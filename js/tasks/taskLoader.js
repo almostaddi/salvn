@@ -4,6 +4,38 @@
 import { getTaskConditions } from '../state/gameState.js';
 import { saveGameState } from '../state/gameState.js';
 
+// Image preloader
+class ImagePreloader {
+    constructor() {
+        this.cache = new Map();
+    }
+    
+    preload(url) {
+        if (!url || this.cache.has(url)) return Promise.resolve();
+        
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => {
+                this.cache.set(url, img);
+                console.log('🖼️ Preloaded image:', url);
+                resolve();
+            };
+            img.onerror = () => {
+                console.warn('⚠️ Failed to preload image:', url);
+                reject();
+            };
+            img.src = url;
+        });
+    }
+    
+    preloadMultiple(urls) {
+        const promises = urls.filter(url => url).map(url => this.preload(url));
+        return Promise.all(promises);
+    }
+}
+
+const imagePreloader = new ImagePreloader();
+
 // VN Task Display Class
 class VNTaskDisplay {
     constructor(containerId = 'instructions') {
@@ -24,8 +56,8 @@ class VNTaskDisplay {
         this.taskDefinition = null;
         this.stages = [];
         this.onCompleteCallback = null;
-        this.allBubblesShown = false; // Track if all bubbles have been shown
-        this.pendingButtons = []; // Store buttons to show later
+        this.allBubblesShown = false;
+        this.pendingButtons = [];
         
         this.elements = {};
         this.initialize();
@@ -82,7 +114,7 @@ class VNTaskDisplay {
         }
     }
     
-    // Set image
+    // Set image (now instant since preloaded)
     setImage(imageUrl) {
         if (!imageUrl) {
             this.elements.imageContainer.classList.add('hidden');
@@ -301,7 +333,7 @@ class VNTaskDisplay {
             this.advanceBubble();
         } else {
             console.warn('⚠️ VNTaskDisplay: Stage has no bubbles');
-            this.allBubblesShown = true; // If no bubbles, mark as shown
+            this.allBubblesShown = true;
         }
         
         // Call onMount if present
@@ -530,7 +562,79 @@ function parseHTMLToVNFormat(htmlContent) {
     return { image, bubbles };
 }
 
-// Load and display a task
+// Extract all image URLs from VN data
+function extractImageUrls(vnData) {
+    const urls = [];
+    
+    // Main image
+    if (vnData.image) {
+        urls.push(vnData.image);
+    }
+    
+    // Stage images
+    if (vnData.stages) {
+        vnData.stages.forEach(stage => {
+            if (stage.image) {
+                urls.push(stage.image);
+            }
+        });
+    }
+    
+    return urls;
+}
+
+// PRELOAD task images when player lands (before clicking Enter)
+export async function preloadTaskImages(taskDefinition, addRemoveTask = null) {
+    console.log('🎬 Preloading images for:', taskDefinition.id);
+    
+    const conditions = getTaskConditions();
+    
+    // Build difficulty map
+    const difficultyMap = {};
+    for (const [toyKey, diff] of Object.entries(window.GAME_STATE.toyDifficulties)) {
+        const [setId, ...toyIdParts] = toyKey.split('_');
+        const toyId = toyIdParts.join('_');
+        if (!difficultyMap[toyId]) {
+            difficultyMap[toyId] = diff;
+        }
+    }
+    
+    // Get primary difficulty
+    const toyKey = taskDefinition.setId && taskDefinition.toyId ? 
+        `${taskDefinition.setId}_${taskDefinition.toyId}` : null;
+    const primaryDifficulty = toyKey ? 
+        (window.GAME_STATE.toyDifficulties[toyKey] || 'medium') : 
+        'medium';
+    
+    // Get task content
+    const taskContent = taskDefinition.getDifficulty(primaryDifficulty, conditions, difficultyMap);
+    
+    // Determine if VN format or HTML string
+    let vnData;
+    if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
+        vnData = taskContent;
+    } else {
+        vnData = parseHTMLToVNFormat(taskContent);
+    }
+    
+    // Handle add/remove task
+    if (addRemoveTask && addRemoveTask.getHTML) {
+        const addRemoveHTML = addRemoveTask.getHTML();
+        const parsed = parseHTMLToVNFormat(addRemoveHTML);
+        if (parsed.image) {
+            await imagePreloader.preload(parsed.image);
+        }
+    }
+    
+    // Extract and preload all images
+    const imageUrls = extractImageUrls(vnData);
+    if (imageUrls.length > 0) {
+        await imagePreloader.preloadMultiple(imageUrls);
+        console.log('✅ Preloaded', imageUrls.length, 'images');
+    }
+}
+
+// Load and display a task (now instant due to preloading)
 export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
     console.log('🎯 loadAndDisplayTask called');
     console.log('📋 Task:', taskDefinition.id);
@@ -757,6 +861,7 @@ window.displayRandomInstructionWithAddRemove = async (addRemoveTask) => {
     }
 };
 
+window.preloadTaskImages = preloadTaskImages;
 window.displaySnakeLadderTask = loadAndDisplaySnakeLadderTask;
 window.displayFinalChallenge = loadAndDisplayFinalChallenge;
 window.restoreVNState = restoreVNState;
