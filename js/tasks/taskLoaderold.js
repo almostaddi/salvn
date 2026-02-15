@@ -7,7 +7,16 @@ import { saveGameState } from '../state/gameState.js';
 // VN Task Display Class
 class VNTaskDisplay {
     constructor(containerId = 'instructions') {
+        console.log('🎬 VNTaskDisplay: Constructor called');
         this.container = document.getElementById(containerId);
+        
+        if (!this.container) {
+            console.error('❌ VNTaskDisplay: Container not found:', containerId);
+            return;
+        }
+        
+        console.log('✅ VNTaskDisplay: Container found');
+        
         this.currentBubbleIndex = 0;
         this.bubbles = [];
         this.currentStageId = null;
@@ -15,12 +24,21 @@ class VNTaskDisplay {
         this.taskDefinition = null;
         this.stages = [];
         this.onCompleteCallback = null;
+        this.allBubblesShown = false; // Track if all bubbles have been shown
+        this.pendingButtons = []; // Store buttons to show later
         
         this.elements = {};
         this.initialize();
     }
     
     initialize() {
+        console.log('🎬 VNTaskDisplay: Initialize called');
+        
+        if (!this.container) {
+            console.error('❌ VNTaskDisplay: No container in initialize');
+            return;
+        }
+        
         this.container.innerHTML = '';
         
         this.container.innerHTML = `
@@ -39,6 +57,8 @@ class VNTaskDisplay {
             <div class="vn-right-module"></div>
         `;
         
+        console.log('✅ VNTaskDisplay: HTML structure created');
+        
         this.elements = {
             leftModule: this.container.querySelector('.vn-left-module'),
             rightModule: this.container.querySelector('.vn-right-module'),
@@ -51,8 +71,15 @@ class VNTaskDisplay {
             continueIndicator: this.container.querySelector('.vn-continue-indicator')
         };
         
+        console.log('✅ VNTaskDisplay: Elements cached');
+        
         // Click handler for text area
-        this.elements.textArea.addEventListener('click', () => this.advanceBubble());
+        if (this.elements.textArea) {
+            this.elements.textArea.addEventListener('click', () => this.advanceBubble());
+            console.log('✅ VNTaskDisplay: Click handler attached');
+        } else {
+            console.error('❌ VNTaskDisplay: Text area not found');
+        }
     }
     
     // Set image
@@ -64,23 +91,30 @@ class VNTaskDisplay {
         
         this.elements.image.src = imageUrl;
         this.elements.imageContainer.classList.remove('hidden');
+        console.log('🖼️ VNTaskDisplay: Image set:', imageUrl);
     }
     
     // Add bubble
     addBubble(content) {
         this.bubbles.push(content);
+        console.log('💬 VNTaskDisplay: Bubble added, total:', this.bubbles.length);
     }
     
     // Clear bubbles
     clearBubbles() {
         this.bubbles = [];
         this.currentBubbleIndex = 0;
+        this.allBubblesShown = false;
         this.elements.bubblesContainer.innerHTML = '';
+        console.log('🧹 VNTaskDisplay: Bubbles cleared');
     }
     
     // Advance to next bubble
     advanceBubble() {
+        console.log('👆 VNTaskDisplay: advanceBubble called, index:', this.currentBubbleIndex, 'total:', this.bubbles.length);
+        
         if (this.currentBubbleIndex >= this.bubbles.length) {
+            console.log('⚠️ VNTaskDisplay: No more bubbles to show');
             return;
         }
         
@@ -102,8 +136,15 @@ class VNTaskDisplay {
         this.elements.bubblesContainer.appendChild(bubble);
         this.currentBubbleIndex++;
         
-        // Show continue indicator if more bubbles
-        if (this.currentBubbleIndex < this.bubbles.length) {
+        console.log('✅ VNTaskDisplay: Bubble shown, new index:', this.currentBubbleIndex);
+        
+        // Check if all bubbles have been shown
+        if (this.currentBubbleIndex >= this.bubbles.length) {
+            this.allBubblesShown = true;
+            console.log('✅ VNTaskDisplay: All bubbles shown - showing buttons');
+            this.showPendingButtons();
+        } else {
+            // Show continue indicator if more bubbles
             setTimeout(() => {
                 this.elements.continueIndicator.style.display = 'block';
             }, 400);
@@ -121,15 +162,40 @@ class VNTaskDisplay {
     // Clear buttons
     clearButtons() {
         this.elements.buttonArea.innerHTML = '';
+        this.pendingButtons = [];
     }
     
-    // Add button
+    // Add button (stores it if bubbles not shown yet)
     addButton(text, callback, type = 'choice') {
+        const buttonData = { text, callback, type };
+        
+        if (this.allBubblesShown) {
+            // Show immediately
+            this.createButton(buttonData);
+        } else {
+            // Store for later
+            this.pendingButtons.push(buttonData);
+            console.log('📦 VNTaskDisplay: Button queued:', text, type);
+        }
+    }
+    
+    // Actually create and show a button
+    createButton(buttonData) {
         const button = document.createElement('button');
-        button.textContent = text;
-        button.className = `vn-button-${type}`;
-        button.addEventListener('click', callback);
+        button.textContent = buttonData.text;
+        button.className = `vn-button-${buttonData.type}`;
+        button.addEventListener('click', buttonData.callback);
         this.elements.buttonArea.appendChild(button);
+        console.log('🔘 VNTaskDisplay: Button shown:', buttonData.text, buttonData.type);
+    }
+    
+    // Show all pending buttons
+    showPendingButtons() {
+        console.log('🎯 VNTaskDisplay: Showing', this.pendingButtons.length, 'pending buttons');
+        this.pendingButtons.forEach(buttonData => {
+            this.createButton(buttonData);
+        });
+        this.pendingButtons = [];
     }
     
     // Set left module
@@ -143,6 +209,7 @@ class VNTaskDisplay {
         if (onMount) {
             onMount();
         }
+        console.log('📦 VNTaskDisplay: Left module set:', title);
     }
     
     // Set right module
@@ -156,6 +223,7 @@ class VNTaskDisplay {
         if (onMount) {
             onMount();
         }
+        console.log('📦 VNTaskDisplay: Right module set:', title);
     }
     
     // Clear modules
@@ -171,12 +239,14 @@ class VNTaskDisplay {
     
     // Load a stage
     loadStage(stageId, newData = {}) {
+        console.log('🎭 VNTaskDisplay: Loading stage:', stageId);
+        
         // Merge data
         this.stageData = { ...this.stageData, ...newData };
         
         const stage = this.stages.find(s => s.id === stageId);
         if (!stage) {
-            console.error('Stage not found:', stageId);
+            console.error('❌ VNTaskDisplay: Stage not found:', stageId);
             return;
         }
         
@@ -229,6 +299,9 @@ class VNTaskDisplay {
         // Show first bubble
         if (this.bubbles.length > 0) {
             this.advanceBubble();
+        } else {
+            console.warn('⚠️ VNTaskDisplay: Stage has no bubbles');
+            this.allBubblesShown = true; // If no bubbles, mark as shown
         }
         
         // Call onMount if present
@@ -236,7 +309,7 @@ class VNTaskDisplay {
             stage.onMount(this.stageData, this);
         }
         
-        // Add buttons
+        // Add buttons (will be queued until bubbles are shown)
         if (stage.choices) {
             stage.choices.forEach(choice => {
                 this.addButton(choice.text, () => {
@@ -272,22 +345,36 @@ class VNTaskDisplay {
             }, 'complete');
         }
         
+        // If no bubbles, show buttons immediately
+        if (this.allBubblesShown) {
+            this.showPendingButtons();
+        }
+        
         // Call onUpdate if present
         if (stage.onUpdate) {
             stage.onUpdate(this.stageData, this);
         }
         
         this.saveState();
+        console.log('✅ VNTaskDisplay: Stage loaded:', stageId);
     }
     
     // Load task from definition
     loadTask(taskDefinition, vnData, onComplete) {
+        console.log('🎮 VNTaskDisplay: Loading task:', taskDefinition.id);
+        console.log('📋 VNTaskDisplay: VN Data:', vnData);
+        
         this.taskDefinition = taskDefinition;
         this.onCompleteCallback = onComplete;
         
         // Execute task logic if present
         if (taskDefinition.execute) {
-            taskDefinition.execute(this.stageData);
+            try {
+                taskDefinition.execute(this.stageData);
+                console.log('✅ VNTaskDisplay: Task execute() called');
+            } catch (error) {
+                console.error('❌ VNTaskDisplay: Error in task execute():', error);
+            }
         }
         
         // Set initial image
@@ -317,23 +404,29 @@ class VNTaskDisplay {
         
         // Load stages if present
         if (vnData.stages && vnData.stages.length > 0) {
+            console.log('🎭 VNTaskDisplay: Task has stages:', vnData.stages.length);
             this.stages = vnData.stages;
             this.loadStage(vnData.stages[0].id);
         } else {
+            console.log('💬 VNTaskDisplay: Simple task (no stages)');
             // Simple task without stages
-            vnData.bubbles.forEach(bubble => this.addBubble(bubble));
-            if (this.bubbles.length > 0) {
+            if (vnData.bubbles && vnData.bubbles.length > 0) {
+                vnData.bubbles.forEach(bubble => this.addBubble(bubble));
                 this.advanceBubble();
+                
+                // Add button (will be queued until bubbles shown)
+                this.addButton('✓ Complete', () => {
+                    if (this.onCompleteCallback) {
+                        this.onCompleteCallback();
+                    }
+                }, 'complete');
+            } else {
+                console.error('❌ VNTaskDisplay: No bubbles in task!');
             }
-            
-            this.addButton('✓ Complete', () => {
-                if (this.onCompleteCallback) {
-                    this.onCompleteCallback();
-                }
-            }, 'complete');
         }
         
         this.saveState();
+        console.log('✅ VNTaskDisplay: Task loaded successfully');
     }
     
     // Save current state
@@ -343,7 +436,8 @@ class VNTaskDisplay {
             currentBubbleIndex: this.currentBubbleIndex,
             currentStageId: this.currentStageId,
             stageData: this.stageData,
-            taskId: this.taskDefinition?.id
+            taskId: this.taskDefinition?.id,
+            allBubblesShown: this.allBubblesShown
         };
         saveGameState();
     }
@@ -352,9 +446,12 @@ class VNTaskDisplay {
     restore(vnState) {
         if (!vnState) return;
         
+        console.log('🔄 VNTaskDisplay: Restoring state:', vnState);
+        
         this.currentBubbleIndex = vnState.currentBubbleIndex || 0;
         this.currentStageId = vnState.currentStageId;
         this.stageData = vnState.stageData || {};
+        this.allBubblesShown = vnState.allBubblesShown || false;
         
         // Re-attach event handlers to buttons
         const buttons = this.elements.buttonArea.querySelectorAll('button');
@@ -370,7 +467,11 @@ class VNTaskDisplay {
         });
         
         // Re-attach text area click handler
-        this.elements.textArea.onclick = () => this.advanceBubble();
+        if (this.elements.textArea) {
+            this.elements.textArea.onclick = () => this.advanceBubble();
+        }
+        
+        console.log('✅ VNTaskDisplay: State restored');
     }
 }
 
@@ -379,6 +480,8 @@ let currentVN = null;
 
 // Parse HTML string into VN format (for backward compatibility)
 function parseHTMLToVNFormat(htmlContent) {
+    console.log('🔄 Parsing HTML to VN format');
+    
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlContent, 'text/html');
     
@@ -422,23 +525,32 @@ function parseHTMLToVNFormat(htmlContent) {
         }
     }
     
+    console.log('✅ Parsed:', bubbles.length, 'bubbles, image:', image ? 'yes' : 'no');
+    
     return { image, bubbles };
 }
 
 // Load and display a task
 export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
-    // Clean up previous VN
-    if (currentVN) {
-        // Don't reset, just prepare for new task
-    }
+    console.log('🎯 loadAndDisplayTask called');
+    console.log('📋 Task:', taskDefinition.id);
+    console.log('🔧 Add/Remove:', addRemoveTask ? 'yes' : 'no');
     
     const instructions = document.getElementById('instructions');
+    if (!instructions) {
+        console.error('❌ Instructions container not found!');
+        return;
+    }
+    
     instructions.classList.add('active');
+    console.log('✅ Instructions container activated');
     
     // Create VN instance if needed
     if (!currentVN) {
+        console.log('🆕 Creating new VN instance');
         currentVN = new VNTaskDisplay();
     } else {
+        console.log('♻️ Reinitializing existing VN instance');
         currentVN.initialize();
     }
     
@@ -462,6 +574,8 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
         (window.GAME_STATE.toyDifficulties[toyKey] || 'medium') : 
         'medium';
     
+    console.log('🎚️ Difficulty:', primaryDifficulty);
+    
     // Increment turn counts
     if (taskDefinition.setId && taskDefinition.toyId) {
         const selectedToyKey = `${taskDefinition.setId}_${taskDefinition.toyId}`;
@@ -473,39 +587,50 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
     }
     
     // Get task content
+    console.log('📝 Getting task content...');
     const taskContent = taskDefinition.getDifficulty(primaryDifficulty, conditions, difficultyMap);
+    console.log('✅ Task content received:', typeof taskContent);
     
     // Determine if VN format or HTML string
     let vnData;
     if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
         // New VN format
+        console.log('✨ Using VN format');
         vnData = taskContent;
     } else {
         // Old HTML format - convert
+        console.log('🔄 Converting HTML format to VN');
         vnData = parseHTMLToVNFormat(taskContent);
     }
     
     // Add add/remove task bubbles at the beginning
     if (addRemoveTask && addRemoveTask.getHTML) {
+        console.log('🔧 Adding add/remove task bubbles');
         const addRemoveHTML = addRemoveTask.getHTML();
         const parsed = parseHTMLToVNFormat(addRemoveHTML);
         
         // Prepend add/remove bubbles
         if (vnData.bubbles) {
             vnData.bubbles = [...parsed.bubbles, ...vnData.bubbles];
+            console.log('✅ Add/remove bubbles prepended, total:', vnData.bubbles.length);
         }
     }
     
     // Load task into VN display
+    console.log('🚀 Loading task into VN display...');
     currentVN.loadTask(taskDefinition, vnData, () => {
         if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
             window.GAME_FUNCTIONS.completeTask();
         }
     });
+    
+    console.log('✅ loadAndDisplayTask complete');
 }
 
 // Load and display snake/ladder task
 export async function loadAndDisplaySnakeLadderTask(type, fromPos, toPos) {
+    console.log('🐍 loadAndDisplaySnakeLadderTask called:', type);
+    
     const { task, snakeLadderInfo } = window.selectSnakeLadderTask(type, fromPos, toPos);
     
     const instructions = document.getElementById('instructions');
@@ -545,6 +670,8 @@ export async function loadAndDisplaySnakeLadderTask(type, fromPos, toPos) {
 
 // Load and display final challenge
 export async function loadAndDisplayFinalChallenge() {
+    console.log('🏆 loadAndDisplayFinalChallenge called');
+    
     const prizeType = determinePrize();
     const task = window.selectFinalChallenge();
     
@@ -592,6 +719,8 @@ function determinePrize() {
 
 // Restore VN state (called on page load)
 export function restoreVNState() {
+    console.log('🔄 restoreVNState called');
+    
     if (window.GAME_STATE.vnState && window.GAME_STATE.currentInstruction) {
         const instructions = document.getElementById('instructions');
         instructions.innerHTML = window.GAME_STATE.currentInstruction;
@@ -602,6 +731,9 @@ export function restoreVNState() {
         }
         
         currentVN.restore(window.GAME_STATE.vnState);
+        console.log('✅ VN state restored');
+    } else {
+        console.log('ℹ️ No VN state to restore');
     }
 }
 
