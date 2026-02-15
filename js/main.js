@@ -55,6 +55,13 @@ function showPage(pageName) {
         page.classList.remove('active');
     });
     
+    // CRITICAL FIX: Also hide instructions container when switching away from task page
+    const instructions = document.getElementById('instructions');
+    if (instructions && pageName !== 'task') {
+        instructions.classList.remove('active');
+        console.log('🧹 Instructions hidden');
+    }
+    
     // Show target page
     const targetPage = document.getElementById(pageName + 'Page');
     if (targetPage) {
