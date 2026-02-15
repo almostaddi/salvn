@@ -1,0 +1,360 @@
+/* Visual Novel Style Task Page */
+
+/* Task page container - full height layout */
+#taskPage {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Main task container - 3 column layout */
+#instructions {
+    display: none;
+    flex: 1;
+    min-height: 0;
+    padding: 20px;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+#instructions.active {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+/* Three column layout */
+.vn-left-module,
+.vn-right-module {
+    flex: 0 0 200px;
+    min-width: 200px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 10px;
+    padding: 15px;
+    display: none; /* Hidden by default, shown when modules are active */
+}
+
+.vn-left-module.active,
+.vn-right-module.active {
+    display: block;
+}
+
+.vn-center-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    min-width: 0;
+}
+
+/* Image container at top */
+.vn-image-container {
+    width: 100%;
+    max-height: 400px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #000;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.vn-image-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.vn-image-container.hidden {
+    display: none;
+}
+
+/* Text bubble area - middle section */
+.vn-text-area {
+    flex: 1;
+    min-height: 200px;
+    position: relative;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 10px;
+    padding: 20px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.vn-text-area:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+/* Text bubble container - scrollable */
+.vn-bubbles-container {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: transform 0.3s ease-out;
+}
+
+/* Individual text bubble */
+.vn-bubble {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid var(--border-color);
+    border-radius: 15px;
+    padding: 20px 25px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transform: translateY(20px);
+    animation: bubbleAppear 0.4s ease-out forwards;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+@keyframes bubbleAppear {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.vn-bubble.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.vn-bubble.moving-up {
+    animation: bubbleMoveUp 0.3s ease-out forwards;
+}
+
+@keyframes bubbleMoveUp {
+    to {
+        transform: translateY(-100px);
+        opacity: 0.3;
+    }
+}
+
+/* Bubble content styling */
+.vn-bubble strong {
+    display: block;
+    font-size: 20px;
+    color: var(--border-color);
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.vn-bubble p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-primary);
+    margin: 8px 0;
+}
+
+.vn-bubble em {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
+/* Continue indicator */
+.vn-continue-indicator {
+    position: absolute;
+    bottom: 30px;
+    right: 30px;
+    font-size: 24px;
+    animation: pulse 1.5s ease-in-out infinite;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+/* Button area at bottom */
+.vn-button-area {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px;
+    min-height: 60px;
+    flex-shrink: 0;
+}
+
+.vn-button-area button {
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    color: var(--button-text);
+    border: none;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-shadow: var(--shadow-md);
+}
+
+.vn-button-area button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+.vn-button-area button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Button types */
+.vn-button-next {
+    background: var(--success-gradient);
+    box-shadow: 0 4px 15px rgba(81, 207, 102, 0.4);
+}
+
+.vn-button-next:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(81, 207, 102, 0.5);
+}
+
+.vn-button-choice {
+    background: var(--primary-gradient);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.vn-button-choice:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.vn-button-complete {
+    background: var(--danger-gradient);
+    box-shadow: 0 4px 15px rgba(250, 82, 82, 0.4);
+}
+
+.vn-button-complete:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(250, 82, 82, 0.5);
+}
+
+/* Prize result displays - adapted for VN style */
+.vn-prize-result {
+    background: white;
+    border-radius: 15px;
+    padding: 30px;
+    margin: 20px 0;
+    text-align: center;
+    border: 3px solid;
+    animation: prizeReveal 0.5s ease-out;
+}
+
+@keyframes prizeReveal {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.vn-prize-result.prize-full {
+    border-color: #ffd93d;
+    background: linear-gradient(135deg, #fff9e6 0%, #fffbf0 100%);
+}
+
+.vn-prize-result.prize-ruin {
+    border-color: #51cf66;
+    background: linear-gradient(135deg, #e6f7e9 0%, #f0faf2 100%);
+}
+
+.vn-prize-result.prize-denied {
+    border-color: #adb5bd;
+    background: linear-gradient(135deg, #f1f3f5 0%, #f8f9fa 100%);
+}
+
+.vn-prize-result h2 {
+    font-size: 28px;
+    margin-bottom: 15px;
+}
+
+.vn-prize-result p {
+    font-size: 18px;
+    line-height: 1.6;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+    .vn-left-module,
+    .vn-right-module {
+        display: none !important; /* Hide side modules on smaller screens */
+    }
+}
+
+@media (max-width: 768px) {
+    #instructions.active {
+        padding: 10px;
+    }
+    
+    .vn-image-container {
+        max-height: 300px;
+    }
+    
+    .vn-text-area {
+        min-height: 150px;
+        padding: 15px;
+    }
+    
+    .vn-bubbles-container {
+        bottom: 15px;
+        left: 15px;
+        right: 15px;
+    }
+    
+    .vn-bubble {
+        padding: 15px 20px;
+    }
+    
+    .vn-bubble strong {
+        font-size: 18px;
+    }
+    
+    .vn-bubble p {
+        font-size: 14px;
+    }
+    
+    .vn-button-area button {
+        padding: 10px 20px;
+        font-size: 14px;
+    }
+}
+
+/* Special module styles */
+.vn-module-title {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--border-color);
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.vn-module-content {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    min-height: 100px;
+}
+
+/* Click hint text */
+.vn-click-hint {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 12px;
+    color: var(--text-light);
+    opacity: 0.6;
+    pointer-events: none;
+}
