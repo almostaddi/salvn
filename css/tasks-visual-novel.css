@@ -10,9 +10,8 @@
     flex-direction: column;
 }
 
-/* Main task container - 3 column layout */
+/* Main task container - 3 column layout - HIDDEN BY DEFAULT */
 #instructions {
-    display: none;
     flex: 1;
     min-height: 0;
     padding: 20px;
@@ -20,10 +19,14 @@
     border-radius: 15px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     margin-top: 20px;
+    
+    /* CRITICAL FIX: Hidden by default */
+    display: none !important;
 }
 
+/* Show as flex layout when active */
 #instructions.active {
-    display: flex;
+    display: flex !important;
     flex-direction: row;
     gap: 20px;
 }
