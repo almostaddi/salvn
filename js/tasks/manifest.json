@@ -2,7 +2,7 @@
     "dressup": {
         "tasks": [
             {
-                "file": "sal/js/tasks/dressup/pegs_add_ba_5.js",
+                "file": "js/tasks/dressup/pegs_add_ba_vn.js",
                 "id": "dressup_pegs_add_ba_vn",
                 "toyId": "pegs",
                 "type": "standard",
@@ -20,7 +20,25 @@
                 "baseWeight": 1
             },
             {
-                "file": "sal/js/tasks/dressup/fallback.js",
+                "file": "js/tasks/dressup/pegs_simple.js",
+                "id": "dressup_pegs_simple",
+                "toyId": "pegs",
+                "type": "standard",
+                "isFallback": false,
+                "requires": {
+                    "toys": [
+                        { "toy": "pegs", "quantity": 2 }
+                    ],
+                    "freeBodyParts": [],
+                    "notHolding": [],
+                    "bodyPartCapacity": [
+                        { "bodyPart": "Ni", "toy": "pegs", "spaceNeeded": 2 }
+                    ]
+                },
+                "baseWeight": 1
+            },
+            {
+                "file": "js/tasks/dressup/fallback.js",
                 "id": "dressup_fallback",
                 "toyId": "hand",
                 "type": "standard",
@@ -33,13 +51,43 @@
                 "baseWeight": 1
             }
         ],
-        "add": [],
-        "remove": []
+        "add": [
+            {
+                "file": "js/tasks/dressup/pegs_add_ba.js",
+                "id": "dressup_pegs_add_ba",
+                "toyId": "pegs",
+                "type": "add",
+                "bodyPart": "Ba"
+            },
+            {
+                "file": "js/tasks/dressup/pegs_add_ni.js",
+                "id": "dressup_pegs_add_ni",
+                "toyId": "pegs",
+                "type": "add",
+                "bodyPart": "Ni"
+            }
+        ],
+        "remove": [
+            {
+                "file": "js/tasks/dressup/pegs_remove_ba.js",
+                "id": "dressup_pegs_remove_ba",
+                "toyId": "pegs",
+                "type": "remove",
+                "bodyPart": "Ba"
+            },
+            {
+                "file": "js/tasks/dressup/pegs_remove_ni.js",
+                "id": "dressup_pegs_remove_ni",
+                "toyId": "pegs",
+                "type": "remove",
+                "bodyPart": "Ni"
+            }
+        ]
     },
     "apple": {
         "tasks": [
             {
-                "file": "sal/js/tasks/apple/fallback.js",
+                "file": "js/tasks/apple/fallback.js",
                 "id": "apple_fallback",
                 "toyId": "hand",
                 "type": "standard",
@@ -58,7 +106,7 @@
     "digging": {
         "tasks": [
             {
-                "file": "sal/js/tasks/digging/fallback.js",
+                "file": "js/tasks/digging/fallback.js",
                 "id": "digging_fallback",
                 "toyId": "hand",
                 "type": "standard",
@@ -77,7 +125,7 @@
     "teaseanddenial": {
         "tasks": [
             {
-                "file": "sal/js/tasks/teaseanddenial/fallback.js",
+                "file": "js/tasks/teaseanddenial/fallback.js",
                 "id": "teaseanddenial_fallback",
                 "toyId": "hand",
                 "type": "standard",
@@ -95,25 +143,25 @@
     },
     "_fallbacks": [
         {
-            "file": "sal/js/tasks/fallbacks/snake_fallback.js",
+            "file": "js/tasks/fallbacks/snake_fallback.js",
             "id": "snake_fallback",
             "type": "snake",
             "isFallback": true
         },
         {
-            "file": "sal/js/tasks/fallbacks/ladder_fallback.js",
+            "file": "js/tasks/fallbacks/ladder_fallback.js",
             "id": "ladder_fallback",
             "type": "ladder",
             "isFallback": true
         },
         {
-            "file": "sal/js/tasks/fallbacks/final_fallback.js",
+            "file": "js/tasks/fallbacks/final_fallback.js",
             "id": "final_fallback",
             "type": "final",
             "isFallback": true
         },
         {
-            "file": "sal/js/tasks/fallbacks/general_fallback.js",
+            "file": "js/tasks/fallbacks/general_fallback.js",
             "id": "general_fallback",
             "type": "general-fallback",
             "isFallback": true
