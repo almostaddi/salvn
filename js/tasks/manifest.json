@@ -3,7 +3,7 @@
         "tasks": [
             {
                 "file": "sal/js/tasks/dressup/pegs_add_ba_5.js",
-                "id": "dressup_pegs_add_ba_5",
+                "id": "dressup_pegs_add_ba_vn",
                 "toyId": "pegs",
                 "type": "standard",
                 "isFallback": false,
