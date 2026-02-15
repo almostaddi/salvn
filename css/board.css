@@ -1,0 +1,350 @@
+/* Game container - no height limits! */
+#gameContainer {
+    background: transparent;
+    padding: 20px;
+    border-radius: 0;
+    box-shadow: none;
+    max-width: none;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* NO height constraints - let it grow naturally */
+}
+
+/* Board - no height limits! */
+#board {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-start;
+    margin: 20px auto;
+    box-shadow: none;
+    transform-origin: top center;
+    transition: transform 0.3s ease;
+    background: transparent;
+    /* NO height constraints */
+}
+
+/* Board rows */
+.board-row {
+    display: flex;
+    gap: 2px;
+    align-items: flex-end;
+    background: transparent;
+}
+
+/* Squares */
+.square {
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
+    min-height: 70px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 3px solid var(--text-primary);
+    background: var(--bg-primary);
+    font-weight: bold;
+    font-size: 24px;
+    color: var(--text-primary);
+    position: relative;
+    transition: all 0.2s ease;
+    border-radius: 4px;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+.square:hover {
+    background: var(--bg-secondary);
+    z-index: 10;
+    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.3);
+    border-color: #555;
+}
+
+/* Connector classes for winding path */
+.square-connector-up {
+    width: 70px;
+    min-width: 70px;
+    height: 79px;
+    min-height: 79px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    border-bottom-left-radius: 20px;
+    align-self: flex-end;
+    background: var(--bg-primary);
+    border: 3px solid var(--text-primary);
+    flex-shrink: 0;
+}
+
+.square-connector-up-right {
+    width: 70px;
+    min-width: 70px;
+    height: 79px;
+    min-height: 79px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    border-bottom-right-radius: 20px;
+    align-self: flex-end;
+    background: var(--bg-primary);
+    border: 3px solid var(--text-primary);
+    flex-shrink: 0;
+}
+
+.square-connector-down-left {
+    width: 70px;
+    min-width: 70px;
+    height: 79px;
+    min-height: 79px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    border-top-right-radius: 20px;
+    background: var(--bg-primary);
+    border: 3px solid var(--text-primary);
+    flex-shrink: 0;
+}
+
+.square-connector-down-left-tl {
+    width: 70px;
+    min-width: 70px;
+    height: 79px;
+    min-height: 79px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    border-top-left-radius: 20px;
+    background: var(--bg-primary);
+    border: 3px solid var(--text-primary);
+    flex-shrink: 0;
+}
+
+/* Connector inner divs */
+.square-connector-inner {
+    width: 70px;
+    height: 70px;
+    min-width: 70px;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: inherit;
+    flex-shrink: 0;
+}
+
+/* Snakes */
+.snake {
+    background: var(--danger-gradient);
+    color: var(--button-text);
+}
+
+.square-connector-up.snake,
+.square-connector-up-right.snake,
+.square-connector-down-left.snake,
+.square-connector-down-left-tl.snake {
+    background: var(--danger-gradient);
+}
+
+.snake::before {
+    content: '🐍';
+    position: absolute;
+    font-size: 2.5em;
+    opacity: 0.3;
+}
+
+.snake::after {
+    content: attr(data-destination);
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--button-text);
+    font-size: 0.6em;
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+
+/* Ladders */
+.ladder {
+    background: var(--success-gradient);
+    color: var(--button-text);
+}
+
+.square-connector-up.ladder,
+.square-connector-up-right.ladder,
+.square-connector-down-left.ladder,
+.square-connector-down-left-tl.ladder {
+    background: var(--success-gradient);
+}
+
+.ladder::before {
+    content: '🪜';
+    position: absolute;
+    font-size: 2.5em;
+    opacity: 0.3;
+}
+
+.ladder::after {
+    content: attr(data-destination);
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--button-text);
+    font-size: 0.6em;
+    padding: 2px 5px;
+    border-radius: 5px;
+}
+
+/* Snake/Ladder destination highlights - FIXED: Maintain transform */
+.square.snake-destination,
+.square.ladder-destination {
+    z-index: 10;
+}
+
+.square.snake-destination {
+    animation: pulseRed 1.5s ease-in-out infinite;
+}
+
+.square.ladder-destination {
+    animation: pulseGreen 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseRed {
+    0%, 100% {
+        box-shadow: 0 0 25px rgba(255, 107, 107, 0.9), 0 0 40px rgba(255, 107, 107, 0.4);
+        border: 3px solid #ff6b6b;
+        transform: inherit scale(1.05);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(255, 107, 107, 1), 0 0 60px rgba(255, 107, 107, 0.6);
+        border: 3px solid #ff3838;
+        transform: inherit scale(1.1);
+    }
+}
+
+@keyframes pulseGreen {
+    0%, 100% {
+        box-shadow: 0 0 25px rgba(81, 207, 102, 0.9), 0 0 40px rgba(81, 207, 102, 0.4);
+        border: 3px solid #51cf66;
+        transform: inherit scale(1.05);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(81, 207, 102, 1), 0 0 60px rgba(81, 207, 102, 0.6);
+        border: 3px solid #2fb344;
+        transform: inherit scale(1.1);
+    }
+}
+
+/* Player piece */
+.player {
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle, #4dabf7 0%, #1864ab 100%);
+    border-radius: 50%;
+    position: absolute;
+    z-index: 10;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    animation: pulse 1s ease-in-out infinite;
+    border: 3px solid var(--button-text);
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+/* Controls */
+#controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    margin-top: 20px;
+    text-align: center;
+}
+
+#controls > div:first-child {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+#controls > div:last-child {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Roll dice button */
+#rollDice {
+    background: var(--info-gradient);
+    box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+}
+
+#rollDice:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 25px rgba(79, 172, 254, 0.5);
+}
+
+/* Test jump input */
+#testJumpInput {
+    width: 100px;
+    padding: 8px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 14px;
+    text-align: center;
+}
+
+/* Dice result */
+#diceResult {
+    font-size: 28px;
+    font-weight: bold;
+    padding: 15px 30px;
+    background: var(--warning-gradient);
+    border-radius: 15px;
+    color: var(--text-primary);
+    box-shadow: 0 4px 15px rgba(255, 188, 0, 0.3);
+    min-width: 150px;
+    text-align: center;
+}
+
+/* Turn counter */
+#turnCounter {
+    font-size: 20px;
+    font-weight: bold;
+    padding: 12px 25px;
+    background: var(--primary-gradient);
+    border-radius: 15px;
+    color: var(--button-text);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    #gameContainer {
+        padding: 10px;
+    }
+
+    .square {
+        font-size: 0.7em;
+    }
+
+    .player {
+        width: 20px;
+        height: 20px;
+    }
+}

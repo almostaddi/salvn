@@ -1,0 +1,122 @@
+{
+    "dressup": {
+        "tasks": [
+            {
+                "file": "sal/js/tasks/dressup/pegs_add_ba_5.js",
+                "id": "dressup_pegs_add_ba_5",
+                "toyId": "pegs",
+                "type": "standard",
+                "isFallback": false,
+                "requires": {
+                    "toys": [
+                        { "toy": "pegs", "quantity": 5 }
+                    ],
+                    "freeBodyParts": [],
+                    "notHolding": [],
+                    "bodyPartCapacity": [
+                        { "bodyPart": "Ba", "toy": "pegs", "spaceNeeded": 5 }
+                    ]
+                },
+                "baseWeight": 1
+            },
+            {
+                "file": "sal/js/tasks/dressup/fallback.js",
+                "id": "dressup_fallback",
+                "toyId": "hand",
+                "type": "standard",
+                "isFallback": true,
+                "requires": {
+                    "toys": [],
+                    "freeBodyParts": [],
+                    "notHolding": []
+                },
+                "baseWeight": 1
+            }
+        ],
+        "add": [],
+        "remove": []
+    },
+    "apple": {
+        "tasks": [
+            {
+                "file": "sal/js/tasks/apple/fallback.js",
+                "id": "apple_fallback",
+                "toyId": "hand",
+                "type": "standard",
+                "isFallback": true,
+                "requires": {
+                    "toys": [],
+                    "freeBodyParts": [],
+                    "notHolding": []
+                },
+                "baseWeight": 1
+            }
+        ],
+        "add": [],
+        "remove": []
+    },
+    "digging": {
+        "tasks": [
+            {
+                "file": "sal/js/tasks/digging/fallback.js",
+                "id": "digging_fallback",
+                "toyId": "hand",
+                "type": "standard",
+                "isFallback": true,
+                "requires": {
+                    "toys": [],
+                    "freeBodyParts": [],
+                    "notHolding": []
+                },
+                "baseWeight": 1
+            }
+        ],
+        "add": [],
+        "remove": []
+    },
+    "teaseanddenial": {
+        "tasks": [
+            {
+                "file": "sal/js/tasks/teaseanddenial/fallback.js",
+                "id": "teaseanddenial_fallback",
+                "toyId": "hand",
+                "type": "standard",
+                "isFallback": true,
+                "requires": {
+                    "toys": [],
+                    "freeBodyParts": [],
+                    "notHolding": []
+                },
+                "baseWeight": 1
+            }
+        ],
+        "add": [],
+        "remove": []
+    },
+    "_fallbacks": [
+        {
+            "file": "sal/js/tasks/fallbacks/snake_fallback.js",
+            "id": "snake_fallback",
+            "type": "snake",
+            "isFallback": true
+        },
+        {
+            "file": "sal/js/tasks/fallbacks/ladder_fallback.js",
+            "id": "ladder_fallback",
+            "type": "ladder",
+            "isFallback": true
+        },
+        {
+            "file": "sal/js/tasks/fallbacks/final_fallback.js",
+            "id": "final_fallback",
+            "type": "final",
+            "isFallback": true
+        },
+        {
+            "file": "sal/js/tasks/fallbacks/general_fallback.js",
+            "id": "general_fallback",
+            "type": "general-fallback",
+            "isFallback": true
+        }
+    ]
+}

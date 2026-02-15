@@ -1,0 +1,175 @@
+/* Task page container */
+#taskPage {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Instructions container */
+#instructions {
+    margin-top: 20px;
+    font-size: 18px;
+    text-align: left;
+    min-height: 80px;
+    padding: 50px 80px;
+    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+    border-radius: 15px;
+    color: var(--text-primary);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: none;
+    line-height: 1.8;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#instructions.active {
+    display: block;
+}
+
+/* Task content styling */
+#instructions img {
+    margin: 40px 0;
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+#instructions p {
+    margin: 25px 0;
+    font-size: 17px;
+    line-height: 2;
+}
+
+#instructions strong {
+    font-size: 26px;
+    display: block;
+    margin-bottom: 20px;
+    text-align: center;
+    color: var(--border-color);
+}
+
+#instructions em {
+    color: var(--text-secondary);
+}
+
+/* Continue button */
+#continueButton {
+    margin-top: 15px;
+    padding: 12px 30px;
+    font-size: 18px;
+    background: var(--danger-gradient);
+    box-shadow: 0 6px 20px rgba(250, 82, 82, 0.4);
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#continueButton:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(250, 82, 82, 0.5);
+}
+
+/* Prize result displays */
+.prize-result {
+    font-size: 2em;
+    text-align: center;
+    margin: 20px 0;
+    padding: 30px;
+    border-radius: 15px;
+    animation: prizeReveal 0.5s ease-out;
+}
+
+@keyframes prizeReveal {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.prize-ruin {
+    background: var(--success-gradient);
+    color: var(--button-text);
+}
+
+.prize-full {
+    background: var(--warning-gradient);
+    color: var(--text-primary);
+}
+
+.prize-denied {
+    background: var(--neutral-gradient);
+    color: var(--button-text);
+}
+
+/* Task-specific containers */
+.task-container {
+    width: 100%;
+}
+
+.task-content {
+    padding: 20px;
+}
+
+/* Task images */
+.task-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    margin: 20px 0;
+}
+
+/* Action buttons in tasks */
+.action-btn {
+    padding: 12px 30px;
+    font-size: 16px;
+    background: var(--primary-gradient);
+    color: var(--button-text);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.action-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    #instructions {
+        padding: 30px 20px;
+        font-size: 16px;
+    }
+    
+    #instructions p {
+        font-size: 15px;
+        margin: 15px 0;
+    }
+    
+    #instructions strong {
+        font-size: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .prize-result {
+        font-size: 1.5em;
+        padding: 20px;
+    }
+}

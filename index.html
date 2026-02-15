@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snakes and Ladders</title>
+    
+    <!-- CSS Modules -->
+    <link rel="stylesheet" href="css/core.css">
+    <link rel="stylesheet" href="css/board.css">
+    <link rel="stylesheet" href="css/menu.css">
+    <link rel="stylesheet" href="css/tasks.css">
+</head>
+<body>
+    <h1>🎲 Snakes and Ladders 🎲</h1>
+    
+    <!-- HOME PAGE - Settings and Start Game -->
+    <div id="homePage" class="page">
+        <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 30px;">
+            <button id="homeResetBtn">🔄 Reset Settings</button>
+            <button id="startButton">🎮 Start Game</button>
+            <button id="homePatchNotesBtn">📋 Notes</button>
+        </div>
+        <div id="buttoncontainer">
+            <div class="settings-column-left">
+                <!-- Player Info Section -->
+                <div class="settings-section">
+                    <h3>👤 Player Info</h3>
+                    <label>Player Name:</label>
+                    <input type="text" id="playerNameInput" placeholder="Enter your name">
+                </div>
+                
+                <!-- Board Customization Section -->
+                <div class="settings-section">
+                    <h3>🎯 Board Customization</h3>
+                    <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        Board Size: 
+                        <input type="number" id="boardSizeSelect" min="10" step="10" value="100" style="width: 90px !important; margin: 0; padding: 6px 8px; height: 32px;">
+                    </label>
+                    
+                    <label>Snakes and Ladders:</label>
+                    <div class="snakes-ladders-options" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+                        <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer;">
+                            <input type="radio" name="snakesLaddersMode" value="classic" checked style="margin: 0; cursor: pointer;">
+                            <span>Classic (100-square board only)</span>
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer;">
+                                <input type="radio" name="snakesLaddersMode" value="random" style="margin: 0; cursor: pointer;">
+                                <span>Random</span>
+                            </label>
+                            <select id="snakesLaddersDifficulty">
+                                <option value="easy">😊 Easy</option>
+                                <option value="medium" selected>😐 Medium</option>
+                                <option value="hard">😤 Hard</option>
+                            </select>
+                        </div>
+                        <label style="display: flex; align-items: center; gap: 8px; margin: 0; cursor: pointer;">
+                            <input type="radio" name="snakesLaddersMode" value="custom" style="margin: 0; cursor: pointer;">
+                            <span>Custom</span>
+                        </label>
+                    </div>
+                    
+                    <!-- Custom snakes and ladders inputs -->
+                    <div id="customSnakesLaddersInputs" style="display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <label style="margin: 0;">Snakes:</label>
+                            <button type="button" id="generateCustomBtn" style="padding: 4px 12px; font-size: 12px; background: linear-gradient(to bottom, #ffffff, #f1f3f5); border: 1px solid #adb5bd; border-radius: 6px; color: #495057; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); font-weight: 600; cursor: pointer;">
+                                🎲 Generate from Difficulty Settings
+                            </button>
+                        </div>
+                        <textarea id="customSnakesInput" rows="3" style="width: 100%; padding: 8px; border: 2px solid #667eea; border-radius: 8px; font-family: monospace; resize: vertical; overflow-y: auto; margin-bottom: 10px;" placeholder="16:6, 47:26, 49:11"></textarea>
+                        
+                        <label>Ladders:</label>
+                        <textarea id="customLaddersInput" rows="3" style="width: 100%; padding: 8px; border: 2px solid #667eea; border-radius: 8px; font-family: monospace; resize: vertical; overflow-y: auto;" placeholder="1:38, 4:14, 9:31"></textarea>
+                    </div>
+                </div>
+                
+                <!-- Instruction Sets & Toys Section -->
+                <div class="settings-section">
+                    <h3>🎮 Instruction Sets & Toys</h3>
+                    <label>Select Instruction Sets:</label>
+                    <div id="instructionSetCheckboxes" class="instruction-set-selector">
+                        <label><input type="checkbox" value="apple"> Anal Set 🍑</label>
+                        <label><input type="checkbox" value="digging"> Deepthroat 🍌</label>
+                        <label><input type="checkbox" value="dressup"> Painplay😖</label>
+                        <label><input type="checkbox" value="teaseanddenial"> Tease And Denial 😉</label>
+                    </div>
+
+                    <label>Select Toys:</label>
+                    <div>
+                        <div>
+                            <div>📊 Continuous Task Probability:</div>
+                            <div>
+                                <span>➕ Add: <span id="totalAddProbability">0%</span></span>
+                                <span>➖ Remove: <span id="totalRemoveProbability">0%</span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="toyLibraryContainer"></div>
+                </div>
+            </div>
+            
+            <div class="settings-column-right">
+                <!-- Final Challenges Section -->
+                <div class="settings-section">
+                    <h3>🏆 Final Challenges</h3>
+                    <p>Set probabilities for each final challenge type. These are separate from the main game toys.</p>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label"><span>👋 Stroking:</span><span class="percentage" id="strokingPercent">33%</span></div>
+                        <input type="range" id="strokingSlider" min="0" max="100" value="33">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>🫨 Vibe:</span><span class="percentage" id="vibePercent">33%</span></div>
+                        <input type="range" id="vibeSlider" min="0" max="100" value="33">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>🍑 Anal:</span><span class="percentage" id="analPercent">34%</span></div>
+                        <input type="range" id="analSlider" min="0" max="100" value="34">
+                    </div>
+                    
+                    <!-- Toggle button for challenge types -->
+                    <button type="button" id="toggleChallengeTypes" style="padding: 8px 16px; font-size: 14px; margin-top: 15px; margin-bottom: 10px; background: linear-gradient(to bottom, #ffffff, #f1f3f5); border: 1px solid #adb5bd; border-radius: 6px; color: #495057; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); font-weight: 600; cursor: pointer; width: 100%; text-align: left;">
+                        ▶ Show Challenge Types & Difficulty
+                    </button>
+                    
+                    <!-- Challenge Types Container (hidden by default) -->
+                    <div id="challengeTypesContainer" style="display: none;">
+                        <h4>Challenge Types & Difficulty:</h4>
+                        
+                        <!-- Stroking -->
+                        <div>
+                            <div>
+                                <div>👋 Stroking:</div>
+                                <div>
+                                    <span>Difficulty:</span>
+                                    <select id="strokingDifficulty">
+                                        <option value="easy">Easy</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="hard">Hard</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label>
+                                    <input type="checkbox" id="stroking_icyhot">
+                                    <span>Icy Hot</span>
+                                    <input type="number" id="stroking_icyhot_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="stroking_icewater">
+                                    <span>Ice Water</span>
+                                    <input type="number" id="stroking_icewater_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="stroking_ktb">
+                                    <span>KTB</span>
+                                    <input type="number" id="stroking_ktb_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="stroking_ballsqueeze">
+                                    <span>Ball Squeeze</span>
+                                    <input type="number" id="stroking_ballsqueeze_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="stroking_2finger">
+                                    <span>2 Finger</span>
+                                    <input type="number" id="stroking_2finger_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Vibe -->
+                        <div>
+                            <div>
+                                <div>🫨 Vibe:</div>
+                                <div>
+                                    <span>Difficulty:</span>
+                                    <select id="vibeDifficulty">
+                                        <option value="easy">Easy</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="hard">Hard</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label>
+                                    <input type="checkbox" id="vibe_icyhot">
+                                    <span>Icy Hot</span>
+                                    <input type="number" id="vibe_icyhot_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="vibe_icewater">
+                                    <span>Ice Water</span>
+                                    <input type="number" id="vibe_icewater_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Anal -->
+                        <div>
+                            <div>
+                                <div>🍑 Anal:</div>
+                                <div>
+                                    <span>Difficulty:</span>
+                                    <select id="analDifficulty">
+                                        <option value="easy">Easy</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="hard">Hard</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label>
+                                    <input type="checkbox" id="anal_vibe">
+                                    <span>Vibe</span>
+                                    <input type="number" id="anal_vibe_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Modifiers -->
+                        <div>
+                            <div>🎲 Modifiers:</div>
+                            <div>
+                                <label>
+                                    <input type="checkbox" id="modifier_ce">
+                                    <span>CE (Cum Eating)</span>
+                                    <input type="number" id="modifier_ce_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="modifier_pf">
+                                    <span>PF (Post Finish)</span>
+                                    <input type="number" id="modifier_pf_chance" min="0" max="100" value="10" placeholder="%">
+                                    <span>%</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Prize Probabilities Section -->
+                <div class="settings-section">
+                    <h3>🎁 Prize Probabilities</h3>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>🏆 Full:</span><span class="percentage" id="fullPercent">33%</span></div>
+                        <input type="range" id="fullSlider" min="0" max="100" value="33">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>💧 Ruin:</span><span class="percentage" id="ruinPercent">33%</span></div>
+                        <input type="range" id="ruinSlider" min="0" max="100" value="33">
+                    </div>
+                    <div class="slider-container">
+                        <div class="slider-label"><span>❌ Denial:</span><span class="percentage" id="deniedPercent">34%</span></div>
+                        <input type="range" id="deniedSlider" min="0" max="100" value="34">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- BOARD PAGE - Game Board and Controls -->
+    <div id="boardPage" class="page">
+        <div id="gameContainer">
+            <div id="board"></div>
+            <div id="controls">
+                <div>
+                    <button id="rollDice">🎲 Roll Dice</button>
+                    <input type="number" id="testJumpInput" min="1" max="100" placeholder="or jump to #">
+                </div>
+                <div>
+                    <div id="diceResult">Dice: -</div>
+                    <div id="turnCounter">Turn: 0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- TASK PAGE - Task Display -->
+    <div id="taskPage" class="page">
+        <div id="instructions"></div>
+    </div>
+    
+    <!-- Fixed position buttons for board/task pages - HIDDEN BY DEFAULT WITH INLINE STYLE -->
+    <button id="resetBtn" style="display: none;">🔄 Reset</button>
+    <button id="patchNotesBtn" style="display: none;">📋 Notes</button>
+    
+    <div id="patchNotesModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>📋 Patch Notes</h2>
+            <p><strong>Ver 0.5:</strong> Modifier system with add/remove chances & toy quantities</p>
+        </div>
+    </div>
+    
+    <div id="resetModal" class="modal">
+        <div class="modal-content">
+            <h2>⚠️ Reset Game?</h2>
+            <p>You will lose all progress!</p>
+            <div>
+                <button id="confirmReset">Yes</button>
+                <button id="cancelReset">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="resetSettingsModal" class="modal">
+        <div class="modal-content">
+            <h2>⚠️ Reset Settings?</h2>
+            <p>This will reset all settings to their defaults!</p>
+            <div>
+                <button id="confirmResetSettings">Yes</button>
+                <button id="cancelResetSettings">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- JavaScript Modules -->
+    <script type="module" src="js/main.js"></script>
+    <script>
+        // Wire up home page buttons to the actual buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('homeResetBtn').addEventListener('click', () => {
+                document.getElementById('resetBtn').click();
+            });
+            document.getElementById('homePatchNotesBtn').addEventListener('click', () => {
+                document.getElementById('patchNotesBtn').click();
+            });
+            
+            // Wire up toggle button for challenge types
+            const toggleBtn = document.getElementById('toggleChallengeTypes');
+            const container = document.getElementById('challengeTypesContainer');
+            
+            toggleBtn.addEventListener('click', () => {
+                if (container.style.display === 'none') {
+                    container.style.display = 'block';
+                    toggleBtn.innerHTML = '▼ Hide Challenge Types & Difficulty';
+                } else {
+                    container.style.display = 'none';
+                    toggleBtn.innerHTML = '▶ Show Challenge Types & Difficulty';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
