@@ -24,7 +24,8 @@ import { loadTaskRegistry } from './tasks/taskSelector.js';
 import { 
     loadAndDisplayTask,
     loadAndDisplaySnakeLadderTask,
-    loadAndDisplayFinalChallenge
+    loadAndDisplayFinalChallenge,
+    restoreVNState  // NEW: Import VN restoration
 } from './tasks/taskLoader.js';
 
 // UI components
@@ -645,20 +646,10 @@ function restoreSavedGame(state) {
         
         // Restore based on game phase
         if (state.currentInstruction && state.currentInstruction.trim() !== '') {
-            // Was viewing a task - restore it
-            const instructions = document.getElementById('instructions');
-            instructions.innerHTML = state.currentInstruction;
-            instructions.classList.add('active');
+            // Was viewing a task - restore VN state
+            // NEW: Call VN restoration
+            restoreVNState();
             
-            // Re-attach the continue button event handler
-            const continueButton = instructions.querySelector('#continueButton');
-            if (continueButton) {
-                continueButton.onclick = () => {
-                    if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
-                        window.GAME_FUNCTIONS.completeTask();
-                    }
-                };
-            }
         } else if (phase === 'awaiting_snake_ladder_task') {
             // Waiting to show snake/ladder task
             // Button text already set to Enter
@@ -723,6 +714,7 @@ function resetGame() {
     window.GAME_STATE.diceResultText = 'Dice: -';
     window.GAME_STATE.pendingSnakeLadder = null;
     window.GAME_STATE.gamePhase = 'awaiting_dice_roll';
+    window.GAME_STATE.vnState = null; // NEW: Reset VN state
     
     // Reset body part state
     window.GAME_STATE.bodyPartState = {
