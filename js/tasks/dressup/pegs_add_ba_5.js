@@ -1,5 +1,4 @@
-// Example: VN-style task with dynamic content, stages, and choices
-// This replaces the old pegs_add_ba_5.js example
+// Advanced VN-style task with dynamic content, stages, and choices
 
 export default {
     id: 'dressup_pegs_add_ba_vn',
@@ -8,7 +7,7 @@ export default {
     type: 'standard',
     isFallback: false,
     
-    // Manifest requirements (unchanged)
+    // Manifest requirements
     requires: {
         toys: [
             { toy: 'pegs', quantity: 5 }
@@ -20,7 +19,7 @@ export default {
         ]
     },
     
-    // NEW: Returns VN format instead of HTML string
+    // Returns VN format
     getDifficulty: (difficulty, conditions, difficultyMap) => {
         // Check current game state
         const currentPegs = conditions.countToy('pegs');
