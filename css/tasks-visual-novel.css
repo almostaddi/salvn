@@ -10,10 +10,10 @@
 
 /* Only apply layout styles when taskPage is active */
 #taskPage.active {
-    min-height: 100vh;
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 /* Main task container - 3 column layout - HIDDEN BY DEFAULT */
@@ -24,7 +24,7 @@
     background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
     border-radius: 15px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    /* NO margin-top - takes full height */
+    overflow: hidden;
     
     /* CRITICAL FIX: Hidden by default */
     display: none !important;
@@ -36,6 +36,7 @@
     flex-direction: row;
     gap: 20px;
     height: 100%;
+    overflow: hidden;
 }
 
 /* Three column layout */
@@ -47,6 +48,7 @@
     border-radius: 10px;
     padding: 15px;
     display: none; /* Hidden by default, shown when modules are active */
+    overflow: auto;
 }
 
 .vn-left-module.active,
@@ -61,13 +63,14 @@
     gap: 15px;
     min-width: 0;
     min-height: 0;
+    overflow: hidden;
 }
 
 /* Image container at top - FIXED: proper sizing and no black bars */
 .vn-image-container {
     width: 100%;
-    max-height: 400px;
-    min-height: 300px;
+    max-height: 35vh;
+    min-height: 250px;
     border-radius: 10px;
     overflow: hidden;
     background: transparent;
@@ -92,7 +95,7 @@
 /* Text bubble area - middle section */
 .vn-text-area {
     flex: 1;
-    min-height: 200px;
+    min-height: 0;
     position: relative;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.05);
@@ -195,7 +198,7 @@
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    padding: 10px;
+    padding: 10px 10px 5px 10px;
     min-height: 60px;
     flex-shrink: 0;
 }
@@ -312,20 +315,21 @@
 
 @media (max-width: 768px) {
     #taskPage.active {
-        padding: 10px;
+        padding: 5px;
     }
     
     #instructions.active {
         padding: 10px;
+        gap: 10px;
     }
     
     .vn-image-container {
-        max-height: 300px;
+        max-height: 30vh;
         min-height: 200px;
     }
     
     .vn-text-area {
-        min-height: 150px;
+        min-height: 0;
         padding: 15px;
     }
     
@@ -345,6 +349,11 @@
     
     .vn-bubble p {
         font-size: 14px;
+    }
+    
+    .vn-button-area {
+        padding: 5px;
+        min-height: 50px;
     }
     
     .vn-button-area button {
