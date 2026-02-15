@@ -192,7 +192,7 @@ export async function loadTaskRegistry() {
 // Load task definition from JS module file
 async function loadTaskDefinition(filePath) {
     try {
-        const module = await import(`slvn/${filePath}`);
+        const module = await import(`/slvn/${filePath}`);
         return module.default;
     } catch (error) {
         console.error(`Failed to load ${filePath}:`, error);
