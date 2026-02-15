@@ -44,7 +44,6 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     height: auto; /* Allow body to grow with content */
     min-height: 100vh; /* At least viewport height */
-    padding: 20px;
     background: var(--primary-gradient);
     background-attachment: fixed; /* Keep gradient fixed while scrolling */
     color: var(--text-primary);
