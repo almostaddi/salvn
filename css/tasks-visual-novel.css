@@ -1,10 +1,16 @@
 /* Visual Novel Style Task Page */
 
 /* Task page container - full height layout */
+/* CRITICAL FIX: Don't override display property, let .page class control visibility */
 #taskPage {
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
+    /* NO min-height here - only apply when active */
+}
+
+/* Only apply layout styles when taskPage is active */
+#taskPage.active {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -298,6 +304,10 @@
 }
 
 @media (max-width: 768px) {
+    #taskPage.active {
+        padding: 10px;
+    }
+    
     #instructions.active {
         padding: 10px;
     }
