@@ -4,7 +4,6 @@
 #taskPage {
     width: 100%;
     max-width: 1400px;
-    min-width: 800px;
     margin: 0 auto;
     /* NO min-height here - only apply when active */
 }
@@ -37,6 +36,8 @@
     display: flex !important;
     flex-direction: row;
     gap: 20px;
+    width: 100%; /* Explicit width to prevent collapse */
+    max-width: 1400px;
     height: 100%;
     overflow: hidden;
     padding: 15px; /* Move padding here instead of on #taskPage */
@@ -60,11 +61,11 @@
 }
 
 .vn-center-content {
-    flex: 1;
+    flex: 1 1 auto; /* Allow grow and shrink */
     display: flex;
     flex-direction: column;
     gap: 15px;
-    min-width: 0;
+    min-width: 0; /* Reset to allow proper flex sizing */
     min-height: 0;
     overflow: hidden;
 }
@@ -319,10 +320,6 @@
 }
 
 @media (max-width: 768px) {
-    #taskPage {
-        min-width: 0; /* Remove min-width on mobile */
-    }
-    
     #taskPage.active {
         padding: 5px;
     }
