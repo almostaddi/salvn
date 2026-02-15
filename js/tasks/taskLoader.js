@@ -24,6 +24,7 @@ class VNTaskDisplay {
         this.taskDefinition = null;
         this.stages = [];
         this.onCompleteCallback = null;
+        this.allBubblesShown = false; // Track if all bubbles have been shown
         
         this.elements = {};
         this.initialize();
@@ -102,6 +103,7 @@ class VNTaskDisplay {
     clearBubbles() {
         this.bubbles = [];
         this.currentBubbleIndex = 0;
+        this.allBubblesShown = false;
         this.elements.bubblesContainer.innerHTML = '';
         console.log('🧹 VNTaskDisplay: Bubbles cleared');
     }
@@ -135,8 +137,12 @@ class VNTaskDisplay {
         
         console.log('✅ VNTaskDisplay: Bubble shown, new index:', this.currentBubbleIndex);
         
-        // Show continue indicator if more bubbles
-        if (this.currentBubbleIndex < this.bubbles.length) {
+        // Check if all bubbles have been shown
+        if (this.currentBubbleIndex >= this.bubbles.length) {
+            this.allBubblesShown = true;
+            console.log('✅ VNTaskDisplay: All bubbles shown');
+        } else {
+            // Show continue indicator if more bubbles
             setTimeout(() => {
                 this.elements.continueIndicator.style.display = 'block';
             }, 400);
@@ -157,13 +163,14 @@ class VNTaskDisplay {
     }
     
     // Add button
-    addButton(text, callback, type = 'choice') {
+    addButton(text, callback, type = 'choice', disabled = false) {
         const button = document.createElement('button');
         button.textContent = text;
         button.className = `vn-button-${type}`;
+        button.disabled = disabled;
         button.addEventListener('click', callback);
         this.elements.buttonArea.appendChild(button);
-        console.log('🔘 VNTaskDisplay: Button added:', text, type);
+        console.log('🔘 VNTaskDisplay: Button added:', text, type, 'disabled:', disabled);
     }
     
     // Set left module
@@ -269,6 +276,7 @@ class VNTaskDisplay {
             this.advanceBubble();
         } else {
             console.warn('⚠️ VNTaskDisplay: Stage has no bubbles');
+            this.allBubblesShown = true; // If no bubbles, mark as shown
         }
         
         // Call onMount if present
@@ -276,7 +284,9 @@ class VNTaskDisplay {
             stage.onMount(this.stageData, this);
         }
         
-        // Add buttons
+        // Add buttons (initially disabled if not all bubbles shown)
+        const shouldDisableButtons = !this.allBubblesShown;
+        
         if (stage.choices) {
             stage.choices.forEach(choice => {
                 this.addButton(choice.text, () => {
@@ -284,7 +294,7 @@ class VNTaskDisplay {
                     if (nextStage) {
                         this.loadStage(nextStage, choice.data);
                     }
-                }, 'choice');
+                }, 'choice', shouldDisableButtons);
             });
         } else if (stage.buttons) {
             stage.buttons.forEach(btn => {
@@ -298,18 +308,23 @@ class VNTaskDisplay {
                     } else if (btn.nextStage) {
                         this.loadStage(btn.nextStage, btn.data);
                     }
-                }, btnType);
+                }, btnType, shouldDisableButtons);
             });
         } else if (stage.nextStage) {
             this.addButton('Continue', () => {
                 this.loadStage(stage.nextStage);
-            }, 'next');
+            }, 'next', shouldDisableButtons);
         } else if (stage.complete) {
             this.addButton('✓ Complete', () => {
                 if (this.onCompleteCallback) {
                     this.onCompleteCallback();
                 }
-            }, 'complete');
+            }, 'complete', shouldDisableButtons);
+        }
+        
+        // Set up observer to enable buttons when all bubbles are shown
+        if (shouldDisableButtons) {
+            this.setupButtonEnabling();
         }
         
         // Call onUpdate if present
@@ -319,6 +334,21 @@ class VNTaskDisplay {
         
         this.saveState();
         console.log('✅ VNTaskDisplay: Stage loaded:', stageId);
+    }
+    
+    // Setup button enabling when all bubbles are shown
+    setupButtonEnabling() {
+        const checkInterval = setInterval(() => {
+            if (this.allBubblesShown) {
+                // Enable all buttons
+                const buttons = this.elements.buttonArea.querySelectorAll('button');
+                buttons.forEach(btn => {
+                    btn.disabled = false;
+                });
+                console.log('✅ VNTaskDisplay: Buttons enabled');
+                clearInterval(checkInterval);
+            }
+        }, 100);
     }
     
     // Load task from definition
@@ -375,15 +405,18 @@ class VNTaskDisplay {
             if (vnData.bubbles && vnData.bubbles.length > 0) {
                 vnData.bubbles.forEach(bubble => this.addBubble(bubble));
                 this.advanceBubble();
+                
+                // Setup button enabling for simple tasks too
+                this.addButton('✓ Complete', () => {
+                    if (this.onCompleteCallback) {
+                        this.onCompleteCallback();
+                    }
+                }, 'complete', true); // Initially disabled
+                
+                this.setupButtonEnabling();
             } else {
                 console.error('❌ VNTaskDisplay: No bubbles in task!');
             }
-            
-            this.addButton('✓ Complete', () => {
-                if (this.onCompleteCallback) {
-                    this.onCompleteCallback();
-                }
-            }, 'complete');
         }
         
         this.saveState();
@@ -397,7 +430,8 @@ class VNTaskDisplay {
             currentBubbleIndex: this.currentBubbleIndex,
             currentStageId: this.currentStageId,
             stageData: this.stageData,
-            taskId: this.taskDefinition?.id
+            taskId: this.taskDefinition?.id,
+            allBubblesShown: this.allBubblesShown
         };
         saveGameState();
     }
@@ -411,6 +445,7 @@ class VNTaskDisplay {
         this.currentBubbleIndex = vnState.currentBubbleIndex || 0;
         this.currentStageId = vnState.currentStageId;
         this.stageData = vnState.stageData || {};
+        this.allBubblesShown = vnState.allBubblesShown || false;
         
         // Re-attach event handlers to buttons
         const buttons = this.elements.buttonArea.querySelectorAll('button');
@@ -422,6 +457,8 @@ class VNTaskDisplay {
                         this.onCompleteCallback();
                     }
                 };
+                // Enable button if all bubbles were shown
+                button.disabled = !this.allBubblesShown;
             }
         });
         
