@@ -4,6 +4,7 @@
 #taskPage {
     width: 100%;
     max-width: 1400px;
+    min-width: 800px;
     margin: 0 auto;
     /* NO min-height here - only apply when active */
 }
@@ -75,7 +76,7 @@
     min-height: 400px;
     border-radius: 10px;
     overflow: hidden;
-    background: transparent;
+    background: rgba(0, 0, 0, 0.03);
     position: relative;
     flex-shrink: 0;
     display: flex;
@@ -318,6 +319,10 @@
 }
 
 @media (max-width: 768px) {
+    #taskPage {
+        min-width: 0; /* Remove min-width on mobile */
+    }
+    
     #taskPage.active {
         padding: 5px;
     }
