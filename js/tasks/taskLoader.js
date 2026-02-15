@@ -25,6 +25,7 @@ class VNTaskDisplay {
         this.stages = [];
         this.onCompleteCallback = null;
         this.allBubblesShown = false; // Track if all bubbles have been shown
+        this.pendingButtons = []; // Store buttons to show later
         
         this.elements = {};
         this.initialize();
@@ -140,7 +141,8 @@ class VNTaskDisplay {
         // Check if all bubbles have been shown
         if (this.currentBubbleIndex >= this.bubbles.length) {
             this.allBubblesShown = true;
-            console.log('✅ VNTaskDisplay: All bubbles shown');
+            console.log('✅ VNTaskDisplay: All bubbles shown - showing buttons');
+            this.showPendingButtons();
         } else {
             // Show continue indicator if more bubbles
             setTimeout(() => {
@@ -160,17 +162,40 @@ class VNTaskDisplay {
     // Clear buttons
     clearButtons() {
         this.elements.buttonArea.innerHTML = '';
+        this.pendingButtons = [];
     }
     
-    // Add button
-    addButton(text, callback, type = 'choice', disabled = false) {
+    // Add button (stores it if bubbles not shown yet)
+    addButton(text, callback, type = 'choice') {
+        const buttonData = { text, callback, type };
+        
+        if (this.allBubblesShown) {
+            // Show immediately
+            this.createButton(buttonData);
+        } else {
+            // Store for later
+            this.pendingButtons.push(buttonData);
+            console.log('📦 VNTaskDisplay: Button queued:', text, type);
+        }
+    }
+    
+    // Actually create and show a button
+    createButton(buttonData) {
         const button = document.createElement('button');
-        button.textContent = text;
-        button.className = `vn-button-${type}`;
-        button.disabled = disabled;
-        button.addEventListener('click', callback);
+        button.textContent = buttonData.text;
+        button.className = `vn-button-${buttonData.type}`;
+        button.addEventListener('click', buttonData.callback);
         this.elements.buttonArea.appendChild(button);
-        console.log('🔘 VNTaskDisplay: Button added:', text, type, 'disabled:', disabled);
+        console.log('🔘 VNTaskDisplay: Button shown:', buttonData.text, buttonData.type);
+    }
+    
+    // Show all pending buttons
+    showPendingButtons() {
+        console.log('🎯 VNTaskDisplay: Showing', this.pendingButtons.length, 'pending buttons');
+        this.pendingButtons.forEach(buttonData => {
+            this.createButton(buttonData);
+        });
+        this.pendingButtons = [];
     }
     
     // Set left module
@@ -284,9 +309,7 @@ class VNTaskDisplay {
             stage.onMount(this.stageData, this);
         }
         
-        // Add buttons (initially disabled if not all bubbles shown)
-        const shouldDisableButtons = !this.allBubblesShown;
-        
+        // Add buttons (will be queued until bubbles are shown)
         if (stage.choices) {
             stage.choices.forEach(choice => {
                 this.addButton(choice.text, () => {
@@ -294,7 +317,7 @@ class VNTaskDisplay {
                     if (nextStage) {
                         this.loadStage(nextStage, choice.data);
                     }
-                }, 'choice', shouldDisableButtons);
+                }, 'choice');
             });
         } else if (stage.buttons) {
             stage.buttons.forEach(btn => {
@@ -308,23 +331,23 @@ class VNTaskDisplay {
                     } else if (btn.nextStage) {
                         this.loadStage(btn.nextStage, btn.data);
                     }
-                }, btnType, shouldDisableButtons);
+                }, btnType);
             });
         } else if (stage.nextStage) {
             this.addButton('Continue', () => {
                 this.loadStage(stage.nextStage);
-            }, 'next', shouldDisableButtons);
+            }, 'next');
         } else if (stage.complete) {
             this.addButton('✓ Complete', () => {
                 if (this.onCompleteCallback) {
                     this.onCompleteCallback();
                 }
-            }, 'complete', shouldDisableButtons);
+            }, 'complete');
         }
         
-        // Set up observer to enable buttons when all bubbles are shown
-        if (shouldDisableButtons) {
-            this.setupButtonEnabling();
+        // If no bubbles, show buttons immediately
+        if (this.allBubblesShown) {
+            this.showPendingButtons();
         }
         
         // Call onUpdate if present
@@ -334,21 +357,6 @@ class VNTaskDisplay {
         
         this.saveState();
         console.log('✅ VNTaskDisplay: Stage loaded:', stageId);
-    }
-    
-    // Setup button enabling when all bubbles are shown
-    setupButtonEnabling() {
-        const checkInterval = setInterval(() => {
-            if (this.allBubblesShown) {
-                // Enable all buttons
-                const buttons = this.elements.buttonArea.querySelectorAll('button');
-                buttons.forEach(btn => {
-                    btn.disabled = false;
-                });
-                console.log('✅ VNTaskDisplay: Buttons enabled');
-                clearInterval(checkInterval);
-            }
-        }, 100);
     }
     
     // Load task from definition
@@ -406,14 +414,12 @@ class VNTaskDisplay {
                 vnData.bubbles.forEach(bubble => this.addBubble(bubble));
                 this.advanceBubble();
                 
-                // Setup button enabling for simple tasks too
+                // Add button (will be queued until bubbles shown)
                 this.addButton('✓ Complete', () => {
                     if (this.onCompleteCallback) {
                         this.onCompleteCallback();
                     }
-                }, 'complete', true); // Initially disabled
-                
-                this.setupButtonEnabling();
+                }, 'complete');
             } else {
                 console.error('❌ VNTaskDisplay: No bubbles in task!');
             }
@@ -457,8 +463,6 @@ class VNTaskDisplay {
                         this.onCompleteCallback();
                     }
                 };
-                // Enable button if all bubbles were shown
-                button.disabled = !this.allBubblesShown;
             }
         });
         
