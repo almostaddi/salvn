@@ -2,7 +2,7 @@
     "dressup": {
         "tasks": [
             {
-                "file": "salvn/js/tasks/dressup/pegs_add_ba_vn.js",
+                "file": "js/tasks/dressup/pegs_add_ba_vn.js",
                 "id": "dressup_pegs_add_ba_vn",
                 "toyId": "pegs",
                 "type": "standard",
@@ -20,7 +20,7 @@
                 "baseWeight": 1
             },
             {
-                "file": "salvn/js/tasks/dressup/pegs_simple.js",
+                "file": "js/tasks/dressup/pegs_simple.js",
                 "id": "dressup_pegs_simple",
                 "toyId": "pegs",
                 "type": "standard",
@@ -38,7 +38,7 @@
                 "baseWeight": 1
             },
             {
-                "file": "salvn/js/tasks/dressup/fallback.js",
+                "file": "js/tasks/dressup/fallback.js",
                 "id": "dressup_fallback",
                 "toyId": "hand",
                 "type": "standard",
@@ -53,14 +53,14 @@
         ],
         "add": [
             {
-                "file": "salvn/js/tasks/dressup/pegs_add_ba.js",
+                "file": "js/tasks/dressup/pegs_add_ba.js",
                 "id": "dressup_pegs_add_ba",
                 "toyId": "pegs",
                 "type": "add",
                 "bodyPart": "Ba"
             },
             {
-                "file": "salvn/js/tasks/dressup/pegs_add_ni.js",
+                "file": "js/tasks/dressup/pegs_add_ni.js",
                 "id": "dressup_pegs_add_ni",
                 "toyId": "pegs",
                 "type": "add",
@@ -69,14 +69,14 @@
         ],
         "remove": [
             {
-                "file": "salvn/js/tasks/dressup/pegs_remove_ba.js",
+                "file": "js/tasks/dressup/pegs_remove_ba.js",
                 "id": "dressup_pegs_remove_ba",
                 "toyId": "pegs",
                 "type": "remove",
                 "bodyPart": "Ba"
             },
             {
-                "file": "salvn/js/tasks/dressup/pegs_remove_ni.js",
+                "file": "js/tasks/dressup/pegs_remove_ni.js",
                 "id": "dressup_pegs_remove_ni",
                 "toyId": "pegs",
                 "type": "remove",
@@ -87,7 +87,7 @@
     "apple": {
         "tasks": [
             {
-                "file": "salvn/js/tasks/apple/fallback.js",
+                "file": "js/tasks/apple/fallback.js",
                 "id": "apple_fallback",
                 "toyId": "hand",
                 "type": "standard",
@@ -106,7 +106,7 @@
     "digging": {
         "tasks": [
             {
-                "file": "salvn/js/tasks/digging/fallback.js",
+                "file": "js/tasks/digging/fallback.js",
                 "id": "digging_fallback",
                 "toyId": "hand",
                 "type": "standard",
@@ -125,7 +125,7 @@
     "teaseanddenial": {
         "tasks": [
             {
-                "file": "salvn/js/tasks/teaseanddenial/fallback.js",
+                "file": "js/tasks/teaseanddenial/fallback.js",
                 "id": "teaseanddenial_fallback",
                 "toyId": "hand",
                 "type": "standard",
@@ -143,25 +143,25 @@
     },
     "_fallbacks": [
         {
-            "file": "salvn/js/tasks/fallbacks/snake_fallback.js",
+            "file": "js/tasks/fallbacks/snake_fallback.js",
             "id": "snake_fallback",
             "type": "snake",
             "isFallback": true
         },
         {
-            "file": "salvn/js/tasks/fallbacks/ladder_fallback.js",
+            "file": "js/tasks/fallbacks/ladder_fallback.js",
             "id": "ladder_fallback",
             "type": "ladder",
             "isFallback": true
         },
         {
-            "file": "salvn/js/tasks/fallbacks/final_fallback.js",
+            "file": "js/tasks/fallbacks/final_fallback.js",
             "id": "final_fallback",
             "type": "final",
             "isFallback": true
         },
         {
-            "file": "salvn/js/tasks/fallbacks/general_fallback.js",
+            "file": "js/tasks/fallbacks/general_fallback.js",
             "id": "general_fallback",
             "type": "general-fallback",
             "isFallback": true
