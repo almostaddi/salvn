@@ -291,6 +291,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize board EARLY (before showing page)
     const initialBoardSize = savedState?.totalSquares || 100;
     boardRenderer = new BoardRenderer(initialBoardSize);
+    
+    // FIX: Restore snakes/ladders from saved state BEFORE creating board
+    if (savedState && savedState.boardSnakes && savedState.boardLadders) {
+        window.BOARD_SNAKES = savedState.boardSnakes;
+        window.BOARD_LADDERS = savedState.boardLadders;
+        boardRenderer.snakes = savedState.boardSnakes;
+        boardRenderer.ladders = savedState.boardLadders;
+        console.log('✅ Restored snakes/ladders from saved state');
+    }
+    
     boardRenderer.create();
     
     // PRE-SET UI elements BEFORE showing page to prevent flash
@@ -608,6 +618,10 @@ function startGame() {
         console.log('Using custom ladders:', window.BOARD_LADDERS);
     }
     
+    // FIX: Save snakes/ladders to game state for persistence
+    window.GAME_STATE.boardSnakes = window.BOARD_SNAKES;
+    window.GAME_STATE.boardLadders = window.BOARD_LADDERS;
+    
     // Only set gameStarted AFTER all validation passes
     window.GAME_STATE.gameStarted = true;
     window.GAME_STATE.gamePhase = 'awaiting_dice_roll';
@@ -732,6 +746,8 @@ function resetGame() {
     window.GAME_STATE.pendingSnakeLadder = null;
     window.GAME_STATE.gamePhase = 'awaiting_dice_roll';
     window.GAME_STATE.vnState = null; // NEW: Reset VN state
+    window.GAME_STATE.boardSnakes = {}; // Reset board state
+    window.GAME_STATE.boardLadders = {};
     
     // Reset body part state
     window.GAME_STATE.bodyPartState = {
