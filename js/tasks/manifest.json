@@ -141,30 +141,5 @@
         "add": [],
         "remove": []
     },
-    "_fallbacks": [
-        {
-            "file": "js/tasks/fallbacks/snake_fallback.js",
-            "id": "snake_fallback",
-            "type": "snake",
-            "isFallback": true
-        },
-        {
-            "file": "js/tasks/fallbacks/ladder_fallback.js",
-            "id": "ladder_fallback",
-            "type": "ladder",
-            "isFallback": true
-        },
-        {
-            "file": "js/tasks/fallbacks/final_fallback.js",
-            "id": "final_fallback",
-            "type": "final",
-            "isFallback": true
-        },
-        {
-            "file": "js/tasks/fallbacks/general_fallback.js",
-            "id": "general_fallback",
-            "type": "general-fallback",
-            "isFallback": true
-        }
-    ]
+    "_fallbacks": []
 }
