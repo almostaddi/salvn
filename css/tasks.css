@@ -16,7 +16,7 @@
     border-radius: 15px;
     color: var(--text-primary);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    line-height: 1.8;
+    line-height: 1.7;
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;
@@ -39,8 +39,7 @@
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-#instructions p {
-    margin: 25px 0;
+#instructions p { 
     font-size: 17px;
     line-height: 2;
 }
