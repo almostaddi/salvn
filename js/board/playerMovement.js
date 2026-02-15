@@ -119,6 +119,16 @@ export function rollDice() {
         // Clear onclick first to prevent double-firing
         rollDiceButton.onclick = null;
         
+        // PRELOAD IMAGES IMMEDIATELY AFTER LANDING
+        // Get the task that will be shown
+        const taskToShow = window.selectNextTask();
+        if (taskToShow && window.preloadTaskImages) {
+            console.log('🎬 Preloading task images after landing...');
+            window.preloadTaskImages(taskToShow, addRemoveTask).catch(err => {
+                console.warn('⚠️ Image preload failed:', err);
+            });
+        }
+        
         // Set up what happens when user clicks Continue
         if (isSnake || isLadder) {
             // Snake/Ladder: Highlight the destination square
