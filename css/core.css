@@ -50,6 +50,18 @@ body {
     color: var(--text-primary);
 }
 
+/* CRITICAL: Remove padding and prevent scroll when showing task page */
+body.showing-task {
+    padding: 0 !important;
+    overflow: hidden !important;
+    height: 100vh !important;
+}
+
+/* Also hide padding on html when showing task */
+html:has(body.showing-task) {
+    overflow: hidden;
+}
+
 /* Main heading */
 h1 {
     font-size: 3em;
@@ -352,6 +364,10 @@ body.show-fixed-buttons #patchNotesBtn {
 @media (max-width: 600px) {
     body {
         padding: 10px;
+    }
+    
+    body.showing-task {
+        padding: 0 !important;
     }
     
     h1 {
