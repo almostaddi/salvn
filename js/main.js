@@ -71,6 +71,16 @@ function showPage(pageName) {
         console.error('❌ Page not found:', pageName + 'Page');
     }
     
+    // NEW: Hide/show title based on page
+    const mainTitle = document.querySelector('h1');
+    if (mainTitle) {
+        if (pageName === 'task') {
+            mainTitle.style.display = 'none';
+        } else {
+            mainTitle.style.display = 'block';
+        }
+    }
+    
     // Update body class and button text based on page
     const resetBtn = document.getElementById('resetBtn');
     if (pageName === 'home') {
