@@ -2,7 +2,7 @@
     "dressup": {
         "tasks": [
             {
-                "file": "js/tasks/dressup/pegs_add_ba_vn.js",
+                "file": "salvn/js/tasks/dressup/pegs_add_ba_vn.js",
                 "id": "dressup_pegs_add_ba_vn",
                 "toyId": "pegs",
                 "type": "standard",
