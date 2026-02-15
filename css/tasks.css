@@ -5,7 +5,7 @@
     margin: 0 auto;
 }
 
-/* Instructions container */
+/* Instructions container - HIDDEN BY DEFAULT */
 #instructions {
     margin-top: 20px;
     font-size: 18px;
@@ -16,15 +16,18 @@
     border-radius: 15px;
     color: var(--text-primary);
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    display: none;
     line-height: 1.8;
     max-width: 900px;
     margin-left: auto;
     margin-right: auto;
+    
+    /* CRITICAL FIX: Hidden by default */
+    display: none !important;
 }
 
+/* Only show when active */
 #instructions.active {
-    display: block;
+    display: block !important;
 }
 
 /* Task content styling */
