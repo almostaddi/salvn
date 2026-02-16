@@ -73,7 +73,8 @@ export function initializeState() {
         currentInstruction: '',
         diceResultText: 'Dice: -',
         pendingSnakeLadder: null,
-        challengeTypesExpanded: false, // FIX BUG 1: Track toggle state
+        challengeTypesExpanded: false,
+        lastSaved: Date.now(), // NEW: Timestamp for conflict resolution
         
         // Task selection control
         forceNextTask: null,
@@ -98,11 +99,37 @@ export function initializeGameFunctions(onTaskCompleteCallback) {
 
 // Save game state to localStorage
 export function saveGameState() {
-    // Always save the complete current state
+    // NEW: Check for newer data before saving
+    const existing = localStorage.getItem('snakesLaddersGameState');
+    if (existing) {
+        try {
+            const existingState = JSON.parse(existing);
+            const existingTimestamp = existingState.lastSaved || 0;
+            const currentTimestamp = window.GAME_STATE.lastSaved || 0;
+            
+            if (existingTimestamp > currentTimestamp) {
+                console.warn('⚠️ Newer game state detected in storage, loading it instead');
+                const newerState = loadGameState();
+                if (newerState) {
+                    // Merge the newer state into current state
+                    Object.assign(window.GAME_STATE, newerState);
+                    // Trigger UI update
+                    if (window.updateUIFromState) {
+                        window.updateUIFromState();
+                    }
+                    return; // Don't save, we just loaded newer data
+                }
+            }
+        } catch (e) {
+            console.warn('Could not check timestamp:', e);
+        }
+    }
+    
+    // Update timestamp and save
     const state = {
         ...window.GAME_STATE,
         disabledTasks: Array.from(window.GAME_STATE.disabledTasks),
-        lastSaved: Date.now()
+        lastSaved: Date.now() // NEW: Always update timestamp on save
     };
     
     localStorage.setItem('snakesLaddersGameState', JSON.stringify(state));
@@ -110,7 +137,7 @@ export function saveGameState() {
         gameStarted: state.gameStarted,
         playerPosition: state.playerPosition,
         turnCount: state.turnCount,
-        diceResultText: state.diceResultText
+        timestamp: new Date(state.lastSaved).toLocaleTimeString()
     });
 }
 
@@ -126,12 +153,17 @@ export function loadGameState() {
             gameStarted: state.gameStarted,
             playerPosition: state.playerPosition,
             turnCount: state.turnCount,
-            diceResultText: state.diceResultText
+            timestamp: state.lastSaved ? new Date(state.lastSaved).toLocaleTimeString() : 'unknown'
         });
         
         // Restore game state
         Object.assign(window.GAME_STATE, state);
         window.GAME_STATE.disabledTasks = new Set(state.disabledTasks || []);
+        
+        // Ensure timestamp exists
+        if (!window.GAME_STATE.lastSaved) {
+            window.GAME_STATE.lastSaved = Date.now();
+        }
         
         // FIX: Ensure CE and PF modifiers are properly restored
         if (!window.GAME_STATE.finalChallengeModifiers) {
@@ -167,7 +199,7 @@ export function loadGameState() {
             window.GAME_STATE.snakesLaddersDifficulty = 'medium';
         }
         
-        // FIX BUG 1: Ensure challengeTypesExpanded exists
+        // FIX: Ensure challengeTypesExpanded exists
         if (window.GAME_STATE.challengeTypesExpanded === undefined) {
             window.GAME_STATE.challengeTypesExpanded = false;
         }
@@ -247,7 +279,8 @@ export function resetGameState() {
         ce: false,
         pf: false
     };
-    window.GAME_STATE.challengeTypesExpanded = false; // FIX BUG 1: Reset toggle state
+    window.GAME_STATE.challengeTypesExpanded = false;
+    window.GAME_STATE.lastSaved = Date.now(); // NEW: Reset timestamp
     
     // Reset body part state
     window.GAME_STATE.bodyPartState = {
