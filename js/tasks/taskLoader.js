@@ -474,7 +474,7 @@ class VNTaskDisplay {
         saveGameState();
     }
     
-   // Restore from saved state
+    // Restore from saved state
     restore(vnState) {
         if (!vnState) return;
         
@@ -485,33 +485,9 @@ class VNTaskDisplay {
         this.stageData = vnState.stageData || {};
         this.allBubblesShown = vnState.allBubblesShown || false;
         
-        // CRITICAL: Restore the completion callback
-        this.onCompleteCallback = () => {
-            if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
-                window.GAME_FUNCTIONS.completeTask();
-            }
-        };
-        
-        // Re-attach event handlers to buttons
-        const buttons = this.elements.buttonArea.querySelectorAll('button');
-        buttons.forEach(button => {
-            const text = button.textContent;
-            if (text === '✓ Complete' || text.includes('Complete')) {
-                button.onclick = () => {
-                    if (this.onCompleteCallback) {
-                        this.onCompleteCallback();
-                    }
-                };
-            }
-        });
-        
-        // Re-attach text area click handler
-        if (this.elements.textArea) {
-            this.elements.textArea.onclick = () => this.advanceBubble();
-        }
-        
         console.log('✅ VNTaskDisplay: State restored');
     }
+}
 
 // Current VN display instance
 let currentVN = null;
@@ -831,7 +807,7 @@ function determinePrize() {
 export function restoreVNState() {
     console.log('🔄 restoreVNState called');
     
-    if (!window.GAME_STATE.vnState || !window.GAME_STATE.currentInstruction) {
+    if (!window.GAME_STATE || !window.GAME_STATE.vnState || !window.GAME_STATE.currentInstruction) {
         console.log('ℹ️ No VN state to restore');
         return;
     }
@@ -871,15 +847,40 @@ export function restoreVNState() {
             return;
         }
         
-        // CRITICAL: Set the completion callback BEFORE restoring
+        // Restore basic state values
+        if (window.GAME_STATE.vnState) {
+            currentVN.currentBubbleIndex = window.GAME_STATE.vnState.currentBubbleIndex || 0;
+            currentVN.currentStageId = window.GAME_STATE.vnState.currentStageId;
+            currentVN.stageData = window.GAME_STATE.vnState.stageData || {};
+            currentVN.allBubblesShown = window.GAME_STATE.vnState.allBubblesShown || false;
+        }
+        
+        // CRITICAL: Set the completion callback
         currentVN.onCompleteCallback = () => {
             if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
                 window.GAME_FUNCTIONS.completeTask();
             }
         };
         
-        // Restore state
-        currentVN.restore(window.GAME_STATE.vnState);
+        // Re-attach text area click handler
+        if (currentVN.elements.textArea) {
+            currentVN.elements.textArea.onclick = () => currentVN.advanceBubble();
+            console.log('✅ Text area click handler attached');
+        }
+        
+        // Re-attach button click handlers
+        const buttons = currentVN.elements.buttonArea.querySelectorAll('button');
+        buttons.forEach(button => {
+            const text = button.textContent;
+            if (text === '✓ Complete' || text.includes('Complete')) {
+                button.onclick = () => {
+                    if (currentVN.onCompleteCallback) {
+                        currentVN.onCompleteCallback();
+                    }
+                };
+                console.log('✅ Reconnected Complete button');
+            }
+        });
         
         console.log('✅ VN state fully restored');
     } catch (error) {
