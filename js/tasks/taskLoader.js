@@ -474,76 +474,36 @@ class VNTaskDisplay {
         saveGameState();
     }
     
-// Restore VN state (called on page load)
-export function restoreVNState() {
-    console.log('🔄 restoreVNState called');
-    
-    if (!window.GAME_STATE.vnState || !window.GAME_STATE.currentInstruction) {
-        console.log('ℹ️ No VN state to restore');
-        return;
-    }
-    
-    try {
-        const instructions = document.getElementById('instructions');
-        if (!instructions) {
-            console.error('❌ Instructions container not found');
-            return;
-        }
+    // Restore from saved state
+    restore(vnState) {
+        if (!vnState) return;
         
-        instructions.innerHTML = window.GAME_STATE.currentInstruction;
-        instructions.classList.add('active');
+        console.log('🔄 VNTaskDisplay: Restoring state:', vnState);
         
-        // Create fresh VN instance
-        if (!currentVN) {
-            currentVN = new VNTaskDisplay();
-        }
+        this.currentBubbleIndex = vnState.currentBubbleIndex || 0;
+        this.currentStageId = vnState.currentStageId;
+        this.stageData = vnState.stageData || {};
+        this.allBubblesShown = vnState.allBubblesShown || false;
         
-        // Re-cache element references after HTML restore
-        currentVN.container = instructions;
-        currentVN.elements = {
-            leftModule: instructions.querySelector('.vn-left-module'),
-            rightModule: instructions.querySelector('.vn-right-module'),
-            centerContent: instructions.querySelector('.vn-center-content'),
-            imageContainer: instructions.querySelector('.vn-image-container'),
-            image: instructions.querySelector('.vn-image-container img'),
-            textArea: instructions.querySelector('.vn-text-area'),
-            bubblesContainer: instructions.querySelector('.vn-bubbles-container'),
-            buttonArea: instructions.querySelector('.vn-button-area'),
-            continueIndicator: instructions.querySelector('.vn-continue-indicator')
-        };
-        
-        // Verify critical elements exist
-        if (!currentVN.elements.textArea || !currentVN.elements.buttonArea) {
-            console.error('❌ Critical VN elements not found after restore');
-            return;
-        }
-        
-        // Restore state
-        currentVN.restore(window.GAME_STATE.vnState);
-        
-        // Re-attach text area click handler
-        if (currentVN.elements.textArea) {
-            currentVN.elements.textArea.addEventListener('click', () => currentVN.advanceBubble());
-            console.log('✅ Text area click handler attached');
-        }
-        
-        // Re-attach button click handlers
-        const buttons = currentVN.elements.buttonArea.querySelectorAll('button');
+        // Re-attach event handlers to buttons
+        const buttons = this.elements.buttonArea.querySelectorAll('button');
         buttons.forEach(button => {
             const text = button.textContent;
-            if (text === '✓ Complete' || text.includes('Complete')) {
+            if (text === '✓ Complete') {
                 button.onclick = () => {
-                    if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
-                        window.GAME_FUNCTIONS.completeTask();
+                    if (this.onCompleteCallback) {
+                        this.onCompleteCallback();
                     }
                 };
-                console.log('✅ Reconnected Complete button');
             }
         });
         
-        console.log('✅ VN state fully restored');
-    } catch (error) {
-        console.error('❌ Error restoring VN state:', error);
+        // Re-attach text area click handler
+        if (this.elements.textArea) {
+            this.elements.textArea.onclick = () => this.advanceBubble();
+        }
+        
+        console.log('✅ VNTaskDisplay: State restored');
     }
 }
 
@@ -865,16 +825,28 @@ function determinePrize() {
 export function restoreVNState() {
     console.log('🔄 restoreVNState called');
     
-    if (window.GAME_STATE.vnState && window.GAME_STATE.currentInstruction) {
+    if (!window.GAME_STATE.vnState || !window.GAME_STATE.currentInstruction) {
+        console.log('ℹ️ No VN state to restore');
+        return;
+    }
+    
+    try {
         const instructions = document.getElementById('instructions');
+        if (!instructions) {
+            console.error('❌ Instructions container not found');
+            return;
+        }
+        
         instructions.innerHTML = window.GAME_STATE.currentInstruction;
         instructions.classList.add('active');
         
+        // Create fresh VN instance
         if (!currentVN) {
             currentVN = new VNTaskDisplay();
         }
         
-        // CRITICAL FIX: Re-cache elements after restoring HTML
+        // Re-cache element references after HTML restore
+        currentVN.container = instructions;
         currentVN.elements = {
             leftModule: instructions.querySelector('.vn-left-module'),
             rightModule: instructions.querySelector('.vn-right-module'),
@@ -887,15 +859,38 @@ export function restoreVNState() {
             continueIndicator: instructions.querySelector('.vn-continue-indicator')
         };
         
-        // Re-attach text area click handler
-        if (currentVN.elements.textArea) {
-            currentVN.elements.textArea.onclick = () => currentVN.advanceBubble();
+        // Verify critical elements exist
+        if (!currentVN.elements.textArea || !currentVN.elements.buttonArea) {
+            console.error('❌ Critical VN elements not found after restore');
+            return;
         }
         
+        // Restore state
         currentVN.restore(window.GAME_STATE.vnState);
-        console.log('✅ VN state restored');
-    } else {
-        console.log('ℹ️ No VN state to restore');
+        
+        // Re-attach text area click handler
+        if (currentVN.elements.textArea) {
+            currentVN.elements.textArea.addEventListener('click', () => currentVN.advanceBubble());
+            console.log('✅ Text area click handler attached');
+        }
+        
+        // Re-attach button click handlers
+        const buttons = currentVN.elements.buttonArea.querySelectorAll('button');
+        buttons.forEach(button => {
+            const text = button.textContent;
+            if (text === '✓ Complete' || text.includes('Complete')) {
+                button.onclick = () => {
+                    if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
+                        window.GAME_FUNCTIONS.completeTask();
+                    }
+                };
+                console.log('✅ Reconnected Complete button');
+            }
+        });
+        
+        console.log('✅ VN state fully restored');
+    } catch (error) {
+        console.error('❌ Error restoring VN state:', error);
     }
 }
 
