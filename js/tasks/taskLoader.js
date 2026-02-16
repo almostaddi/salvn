@@ -78,6 +78,7 @@ class VNTaskDisplay {
         this.onCompleteCallback = null;
         this.allBubblesShown = false;
         this.pendingButtons = [];
+        this.currentImageUrl = null; // NEW: Track current image
         
         this.elements = {};
         this.initialize();
@@ -138,11 +139,13 @@ class VNTaskDisplay {
     setImage(imageUrl) {
         if (!imageUrl) {
             this.elements.imageContainer.classList.add('hidden');
+            this.currentImageUrl = null; // NEW: Track null image
             return;
         }
         
         this.elements.image.src = imageUrl;
         this.elements.imageContainer.classList.remove('hidden');
+        this.currentImageUrl = imageUrl; // NEW: Track current image
         console.log('🖼️ VNTaskDisplay: Image set:', imageUrl);
     }
     
@@ -529,7 +532,7 @@ class VNTaskDisplay {
         console.log('✅ VNTaskDisplay: Task loaded successfully');
     }
     
-    // UPDATED: Save current state with bubble content snapshots
+    // UPDATED: Save current state with bubble content snapshots AND current image
     saveState() {
         window.GAME_STATE.currentInstruction = this.container.innerHTML;
         window.GAME_STATE.vnState = {
@@ -542,6 +545,9 @@ class VNTaskDisplay {
             
             // NEW: Save actual bubble HTML content (snapshot)
             bubbleSnapshots: [...this.bubbles],
+            
+            // NEW: Save current image URL
+            currentImageUrl: this.currentImageUrl,
             
             // Save complete task context for restoration
             taskContext: {
@@ -934,7 +940,7 @@ async function loadTaskDefinition(filePath) {
     }
 }
 
-// UPDATED: Restore VN state using saved bubble snapshots
+// UPDATED: Restore VN state using saved bubble snapshots AND saved image
 export async function restoreVNState() {
     console.log('🔄 restoreVNState called');
     
@@ -956,7 +962,7 @@ export async function restoreVNState() {
         if (vnState.bubbleSnapshots && vnState.bubbleSnapshots.length > 0) {
             console.log('✅ Using bubble snapshots for restoration (new method)');
             
-            // Load task definition to get images and structure
+            // Load task definition to get structure (but not bubble content)
             const taskDef = await loadTaskDefinition(vnState.taskFilePath);
             
             if (!taskDef) {
@@ -965,38 +971,10 @@ export async function restoreVNState() {
                 return;
             }
             
-            // Get conditions and difficulty map
-            const conditions = getTaskConditions();
-            const difficultyMap = buildDifficultyMap();
-            
-            const toyKey = taskDef.setId && taskDef.toyId ? 
-                `${taskDef.setId}_${taskDef.toyId}` : null;
-            const primaryDifficulty = toyKey ? 
-                (window.GAME_STATE.toyDifficulties[toyKey] || 'medium') : 
-                'medium';
-            
-            // Regenerate task content (for images and structure only)
-            const taskContent = taskDef.getDifficulty(primaryDifficulty, conditions, difficultyMap);
-            
-            let vnData;
-            if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
-                vnData = taskContent;
-            } else {
-                vnData = parseHTMLToVNFormat(taskContent);
-            }
-            
-            // Preload current stage images
-            console.log('🖼️ Preloading current stage images for restoration...');
-            const currentImageUrls = extractCurrentStageImageUrls(vnData, vnState.currentStageId);
-            if (currentImageUrls.length > 0) {
-                await imagePreloader.preloadMultiple(currentImageUrls);
-                console.log('✅ Preloaded', currentImageUrls.length, 'current stage images');
-            }
-            
-            // Background preload remaining images
-            const remainingImageUrls = extractRemainingStageImageUrls(vnData, vnState.currentStageId);
-            if (remainingImageUrls.length > 0) {
-                imagePreloader.preloadInBackground(remainingImageUrls);
+            // NEW: Preload the SAVED image (not the regenerated one)
+            if (vnState.currentImageUrl) {
+                console.log('🖼️ Preloading saved image:', vnState.currentImageUrl);
+                await imagePreloader.preload(vnState.currentImageUrl);
             }
             
             // Show instructions
@@ -1025,14 +1003,29 @@ export async function restoreVNState() {
                 currentVN.stageData = vnState.stageData;
             }
             
-            // Set image
-            if (vnData.image) {
-                currentVN.setImage(vnData.image);
-            } else if (vnData.stages && vnState.currentStageId) {
-                const currentStage = vnData.stages.find(s => s.id === vnState.currentStageId);
-                if (currentStage && currentStage.image) {
-                    currentVN.setImage(currentStage.image);
-                }
+            // NEW: Set the SAVED image (not regenerated one)
+            if (vnState.currentImageUrl) {
+                currentVN.setImage(vnState.currentImageUrl);
+                console.log('✅ Restored saved image:', vnState.currentImageUrl);
+            }
+            
+            // Get task content for structure (we'll ignore the bubbles)
+            const conditions = getTaskConditions();
+            const difficultyMap = buildDifficultyMap();
+            
+            const toyKey = taskDef.setId && taskDef.toyId ? 
+                `${taskDef.setId}_${taskDef.toyId}` : null;
+            const primaryDifficulty = toyKey ? 
+                (window.GAME_STATE.toyDifficulties[toyKey] || 'medium') : 
+                'medium';
+            
+            const taskContent = taskDef.getDifficulty(primaryDifficulty, conditions, difficultyMap);
+            
+            let vnData;
+            if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
+                vnData = taskContent;
+            } else {
+                vnData = parseHTMLToVNFormat(taskContent);
             }
             
             // Load stages structure (for buttons and navigation)
@@ -1091,7 +1084,7 @@ export async function restoreVNState() {
             const targetBubbleIndex = vnState.currentBubbleIndex || 1;
             currentVN.restoreToBubbleIndex(targetBubbleIndex);
             
-            console.log('✅ Task restored using bubble snapshots');
+            console.log('✅ Task restored using bubble snapshots and saved image');
             
         } else {
             // OLD FORMAT: No bubble snapshots, use fallback
@@ -1142,6 +1135,7 @@ function fallbackToHTMLRestore(instructions, vnState) {
         currentVN.currentStageId = vnState.currentStageId;
         currentVN.stageData = vnState.stageData || {};
         currentVN.allBubblesShown = vnState.allBubblesShown || false;
+        currentVN.currentImageUrl = vnState.currentImageUrl || null; // NEW: Restore image URL
     }
     
     // CRITICAL: Set the completion callback
