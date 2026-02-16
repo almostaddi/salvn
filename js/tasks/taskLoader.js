@@ -365,14 +365,6 @@ class VNTaskDisplay {
             });
         }
         
-        // Show first bubble
-        if (this.bubbles.length > 0) {
-            this.advanceBubble();
-        } else {
-            console.warn('⚠️ VNTaskDisplay: Stage has no bubbles');
-            this.allBubblesShown = true;
-        }
-        
         // Call onMount if present
         if (stage.onMount) {
             stage.onMount(this.stageData, this);
@@ -407,6 +399,7 @@ class VNTaskDisplay {
                 this.loadStage(stage.nextStage);
             }, 'next');
         } else if (stage.complete) {
+            // FIX BUG 3: Queue complete button like other buttons
             this.addButton('✓ Complete', () => {
                 if (this.onCompleteCallback) {
                     this.onCompleteCallback();
@@ -414,8 +407,13 @@ class VNTaskDisplay {
             }, 'complete');
         }
         
-        // If no bubbles, show buttons immediately
-        if (this.allBubblesShown) {
+        // Show first bubble AFTER buttons are queued
+        if (this.bubbles.length > 0) {
+            this.advanceBubble();
+        } else {
+            console.warn('⚠️ VNTaskDisplay: Stage has no bubbles');
+            this.allBubblesShown = true;
+            // If no bubbles, show buttons immediately
             this.showPendingButtons();
         }
         
@@ -515,14 +513,16 @@ class VNTaskDisplay {
             // Simple task without stages
             if (vnData.bubbles && vnData.bubbles.length > 0) {
                 vnData.bubbles.forEach(bubble => this.addBubble(bubble));
-                this.advanceBubble();
                 
-                // Add button (will be queued until bubbles shown)
+                // FIX BUG 3: Queue button BEFORE showing first bubble
                 this.addButton('✓ Complete', () => {
                     if (this.onCompleteCallback) {
                         this.onCompleteCallback();
                     }
                 }, 'complete');
+                
+                // Show first bubble after button is queued
+                this.advanceBubble();
             } else {
                 console.error('❌ VNTaskDisplay: No bubbles in task!');
             }
