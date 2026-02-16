@@ -254,6 +254,61 @@ function handleTaskCompletion() {
     }
 }
 
+// NEW: Handle game completion (called after final challenge)
+function handleGameCompletion() {
+    console.log('🎉 Game completed!');
+    
+    // Reset game state like in resetGame, but don't show modal
+    window.GAME_STATE.gameStarted = false;
+    window.GAME_STATE.playerPosition = 0;
+    window.GAME_STATE.turnCount = 0;
+    window.GAME_STATE.turnCountBySet = {};
+    window.GAME_STATE.turnCountByToy = {};
+    window.GAME_STATE.lastSelectedSet = {};
+    window.GAME_STATE.completedOnlyOnceTasks = {};
+    window.GAME_STATE.forceNextTask = null;
+    window.GAME_STATE.scheduledTasks = [];
+    window.GAME_STATE.disabledTasks = new Set();
+    window.GAME_STATE.taskWeights = {};
+    window.GAME_STATE.customFlags = {};
+    window.GAME_STATE.currentInstruction = '';
+    window.GAME_STATE.diceResultText = 'Dice: -';
+    window.GAME_STATE.pendingSnakeLadder = null;
+    window.GAME_STATE.gamePhase = 'awaiting_dice_roll';
+    window.GAME_STATE.vnState = null;
+    window.GAME_STATE.boardSnakes = {};
+    window.GAME_STATE.boardLadders = {};
+    window.GAME_STATE.lastSaved = Date.now(); // Reset timestamp
+    
+    // Reset body part state
+    window.GAME_STATE.bodyPartState = {
+        Mo: { name: "Mo", items: [] },
+        Ba: { name: "Ba", items: [] },
+        Bu: { name: "Bu", items: [] },
+        As: { name: "As", items: [] },
+        Ni: { name: "Ni", items: [] },
+        Ha: { name: "Ha", items: [] },
+        Bo: { name: "Bo", items: [] },
+        Pe: { name: "Pe", items: [] }
+    };
+    
+    // Reset player state
+    resetPlayerState();
+    
+    // Update button back to "Start Game"
+    const startButton = document.getElementById('startButton');
+    if (startButton) {
+        startButton.textContent = '🎮 Start Game';
+        startButton.title = 'Start a new game';
+    }
+    
+    // Save state
+    saveGameState();
+    
+    // Return to home page
+    showPage('home');
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎲 Snakes and Ladders - Initializing...');
@@ -264,6 +319,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Load saved game state
     const savedState = loadGameState();
+    
+    // NEW: Update Start button based on saved state
+    const startButton = document.getElementById('startButton');
+    if (savedState && savedState.gameStarted) {
+        startButton.textContent = '🔄 Continue Game';
+        startButton.title = 'Continue your saved game';
+    } else {
+        startButton.textContent = '🎮 Start Game';
+        startButton.title = 'Start a new game';
+    }
     
     // PRE-SET SLIDER DISPLAYS BEFORE SHOWING PAGE (prevents flash)
     if (savedState) {
@@ -553,6 +618,24 @@ function setupEventListeners() {
 
 // Start game
 function startGame() {
+    const savedState = loadGameState();
+    
+    // NEW: If game already started, this is a "Continue" action
+    if (savedState && savedState.gameStarted) {
+        console.log('🔄 Continuing saved game...');
+        
+        // Just navigate to the correct page based on game phase
+        if (savedState.currentInstruction && savedState.currentInstruction.trim() !== '') {
+            showPage('task');
+        } else {
+            showPage('board');
+        }
+        
+        // Restore will happen automatically in restoreSavedGame
+        return;
+    }
+    
+    // NEW GAME START LOGIC
     // Validate instruction sets
     const selectedSets = window.GAME_STATE.selectedSets;
     if (selectedSets.length === 0) {
@@ -664,6 +747,11 @@ function startGame() {
     rollDiceButton.onclick = null;
     rollDiceButton.onclick = rollDice;
     
+    // NEW: Update button to Continue
+    const startButton = document.getElementById('startButton');
+    startButton.textContent = '🔄 Continue Game';
+    startButton.title = 'Continue your saved game';
+    
     // Save state
     saveGameState();
     
@@ -758,6 +846,7 @@ function resetGame() {
     window.GAME_STATE.vnState = null; // NEW: Reset VN state
     window.GAME_STATE.boardSnakes = {}; // Reset board state
     window.GAME_STATE.boardLadders = {};
+    window.GAME_STATE.lastSaved = Date.now(); // NEW: Reset timestamp
     
     // Reset body part state
     window.GAME_STATE.bodyPartState = {
@@ -790,6 +879,13 @@ function resetGame() {
     const instructions = document.getElementById('instructions');
     instructions.classList.remove('active');
     instructions.innerHTML = '';
+    
+    // NEW: Update button back to "Start Game"
+    const startButton = document.getElementById('startButton');
+    if (startButton) {
+        startButton.textContent = '🎮 Start Game';
+        startButton.title = 'Start a new game';
+    }
     
     // Save state
     saveGameState();
@@ -916,6 +1012,13 @@ function resetSettings() {
     document.getElementById('vibeSlider').value = 33;
     document.getElementById('analSlider').value = 34;
     
+    // NEW: Update button back to "Start Game"
+    const startButton = document.getElementById('startButton');
+    if (startButton) {
+        startButton.textContent = '🎮 Start Game';
+        startButton.title = 'Start a new game';
+    }
+    
     // Re-initialize UI completely
     initializeUI();
     
@@ -946,3 +1049,6 @@ window.displayRandomInstructionWithAddRemove = async (addRemoveTask) => {
 
 window.displaySnakeLadderTask = loadAndDisplaySnakeLadderTask;
 window.displayFinalChallenge = loadAndDisplayFinalChallenge;
+
+// NEW: Expose game completion handler globally
+window.handleGameCompletion = handleGameCompletion;
