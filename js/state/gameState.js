@@ -73,6 +73,7 @@ export function initializeState() {
         currentInstruction: '',
         diceResultText: 'Dice: -',
         pendingSnakeLadder: null,
+        challengeTypesExpanded: false, // FIX BUG 1: Track toggle state
         
         // Task selection control
         forceNextTask: null,
@@ -166,6 +167,11 @@ export function loadGameState() {
             window.GAME_STATE.snakesLaddersDifficulty = 'medium';
         }
         
+        // FIX BUG 1: Ensure challengeTypesExpanded exists
+        if (window.GAME_STATE.challengeTypesExpanded === undefined) {
+            window.GAME_STATE.challengeTypesExpanded = false;
+        }
+        
         return state;
     } catch (e) {
         console.error('Failed to load saved game:', e);
@@ -241,6 +247,7 @@ export function resetGameState() {
         ce: false,
         pf: false
     };
+    window.GAME_STATE.challengeTypesExpanded = false; // FIX BUG 1: Reset toggle state
     
     // Reset body part state
     window.GAME_STATE.bodyPartState = {
