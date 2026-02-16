@@ -954,14 +954,6 @@ export function restoreUIState(state) {
         }
     }
     
-    // FIX BUG 1: Restore challenge types toggle state
-    const toggleBtn = document.getElementById('toggleChallengeTypes');
-    const container = document.getElementById('challengeTypesContainer');
-    if (toggleBtn && container && state.challengeTypesExpanded) {
-        container.style.display = 'block';
-        toggleBtn.innerHTML = '▼ Hide Challenge Types & Difficulty';
-    }
-    
     isRestoringUI = false;
     
     // FIX BUG 2: Trigger toy library rendering after restore
