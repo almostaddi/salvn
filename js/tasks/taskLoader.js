@@ -836,7 +836,7 @@ async function loadTaskDefinition(filePath) {
     }
 }
 
-// UPDATED: Restore VN state with full task reload
+// UPDATED: Restore VN state with full task reload AND image preloading
 export async function restoreVNState() {
     console.log('🔄 restoreVNState called');
     
@@ -854,8 +854,7 @@ export async function restoreVNState() {
             return;
         }
         
-        // Show the task page and instructions container
-        instructions.classList.add('active');
+        // DON'T show instructions yet - wait for images to preload
         
         // Method 1: Full task reload (RECOMMENDED)
         if (vnState.taskId && vnState.taskFilePath) {
@@ -868,13 +867,6 @@ export async function restoreVNState() {
                 console.error('❌ Failed to reload task definition');
                 fallbackToHTMLRestore(instructions, vnState);
                 return;
-            }
-            
-            // Recreate VN instance
-            if (!currentVN) {
-                currentVN = new VNTaskDisplay();
-            } else {
-                currentVN.initialize();
             }
             
             // Get conditions and difficulty map
@@ -897,6 +889,24 @@ export async function restoreVNState() {
                 vnData = parseHTMLToVNFormat(taskContent);
             }
             
+            // NEW: PRELOAD ALL IMAGES BEFORE SHOWING TASK
+            console.log('🖼️ Preloading images for restoration...');
+            const imageUrls = extractImageUrls(vnData);
+            if (imageUrls.length > 0) {
+                await imagePreloader.preloadMultiple(imageUrls);
+                console.log('✅ Preloaded', imageUrls.length, 'images for restoration');
+            }
+            
+            // NOW show the task page and instructions container (after images loaded)
+            instructions.classList.add('active');
+            
+            // Recreate VN instance
+            if (!currentVN) {
+                currentVN = new VNTaskDisplay();
+            } else {
+                currentVN.initialize();
+            }
+            
             // Load task into VN (but don't show first bubble yet)
             currentVN.taskDefinition = {
                 ...taskDef,
@@ -908,7 +918,7 @@ export async function restoreVNState() {
                 }
             };
             
-            // Set image
+            // Set image (now instant since preloaded)
             if (vnData.image) {
                 currentVN.setImage(vnData.image);
             }
@@ -950,7 +960,7 @@ export async function restoreVNState() {
                 if (stage) {
                     currentVN.currentStageId = stageToRestore;
                     
-                    // Set image for this stage
+                    // Set image for this stage (instant since preloaded)
                     if (stage.image !== undefined) {
                         currentVN.setImage(stage.image);
                     }
@@ -1054,7 +1064,7 @@ export async function restoreVNState() {
                 }
             }
             
-            console.log('✅ Task fully reloaded and state restored');
+            console.log('✅ Task fully reloaded and state restored (with images preloaded)');
         } else {
             // Method 2: HTML-only restore (FALLBACK)
             fallbackToHTMLRestore(instructions, vnState);
