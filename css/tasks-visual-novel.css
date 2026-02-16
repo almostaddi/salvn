@@ -68,6 +68,7 @@
     min-height: 0;
     overflow: hidden;
 }
+
 /* Image container at top - FIXED: scales proportionally with window */
 .vn-image-container {
     width: 100%;
@@ -99,7 +100,7 @@
 /* Text bubble area - middle section */
 .vn-text-area {
     flex: 1;
-    min-height: 0;
+    min-height: 250px; /* ADDED: Prevents chat bubbles from disappearing when shrinking */
     position: relative;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.05);
@@ -151,15 +152,15 @@
     pointer-events: none;
 }
 
-/* FIXED: Bubble moves up less distance */
+/* FIXED: Bubble moves up less distance and stays more visible */
 .vn-bubble.moving-up {
     animation: bubbleMoveUp 0.3s ease-out forwards;
 }
 
 @keyframes bubbleMoveUp {
     to {
-        transform: translateY(-40px);
-        opacity: 0.5;
+        transform: translateY(-15px); /* REDUCED from -40px to -15px */
+        opacity: 0.3; /* INCREASED from 0.5 to 0.3 for better visibility */
     }
 }
 
