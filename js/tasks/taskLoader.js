@@ -512,19 +512,27 @@ class VNTaskDisplay {
             console.log('💬 VNTaskDisplay: Simple task (no stages)');
             // Simple task without stages
             if (vnData.bubbles && vnData.bubbles.length > 0) {
+                // FIX BUG 3: Add ALL bubbles first
                 vnData.bubbles.forEach(bubble => this.addBubble(bubble));
                 
-                // FIX BUG 3: Queue button BEFORE showing first bubble
+                // Then queue the complete button BEFORE showing first bubble
                 this.addButton('✓ Complete', () => {
                     if (this.onCompleteCallback) {
                         this.onCompleteCallback();
                     }
                 }, 'complete');
                 
-                // Show first bubble after button is queued
+                // Finally show first bubble after button is queued
                 this.advanceBubble();
             } else {
                 console.error('❌ VNTaskDisplay: No bubbles in task!');
+                // No bubbles - add button and show immediately
+                this.allBubblesShown = true;
+                this.addButton('✓ Complete', () => {
+                    if (this.onCompleteCallback) {
+                        this.onCompleteCallback();
+                    }
+                }, 'complete');
             }
         }
         
@@ -886,6 +894,7 @@ export async function loadAndDisplaySnakeLadderTask(type, fromPos, toPos) {
         snakeLadderToPos: toPos
     };
     
+    // FIX BUG 3: Use same loading logic as loadAndDisplayTask
     currentVN.loadTask(taskWithContext, vnData, () => {
         if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
             window.GAME_FUNCTIONS.completeTask();
@@ -928,6 +937,7 @@ export async function loadAndDisplayFinalChallenge() {
         isFinalChallenge: true
     };
     
+    // FIX BUG 3: Use same loading logic as loadAndDisplayTask
     currentVN.loadTask(taskWithContext, vnData, () => {
         // Final challenge complete - no callback needed
         // The task itself handles what happens next
