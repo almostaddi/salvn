@@ -33,6 +33,25 @@ class ImagePreloader {
         const promises = urls.filter(url => url).map(url => this.preload(url));
         return Promise.all(promises);
     }
+    
+    // NEW: Preload in background (non-blocking)
+    preloadInBackground(urls) {
+        const uniqueUrls = urls.filter(url => url && !this.cache.has(url));
+        
+        if (uniqueUrls.length === 0) {
+            console.log('🖼️ All images already cached');
+            return;
+        }
+        
+        console.log(`🖼️ Background preloading ${uniqueUrls.length} images...`);
+        
+        // Fire and forget - don't await
+        uniqueUrls.forEach(url => {
+            this.preload(url).catch(err => {
+                console.warn('⚠️ Background preload failed for:', url);
+            });
+        });
+    }
 }
 
 const imagePreloader = new ImagePreloader();
@@ -581,8 +600,62 @@ function parseHTMLToVNFormat(htmlContent) {
     return { image, bubbles };
 }
 
-// Extract all image URLs from VN data
-function extractImageUrls(vnData) {
+// NEW: Extract image URLs from current stage only
+function extractCurrentStageImageUrls(vnData, currentStageId = null) {
+    const urls = [];
+    
+    // Main image (for simple tasks)
+    if (vnData.image) {
+        urls.push(vnData.image);
+    }
+    
+    // Current stage image (for multi-stage tasks)
+    if (vnData.stages && currentStageId) {
+        const currentStage = vnData.stages.find(s => s.id === currentStageId);
+        if (currentStage && currentStage.image) {
+            urls.push(currentStage.image);
+        }
+    } else if (vnData.stages && vnData.stages.length > 0) {
+        // If no currentStageId specified, get first stage
+        if (vnData.stages[0].image) {
+            urls.push(vnData.stages[0].image);
+        }
+    }
+    
+    return urls;
+}
+
+// NEW: Extract image URLs from remaining stages (for background preloading)
+function extractRemainingStageImageUrls(vnData, currentStageId = null) {
+    const urls = [];
+    
+    if (!vnData.stages || vnData.stages.length === 0) {
+        return urls;
+    }
+    
+    // Find current stage index
+    let startIndex = 0;
+    if (currentStageId) {
+        const currentIndex = vnData.stages.findIndex(s => s.id === currentStageId);
+        if (currentIndex >= 0) {
+            startIndex = currentIndex + 1; // Start from next stage
+        }
+    } else {
+        startIndex = 1; // Skip first stage (already loaded)
+    }
+    
+    // Get all remaining stage images
+    for (let i = startIndex; i < vnData.stages.length; i++) {
+        if (vnData.stages[i].image) {
+            urls.push(vnData.stages[i].image);
+        }
+    }
+    
+    return urls;
+}
+
+// Extract all image URLs from VN data (for restoration only)
+function extractAllImageUrls(vnData) {
     const urls = [];
     
     // Main image
@@ -638,15 +711,22 @@ export async function preloadTaskImages(taskDefinition, addRemoveTask = null) {
         }
     }
     
-    // Extract and preload all images
-    const imageUrls = extractImageUrls(vnData);
-    if (imageUrls.length > 0) {
-        await imagePreloader.preloadMultiple(imageUrls);
-        console.log('✅ Preloaded', imageUrls.length, 'images');
+    // NEW: Only preload CURRENT stage images (blocking)
+    const currentImageUrls = extractCurrentStageImageUrls(vnData);
+    if (currentImageUrls.length > 0) {
+        await imagePreloader.preloadMultiple(currentImageUrls);
+        console.log('✅ Preloaded', currentImageUrls.length, 'current stage images');
+    }
+    
+    // NEW: Preload remaining stage images in background (non-blocking)
+    const remainingImageUrls = extractRemainingStageImageUrls(vnData);
+    if (remainingImageUrls.length > 0) {
+        imagePreloader.preloadInBackground(remainingImageUrls);
+        console.log(`🔄 Background preloading ${remainingImageUrls.length} remaining images...`);
     }
 }
 
-// Load and display a task (now instant due to preloading)
+// Load and display a task
 export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
     console.log('🎯 loadAndDisplayTask called');
     console.log('📋 Task:', taskDefinition.id);
@@ -722,6 +802,14 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
         if (vnData.bubbles) {
             vnData.bubbles = [...parsed.bubbles, ...vnData.bubbles];
             console.log('✅ Add/remove bubbles prepended, total:', vnData.bubbles.length);
+        }
+    }
+    
+    // NEW: Start background preloading of remaining images (if multi-stage)
+    if (vnData.stages && vnData.stages.length > 1) {
+        const remainingImageUrls = extractRemainingStageImageUrls(vnData);
+        if (remainingImageUrls.length > 0) {
+            imagePreloader.preloadInBackground(remainingImageUrls);
         }
     }
     
@@ -836,7 +924,7 @@ async function loadTaskDefinition(filePath) {
     }
 }
 
-// UPDATED: Restore VN state with full task reload AND image preloading
+// UPDATED: Restore VN state with smart image preloading
 export async function restoreVNState() {
     console.log('🔄 restoreVNState called');
     
@@ -854,7 +942,7 @@ export async function restoreVNState() {
             return;
         }
         
-        // DON'T show instructions yet - wait for images to preload
+        // DON'T show instructions yet - wait for current stage images to preload
         
         // Method 1: Full task reload (RECOMMENDED)
         if (vnState.taskId && vnState.taskFilePath) {
@@ -889,15 +977,23 @@ export async function restoreVNState() {
                 vnData = parseHTMLToVNFormat(taskContent);
             }
             
-            // NEW: PRELOAD ALL IMAGES BEFORE SHOWING TASK
-            console.log('🖼️ Preloading images for restoration...');
-            const imageUrls = extractImageUrls(vnData);
-            if (imageUrls.length > 0) {
-                await imagePreloader.preloadMultiple(imageUrls);
-                console.log('✅ Preloaded', imageUrls.length, 'images for restoration');
+            // NEW: Smart preloading for restoration
+            // 1. Preload current stage images (BLOCKING - must finish before showing)
+            console.log('🖼️ Preloading current stage images for restoration...');
+            const currentImageUrls = extractCurrentStageImageUrls(vnData, vnState.currentStageId);
+            if (currentImageUrls.length > 0) {
+                await imagePreloader.preloadMultiple(currentImageUrls);
+                console.log('✅ Preloaded', currentImageUrls.length, 'current stage images');
             }
             
-            // NOW show the task page and instructions container (after images loaded)
+            // 2. Start background preloading of remaining images (NON-BLOCKING)
+            const remainingImageUrls = extractRemainingStageImageUrls(vnData, vnState.currentStageId);
+            if (remainingImageUrls.length > 0) {
+                imagePreloader.preloadInBackground(remainingImageUrls);
+                console.log(`🔄 Background preloading ${remainingImageUrls.length} remaining images...`);
+            }
+            
+            // NOW show the task page and instructions container (after current stage images loaded)
             instructions.classList.add('active');
             
             // Recreate VN instance
@@ -1064,7 +1160,7 @@ export async function restoreVNState() {
                 }
             }
             
-            console.log('✅ Task fully reloaded and state restored (with images preloaded)');
+            console.log('✅ Task fully reloaded and state restored (with smart preloading)');
         } else {
             // Method 2: HTML-only restore (FALLBACK)
             fallbackToHTMLRestore(instructions, vnState);
