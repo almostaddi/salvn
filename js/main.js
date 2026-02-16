@@ -286,6 +286,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('vibeSlider').value = savedState.finalChallengeSettings.vibe;
             document.getElementById('analSlider').value = savedState.finalChallengeSettings.anal;
         }
+        
+        // FIX: Challenge types expanded state (prevent flash)
+        if (savedState.challengeTypesExpanded) {
+            const toggleBtn = document.getElementById('toggleChallengeTypes');
+            const container = document.getElementById('challengeTypesContainer');
+            if (toggleBtn && container) {
+                container.style.display = 'block';
+                toggleBtn.innerHTML = '▼ Hide Challenge Types & Difficulty';
+            }
+        }
     }
     
     // Initialize board EARLY (before showing page)
