@@ -478,28 +478,44 @@ class VNTaskDisplay {
 export function restoreVNState() {
     console.log('🔄 restoreVNState called');
     
-    if (window.GAME_STATE.vnState && window.GAME_STATE.currentInstruction) {
+    if (!window.GAME_STATE.vnState || !window.GAME_STATE.currentInstruction) {
+        console.log('ℹ️ No VN state to restore');
+        return;
+    }
+    
+    try {
         const instructions = document.getElementById('instructions');
+        if (!instructions) {
+            console.error('❌ Instructions container not found');
+            return;
+        }
+        
         instructions.innerHTML = window.GAME_STATE.currentInstruction;
         instructions.classList.add('active');
         
         // Create fresh VN instance
         if (!currentVN) {
             currentVN = new VNTaskDisplay();
-        } else {
-            // Re-initialize to get fresh element references
-            currentVN.container = instructions;
-            currentVN.elements = {
-                leftModule: instructions.querySelector('.vn-left-module'),
-                rightModule: instructions.querySelector('.vn-right-module'),
-                centerContent: instructions.querySelector('.vn-center-content'),
-                imageContainer: instructions.querySelector('.vn-image-container'),
-                image: instructions.querySelector('.vn-image-container img'),
-                textArea: instructions.querySelector('.vn-text-area'),
-                bubblesContainer: instructions.querySelector('.vn-bubbles-container'),
-                buttonArea: instructions.querySelector('.vn-button-area'),
-                continueIndicator: instructions.querySelector('.vn-continue-indicator')
-            };
+        }
+        
+        // Re-cache element references after HTML restore
+        currentVN.container = instructions;
+        currentVN.elements = {
+            leftModule: instructions.querySelector('.vn-left-module'),
+            rightModule: instructions.querySelector('.vn-right-module'),
+            centerContent: instructions.querySelector('.vn-center-content'),
+            imageContainer: instructions.querySelector('.vn-image-container'),
+            image: instructions.querySelector('.vn-image-container img'),
+            textArea: instructions.querySelector('.vn-text-area'),
+            bubblesContainer: instructions.querySelector('.vn-bubbles-container'),
+            buttonArea: instructions.querySelector('.vn-button-area'),
+            continueIndicator: instructions.querySelector('.vn-continue-indicator')
+        };
+        
+        // Verify critical elements exist
+        if (!currentVN.elements.textArea || !currentVN.elements.buttonArea) {
+            console.error('❌ Critical VN elements not found after restore');
+            return;
         }
         
         // Restore state
@@ -508,6 +524,7 @@ export function restoreVNState() {
         // Re-attach text area click handler
         if (currentVN.elements.textArea) {
             currentVN.elements.textArea.addEventListener('click', () => currentVN.advanceBubble());
+            console.log('✅ Text area click handler attached');
         }
         
         // Re-attach button click handlers
@@ -524,9 +541,9 @@ export function restoreVNState() {
             }
         });
         
-        console.log('✅ VN state restored');
-    } else {
-        console.log('ℹ️ No VN state to restore');
+        console.log('✅ VN state fully restored');
+    } catch (error) {
+        console.error('❌ Error restoring VN state:', error);
     }
 }
 
