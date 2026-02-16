@@ -34,7 +34,7 @@ class ImagePreloader {
         return Promise.all(promises);
     }
     
-    // NEW: Preload in background (non-blocking)
+    // Preload in background (non-blocking)
     preloadInBackground(urls) {
         const uniqueUrls = urls.filter(url => url && !this.cache.has(url));
         
@@ -78,7 +78,7 @@ class VNTaskDisplay {
         this.onCompleteCallback = null;
         this.allBubblesShown = false;
         this.pendingButtons = [];
-        this.currentImageUrl = null; // NEW: Track current image
+        this.currentImageUrl = null; // Track current image
         
         this.elements = {};
         this.initialize();
@@ -139,13 +139,13 @@ class VNTaskDisplay {
     setImage(imageUrl) {
         if (!imageUrl) {
             this.elements.imageContainer.classList.add('hidden');
-            this.currentImageUrl = null; // NEW: Track null image
+            this.currentImageUrl = null;
             return;
         }
         
         this.elements.image.src = imageUrl;
         this.elements.imageContainer.classList.remove('hidden');
-        this.currentImageUrl = imageUrl; // NEW: Track current image
+        this.currentImageUrl = imageUrl;
         console.log('🖼️ VNTaskDisplay: Image set:', imageUrl);
     }
     
@@ -164,12 +164,12 @@ class VNTaskDisplay {
         console.log('🧹 VNTaskDisplay: Bubbles cleared');
     }
     
-    // NEW: Silently add bubble to DOM without animation (for restoration)
+    // Silently add bubble to DOM without animation (for restoration)
     addBubbleToDOMSilent(content, isOld = false) {
         const bubble = document.createElement('div');
         bubble.className = 'vn-bubble';
         
-        // NEW: Add moving-up class to old bubbles (faded effect)
+        // Add moving-up class to old bubbles (faded effect)
         if (isOld) {
             bubble.classList.add('moving-up');
         }
@@ -428,7 +428,7 @@ class VNTaskDisplay {
         console.log('✅ VNTaskDisplay: Stage loaded:', stageId);
     }
     
-    // NEW: Restore to a specific bubble index silently (no animations)
+    // Restore to a specific bubble index silently (no animations)
     restoreToBubbleIndex(targetIndex) {
         console.log('🔄 VNTaskDisplay: Restoring to bubble index:', targetIndex);
         
@@ -463,7 +463,7 @@ class VNTaskDisplay {
         console.log('🎮 VNTaskDisplay: Loading task:', taskDefinition.id);
         console.log('📋 VNTaskDisplay: VN Data:', vnData);
         
-        // UPDATED: Save file path for restoration
+        // Save file path for restoration
         this.taskDefinition = {
             ...taskDefinition,
             filePath: taskDefinition.filePath || null
@@ -532,7 +532,7 @@ class VNTaskDisplay {
         console.log('✅ VNTaskDisplay: Task loaded successfully');
     }
     
-    // UPDATED: Save current state with bubble content snapshots AND current image
+    // Save current state with bubble content snapshots AND current image
     saveState() {
         window.GAME_STATE.currentInstruction = this.container.innerHTML;
         window.GAME_STATE.vnState = {
@@ -543,11 +543,21 @@ class VNTaskDisplay {
             taskFilePath: this.taskDefinition?.filePath,
             allBubblesShown: this.allBubblesShown,
             
-            // NEW: Save actual bubble HTML content (snapshot)
+            // Save actual bubble HTML content (snapshot)
             bubbleSnapshots: [...this.bubbles],
             
-            // NEW: Save current image URL
+            // Save current image URL
             currentImageUrl: this.currentImageUrl,
+            
+            // Save snake/ladder context
+            snakeLadderInfo: this.taskDefinition?.snakeLadderInfo,
+            snakeLadderType: this.taskDefinition?.snakeLadderType,
+            snakeLadderFromPos: this.taskDefinition?.snakeLadderFromPos,
+            snakeLadderToPos: this.taskDefinition?.snakeLadderToPos,
+            
+            // Save final challenge context
+            prizeType: this.taskDefinition?.prizeType,
+            isFinalChallenge: this.taskDefinition?.isFinalChallenge,
             
             // Save complete task context for restoration
             taskContext: {
@@ -616,7 +626,7 @@ function parseHTMLToVNFormat(htmlContent) {
     return { image, bubbles };
 }
 
-// NEW: Extract image URLs from current stage only
+// Extract image URLs from current stage only
 function extractCurrentStageImageUrls(vnData, currentStageId = null) {
     const urls = [];
     
@@ -641,7 +651,7 @@ function extractCurrentStageImageUrls(vnData, currentStageId = null) {
     return urls;
 }
 
-// NEW: Extract image URLs from remaining stages (for background preloading)
+// Extract image URLs from remaining stages (for background preloading)
 function extractRemainingStageImageUrls(vnData, currentStageId = null) {
     const urls = [];
     
@@ -727,14 +737,14 @@ export async function preloadTaskImages(taskDefinition, addRemoveTask = null) {
         }
     }
     
-    // NEW: Only preload CURRENT stage images (blocking)
+    // Only preload CURRENT stage images (blocking)
     const currentImageUrls = extractCurrentStageImageUrls(vnData);
     if (currentImageUrls.length > 0) {
         await imagePreloader.preloadMultiple(currentImageUrls);
         console.log('✅ Preloaded', currentImageUrls.length, 'current stage images');
     }
     
-    // NEW: Preload remaining stage images in background (non-blocking)
+    // Preload remaining stage images in background (non-blocking)
     const remainingImageUrls = extractRemainingStageImageUrls(vnData);
     if (remainingImageUrls.length > 0) {
         imagePreloader.preloadInBackground(remainingImageUrls);
@@ -821,7 +831,7 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
         }
     }
     
-    // NEW: Start background preloading of remaining images (if multi-stage)
+    // Start background preloading of remaining images (if multi-stage)
     if (vnData.stages && vnData.stages.length > 1) {
         const remainingImageUrls = extractRemainingStageImageUrls(vnData);
         if (remainingImageUrls.length > 0) {
@@ -867,7 +877,16 @@ export async function loadAndDisplaySnakeLadderTask(type, fromPos, toPos) {
         vnData = parseHTMLToVNFormat(taskContent);
     }
     
-    currentVN.loadTask(task, vnData, () => {
+    // Add snake/ladder info to task definition for restoration
+    const taskWithContext = {
+        ...task,
+        snakeLadderInfo: snakeLadderInfo,
+        snakeLadderType: type,
+        snakeLadderFromPos: fromPos,
+        snakeLadderToPos: toPos
+    };
+    
+    currentVN.loadTask(taskWithContext, vnData, () => {
         if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
             window.GAME_FUNCTIONS.completeTask();
         }
@@ -902,7 +921,14 @@ export async function loadAndDisplayFinalChallenge() {
         vnData = parseHTMLToVNFormat(taskContent);
     }
     
-    currentVN.loadTask(task, vnData, () => {
+    // Add prize type to task definition for restoration
+    const taskWithContext = {
+        ...task,
+        prizeType: prizeType,
+        isFinalChallenge: true
+    };
+    
+    currentVN.loadTask(taskWithContext, vnData, () => {
         // Final challenge complete - no callback needed
         // The task itself handles what happens next
     });
@@ -940,7 +966,7 @@ async function loadTaskDefinition(filePath) {
     }
 }
 
-// UPDATED: Restore VN state using saved bubble snapshots AND saved image
+// Restore VN state using saved bubble snapshots AND saved image
 export async function restoreVNState() {
     console.log('🔄 restoreVNState called');
     
@@ -958,20 +984,97 @@ export async function restoreVNState() {
             return;
         }
         
-        // NEW: Check if we have bubble snapshots (new format)
+        // Check if we have bubble snapshots (new format)
         if (vnState.bubbleSnapshots && vnState.bubbleSnapshots.length > 0) {
             console.log('✅ Using bubble snapshots for restoration (new method)');
             
-            // Load task definition to get structure (but not bubble content)
-            const taskDef = await loadTaskDefinition(vnState.taskFilePath);
+            // Handle special task types
+            let taskDef;
+            let vnData;
             
-            if (!taskDef) {
-                console.error('❌ Failed to reload task definition');
+            if (vnState.isFinalChallenge) {
+                console.log('🏆 Restoring final challenge task');
+                taskDef = window.selectFinalChallenge();
+                
+                const conditions = getTaskConditions();
+                const difficultyMap = buildDifficultyMap();
+                const taskContent = taskDef.getDifficulty(null, conditions, difficultyMap, vnState.prizeType);
+                
+                vnData = typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)
+                    ? taskContent
+                    : parseHTMLToVNFormat(taskContent);
+                    
+                taskDef = {
+                    ...taskDef,
+                    prizeType: vnState.prizeType,
+                    isFinalChallenge: true
+                };
+                
+            } else if (vnState.snakeLadderInfo) {
+                console.log('🐍 Restoring snake/ladder task');
+                const { task, snakeLadderInfo } = window.selectSnakeLadderTask(
+                    vnState.snakeLadderType,
+                    vnState.snakeLadderFromPos,
+                    vnState.snakeLadderToPos
+                );
+                taskDef = task;
+                
+                const conditions = getTaskConditions();
+                const difficultyMap = buildDifficultyMap();
+                const taskContent = taskDef.getDifficulty('medium', conditions, difficultyMap, snakeLadderInfo);
+                
+                vnData = typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)
+                    ? taskContent
+                    : parseHTMLToVNFormat(taskContent);
+                    
+                taskDef = {
+                    ...taskDef,
+                    snakeLadderInfo: snakeLadderInfo,
+                    snakeLadderType: vnState.snakeLadderType,
+                    snakeLadderFromPos: vnState.snakeLadderFromPos,
+                    snakeLadderToPos: vnState.snakeLadderToPos
+                };
+                
+            } else if (vnState.taskFilePath) {
+                console.log('📋 Restoring regular task');
+                // Load the task definition from file
+                taskDef = await loadTaskDefinition(vnState.taskFilePath);
+                
+                if (!taskDef) {
+                    console.error('❌ Failed to reload task definition');
+                    fallbackToHTMLRestore(instructions, vnState);
+                    return;
+                }
+                
+                // Get conditions and difficulty map
+                const conditions = getTaskConditions();
+                const difficultyMap = buildDifficultyMap();
+                
+                const toyKey = taskDef.setId && taskDef.toyId ? 
+                    `${taskDef.setId}_${taskDef.toyId}` : null;
+                const primaryDifficulty = toyKey ? 
+                    (window.GAME_STATE.toyDifficulties[toyKey] || 'medium') : 
+                    'medium';
+                
+                // Regenerate task content
+                const taskContent = taskDef.getDifficulty(primaryDifficulty, conditions, difficultyMap);
+                
+                vnData = typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)
+                    ? taskContent
+                    : parseHTMLToVNFormat(taskContent);
+                    
+                taskDef = {
+                    ...taskDef,
+                    filePath: taskDef.filePath || vnState.taskFilePath
+                };
+                
+            } else {
+                console.error('❌ No task context found for restoration');
                 fallbackToHTMLRestore(instructions, vnState);
                 return;
             }
             
-            // NEW: Preload the SAVED image (not the regenerated one)
+            // Preload the SAVED image (not the regenerated one)
             if (vnState.currentImageUrl) {
                 console.log('🖼️ Preloading saved image:', vnState.currentImageUrl);
                 await imagePreloader.preload(vnState.currentImageUrl);
@@ -988,10 +1091,7 @@ export async function restoreVNState() {
             }
             
             // Set up VN
-            currentVN.taskDefinition = {
-                ...taskDef,
-                filePath: taskDef.filePath || vnState.taskFilePath
-            };
+            currentVN.taskDefinition = taskDef;
             currentVN.onCompleteCallback = () => {
                 if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
                     window.GAME_FUNCTIONS.completeTask();
@@ -1003,29 +1103,10 @@ export async function restoreVNState() {
                 currentVN.stageData = vnState.stageData;
             }
             
-            // NEW: Set the SAVED image (not regenerated one)
+            // Set the SAVED image (not regenerated one)
             if (vnState.currentImageUrl) {
                 currentVN.setImage(vnState.currentImageUrl);
                 console.log('✅ Restored saved image:', vnState.currentImageUrl);
-            }
-            
-            // Get task content for structure (we'll ignore the bubbles)
-            const conditions = getTaskConditions();
-            const difficultyMap = buildDifficultyMap();
-            
-            const toyKey = taskDef.setId && taskDef.toyId ? 
-                `${taskDef.setId}_${taskDef.toyId}` : null;
-            const primaryDifficulty = toyKey ? 
-                (window.GAME_STATE.toyDifficulties[toyKey] || 'medium') : 
-                'medium';
-            
-            const taskContent = taskDef.getDifficulty(primaryDifficulty, conditions, difficultyMap);
-            
-            let vnData;
-            if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
-                vnData = taskContent;
-            } else {
-                vnData = parseHTMLToVNFormat(taskContent);
             }
             
             // Load stages structure (for buttons and navigation)
@@ -1077,7 +1158,7 @@ export async function restoreVNState() {
                 }, 'complete');
             }
             
-            // NEW: Use saved bubble snapshots instead of regenerating
+            // Use saved bubble snapshots instead of regenerating
             currentVN.bubbles = vnState.bubbleSnapshots;
             
             // Restore to saved bubble index
@@ -1135,7 +1216,7 @@ function fallbackToHTMLRestore(instructions, vnState) {
         currentVN.currentStageId = vnState.currentStageId;
         currentVN.stageData = vnState.stageData || {};
         currentVN.allBubblesShown = vnState.allBubblesShown || false;
-        currentVN.currentImageUrl = vnState.currentImageUrl || null; // NEW: Restore image URL
+        currentVN.currentImageUrl = vnState.currentImageUrl || null;
     }
     
     // CRITICAL: Set the completion callback
