@@ -834,6 +834,24 @@ export function restoreVNState() {
             currentVN = new VNTaskDisplay();
         }
         
+        // CRITICAL FIX: Re-cache elements after restoring HTML
+        currentVN.elements = {
+            leftModule: instructions.querySelector('.vn-left-module'),
+            rightModule: instructions.querySelector('.vn-right-module'),
+            centerContent: instructions.querySelector('.vn-center-content'),
+            imageContainer: instructions.querySelector('.vn-image-container'),
+            image: instructions.querySelector('.vn-image-container img'),
+            textArea: instructions.querySelector('.vn-text-area'),
+            bubblesContainer: instructions.querySelector('.vn-bubbles-container'),
+            buttonArea: instructions.querySelector('.vn-button-area'),
+            continueIndicator: instructions.querySelector('.vn-continue-indicator')
+        };
+        
+        // Re-attach text area click handler
+        if (currentVN.elements.textArea) {
+            currentVN.elements.textArea.onclick = () => currentVN.advanceBubble();
+        }
+        
         currentVN.restore(window.GAME_STATE.vnState);
         console.log('✅ VN state restored');
     } else {
