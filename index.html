@@ -339,7 +339,7 @@
                 document.getElementById('patchNotesBtn').click();
             });
             
-            // Wire up toggle button for challenge types
+            // FIX BUG 1: Wire up toggle button for challenge types and save state
             const toggleBtn = document.getElementById('toggleChallengeTypes');
             const container = document.getElementById('challengeTypesContainer');
             
@@ -347,9 +347,15 @@
                 if (container.style.display === 'none') {
                     container.style.display = 'block';
                     toggleBtn.innerHTML = '▼ Hide Challenge Types & Difficulty';
+                    window.GAME_STATE.challengeTypesExpanded = true;
                 } else {
                     container.style.display = 'none';
                     toggleBtn.innerHTML = '▶ Show Challenge Types & Difficulty';
+                    window.GAME_STATE.challengeTypesExpanded = false;
+                }
+                // Save state whenever toggle changes
+                if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.saveState) {
+                    window.GAME_FUNCTIONS.saveState();
                 }
             });
         });
