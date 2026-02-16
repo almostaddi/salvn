@@ -1,3 +1,4 @@
+// js/tasks/taskLoader.js
 // Task loader - loads and renders task using Visual Novel display system
 // Integrates with existing task selection and game state
 
@@ -396,7 +397,11 @@ class VNTaskDisplay {
         console.log('🎮 VNTaskDisplay: Loading task:', taskDefinition.id);
         console.log('📋 VNTaskDisplay: VN Data:', vnData);
         
-        this.taskDefinition = taskDefinition;
+        // UPDATED: Save file path for restoration
+        this.taskDefinition = {
+            ...taskDefinition,
+            filePath: taskDefinition.filePath || null
+        };
         this.onCompleteCallback = onComplete;
         
         // Execute task logic if present
@@ -461,7 +466,7 @@ class VNTaskDisplay {
         console.log('✅ VNTaskDisplay: Task loaded successfully');
     }
     
-    // Save current state
+    // UPDATED: Save current state with file path
     saveState() {
         window.GAME_STATE.currentInstruction = this.container.innerHTML;
         window.GAME_STATE.vnState = {
@@ -469,23 +474,18 @@ class VNTaskDisplay {
             currentStageId: this.currentStageId,
             stageData: this.stageData,
             taskId: this.taskDefinition?.id,
-            allBubblesShown: this.allBubblesShown
+            taskFilePath: this.taskDefinition?.filePath,  // NEW: Save file path
+            allBubblesShown: this.allBubblesShown,
+            
+            // NEW: Save complete task context for restoration
+            taskContext: {
+                setId: this.taskDefinition?.setId,
+                toyId: this.taskDefinition?.toyId,
+                type: this.taskDefinition?.type,
+                isFallback: this.taskDefinition?.isFallback
+            }
         };
         saveGameState();
-    }
-    
-    // Restore from saved state
-    restore(vnState) {
-        if (!vnState) return;
-        
-        console.log('🔄 VNTaskDisplay: Restoring state:', vnState);
-        
-        this.currentBubbleIndex = vnState.currentBubbleIndex || 0;
-        this.currentStageId = vnState.currentStageId;
-        this.stageData = vnState.stageData || {};
-        this.allBubblesShown = vnState.allBubblesShown || false;
-        
-        console.log('✅ VNTaskDisplay: State restored');
     }
 }
 
@@ -572,14 +572,7 @@ export async function preloadTaskImages(taskDefinition, addRemoveTask = null) {
     const conditions = getTaskConditions();
     
     // Build difficulty map
-    const difficultyMap = {};
-    for (const [toyKey, diff] of Object.entries(window.GAME_STATE.toyDifficulties)) {
-        const [setId, ...toyIdParts] = toyKey.split('_');
-        const toyId = toyIdParts.join('_');
-        if (!difficultyMap[toyId]) {
-            difficultyMap[toyId] = diff;
-        }
-    }
+    const difficultyMap = buildDifficultyMap();
     
     // Get primary difficulty
     const toyKey = taskDefinition.setId && taskDefinition.toyId ? 
@@ -644,14 +637,7 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
     const conditions = getTaskConditions();
     
     // Build difficulty map
-    const difficultyMap = {};
-    for (const [toyKey, diff] of Object.entries(window.GAME_STATE.toyDifficulties)) {
-        const [setId, ...toyIdParts] = toyKey.split('_');
-        const toyId = toyIdParts.join('_');
-        if (!difficultyMap[toyId]) {
-            difficultyMap[toyId] = diff;
-        }
-    }
+    const difficultyMap = buildDifficultyMap();
     
     // Get primary difficulty
     const toyKey = taskDefinition.setId && taskDefinition.toyId ? 
@@ -729,14 +715,7 @@ export async function loadAndDisplaySnakeLadderTask(type, fromPos, toPos) {
     }
     
     const conditions = getTaskConditions();
-    const difficultyMap = {};
-    for (const [toyKey, diff] of Object.entries(window.GAME_STATE.toyDifficulties)) {
-        const [setId, ...toyIdParts] = toyKey.split('_');
-        const toyId = toyIdParts.join('_');
-        if (!difficultyMap[toyId]) {
-            difficultyMap[toyId] = diff;
-        }
-    }
+    const difficultyMap = buildDifficultyMap();
     
     const taskContent = task.getDifficulty('medium', conditions, difficultyMap, snakeLadderInfo);
     
@@ -771,14 +750,7 @@ export async function loadAndDisplayFinalChallenge() {
     }
     
     const conditions = getTaskConditions();
-    const difficultyMap = {};
-    for (const [toyKey, diff] of Object.entries(window.GAME_STATE.toyDifficulties)) {
-        const [setId, ...toyIdParts] = toyKey.split('_');
-        const toyId = toyIdParts.join('_');
-        if (!difficultyMap[toyId]) {
-            difficultyMap[toyId] = diff;
-        }
-    }
+    const difficultyMap = buildDifficultyMap();
     
     const taskContent = task.getDifficulty(null, conditions, difficultyMap, prizeType);
     
@@ -803,8 +775,32 @@ function determinePrize() {
            roll < prizeSettings.full + prizeSettings.ruin ? 'ruin' : 'none';
 }
 
-// Restore VN state (called on page load)
-export function restoreVNState() {
+// Helper: Build difficulty map
+function buildDifficultyMap() {
+    const difficultyMap = {};
+    for (const [toyKey, diff] of Object.entries(window.GAME_STATE.toyDifficulties)) {
+        const [setId, ...toyIdParts] = toyKey.split('_');
+        const toyId = toyIdParts.join('_');
+        if (!difficultyMap[toyId]) {
+            difficultyMap[toyId] = diff;
+        }
+    }
+    return difficultyMap;
+}
+
+// Helper: Load task definition from file
+async function loadTaskDefinition(filePath) {
+    try {
+        const module = await import(`/salvn/${filePath}`);
+        return module.default;
+    } catch (error) {
+        console.error(`Failed to load ${filePath}:`, error);
+        return null;
+    }
+}
+
+// UPDATED: Restore VN state with full task reload
+export async function restoreVNState() {
     console.log('🔄 restoreVNState called');
     
     if (!window.GAME_STATE || !window.GAME_STATE.vnState || !window.GAME_STATE.currentInstruction) {
@@ -813,79 +809,165 @@ export function restoreVNState() {
     }
     
     try {
+        const vnState = window.GAME_STATE.vnState;
         const instructions = document.getElementById('instructions');
+        
         if (!instructions) {
             console.error('❌ Instructions container not found');
             return;
         }
         
-        instructions.innerHTML = window.GAME_STATE.currentInstruction;
+        // Show the task page and instructions container
         instructions.classList.add('active');
         
-        // Create fresh VN instance
-        if (!currentVN) {
-            currentVN = new VNTaskDisplay();
-        }
-        
-        // Re-cache element references after HTML restore
-        currentVN.container = instructions;
-        currentVN.elements = {
-            leftModule: instructions.querySelector('.vn-left-module'),
-            rightModule: instructions.querySelector('.vn-right-module'),
-            centerContent: instructions.querySelector('.vn-center-content'),
-            imageContainer: instructions.querySelector('.vn-image-container'),
-            image: instructions.querySelector('.vn-image-container img'),
-            textArea: instructions.querySelector('.vn-text-area'),
-            bubblesContainer: instructions.querySelector('.vn-bubbles-container'),
-            buttonArea: instructions.querySelector('.vn-button-area'),
-            continueIndicator: instructions.querySelector('.vn-continue-indicator')
-        };
-        
-        // Verify critical elements exist
-        if (!currentVN.elements.textArea || !currentVN.elements.buttonArea) {
-            console.error('❌ Critical VN elements not found after restore');
-            return;
-        }
-        
-        // Restore basic state values
-        if (window.GAME_STATE.vnState) {
-            currentVN.currentBubbleIndex = window.GAME_STATE.vnState.currentBubbleIndex || 0;
-            currentVN.currentStageId = window.GAME_STATE.vnState.currentStageId;
-            currentVN.stageData = window.GAME_STATE.vnState.stageData || {};
-            currentVN.allBubblesShown = window.GAME_STATE.vnState.allBubblesShown || false;
-        }
-        
-        // CRITICAL: Set the completion callback
-        currentVN.onCompleteCallback = () => {
-            if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
-                window.GAME_FUNCTIONS.completeTask();
+        // Method 1: Full task reload (RECOMMENDED)
+        if (vnState.taskId && vnState.taskFilePath) {
+            console.log('🔄 Fully reloading task:', vnState.taskId);
+            
+            // Load the task definition from file
+            const taskDef = await loadTaskDefinition(vnState.taskFilePath);
+            
+            if (!taskDef) {
+                console.error('❌ Failed to reload task definition');
+                fallbackToHTMLRestore(instructions, vnState);
+                return;
             }
-        };
-        
-        // Re-attach text area click handler
-        if (currentVN.elements.textArea) {
-            currentVN.elements.textArea.onclick = () => currentVN.advanceBubble();
-            console.log('✅ Text area click handler attached');
+            
+            // Recreate VN instance
+            if (!currentVN) {
+                currentVN = new VNTaskDisplay();
+            } else {
+                currentVN.initialize();
+            }
+            
+            // Get conditions and difficulty map
+            const conditions = getTaskConditions();
+            const difficultyMap = buildDifficultyMap();
+            
+            const toyKey = taskDef.setId && taskDef.toyId ? 
+                `${taskDef.setId}_${taskDef.toyId}` : null;
+            const primaryDifficulty = toyKey ? 
+                (window.GAME_STATE.toyDifficulties[toyKey] || 'medium') : 
+                'medium';
+            
+            // Regenerate task content
+            const taskContent = taskDef.getDifficulty(primaryDifficulty, conditions, difficultyMap);
+            
+            let vnData;
+            if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
+                vnData = taskContent;
+            } else {
+                vnData = parseHTMLToVNFormat(taskContent);
+            }
+            
+            // Load task into VN
+            currentVN.loadTask(taskDef, vnData, () => {
+                if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
+                    window.GAME_FUNCTIONS.completeTask();
+                }
+            });
+            
+            // Restore specific state (stage, bubbles shown, etc.)
+            if (vnState.currentStageId && currentVN.stages.length > 0) {
+                // Restore stage data
+                currentVN.stageData = vnState.stageData || {};
+                
+                // Fast-forward to current stage
+                currentVN.currentStageId = vnState.currentStageId;
+                currentVN.loadStage(vnState.currentStageId);
+                
+                // Fast-forward bubbles if needed
+                const targetBubbleIndex = vnState.currentBubbleIndex || 0;
+                while (currentVN.currentBubbleIndex < targetBubbleIndex && currentVN.currentBubbleIndex < currentVN.bubbles.length) {
+                    currentVN.advanceBubble();
+                }
+            } else {
+                // Simple task without stages - advance to saved bubble index
+                const targetBubbleIndex = vnState.currentBubbleIndex || 0;
+                while (currentVN.currentBubbleIndex < targetBubbleIndex && currentVN.currentBubbleIndex < currentVN.bubbles.length) {
+                    currentVN.advanceBubble();
+                }
+            }
+            
+            console.log('✅ Task fully reloaded and state restored');
+        } else {
+            // Method 2: HTML-only restore (FALLBACK)
+            fallbackToHTMLRestore(instructions, vnState);
         }
         
-        // Re-attach button click handlers
-        const buttons = currentVN.elements.buttonArea.querySelectorAll('button');
-        buttons.forEach(button => {
-            const text = button.textContent;
-            if (text === '✓ Complete' || text.includes('Complete')) {
-                button.onclick = () => {
-                    if (currentVN.onCompleteCallback) {
-                        currentVN.onCompleteCallback();
-                    }
-                };
-                console.log('✅ Reconnected Complete button');
-            }
-        });
-        
-        console.log('✅ VN state fully restored');
     } catch (error) {
         console.error('❌ Error restoring VN state:', error);
     }
+}
+
+// Fallback: Restore HTML and reconnect basic handlers
+function fallbackToHTMLRestore(instructions, vnState) {
+    console.warn('⚠️ Using HTML-only restore (fallback)');
+    
+    instructions.innerHTML = window.GAME_STATE.currentInstruction;
+    instructions.classList.add('active');
+    
+    // Create fresh VN instance
+    if (!currentVN) {
+        currentVN = new VNTaskDisplay();
+    }
+    
+    // Re-cache element references after HTML restore
+    currentVN.container = instructions;
+    currentVN.elements = {
+        leftModule: instructions.querySelector('.vn-left-module'),
+        rightModule: instructions.querySelector('.vn-right-module'),
+        centerContent: instructions.querySelector('.vn-center-content'),
+        imageContainer: instructions.querySelector('.vn-image-container'),
+        image: instructions.querySelector('.vn-image-container img'),
+        textArea: instructions.querySelector('.vn-text-area'),
+        bubblesContainer: instructions.querySelector('.vn-bubbles-container'),
+        buttonArea: instructions.querySelector('.vn-button-area'),
+        continueIndicator: instructions.querySelector('.vn-continue-indicator')
+    };
+    
+    // Verify critical elements exist
+    if (!currentVN.elements.textArea || !currentVN.elements.buttonArea) {
+        console.error('❌ Critical VN elements not found after restore');
+        return;
+    }
+    
+    // Restore basic state values
+    if (vnState) {
+        currentVN.currentBubbleIndex = vnState.currentBubbleIndex || 0;
+        currentVN.currentStageId = vnState.currentStageId;
+        currentVN.stageData = vnState.stageData || {};
+        currentVN.allBubblesShown = vnState.allBubblesShown || false;
+    }
+    
+    // CRITICAL: Set the completion callback
+    currentVN.onCompleteCallback = () => {
+        if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
+            window.GAME_FUNCTIONS.completeTask();
+        }
+    };
+    
+    // Re-attach text area click handler
+    if (currentVN.elements.textArea) {
+        currentVN.elements.textArea.onclick = () => currentVN.advanceBubble();
+        console.log('✅ Text area click handler attached');
+    }
+    
+    // Re-attach button click handlers
+    const buttons = currentVN.elements.buttonArea.querySelectorAll('button');
+    buttons.forEach(button => {
+        const text = button.textContent;
+        if (text === '✓ Complete' || text.includes('Complete')) {
+            button.onclick = () => {
+                if (currentVN.onCompleteCallback) {
+                    currentVN.onCompleteCallback();
+                }
+            };
+            console.log('✅ Reconnected Complete button');
+        }
+    });
+    
+    console.log('✅ HTML-only restore complete');
 }
 
 // Export current VN instance
