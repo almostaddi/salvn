@@ -142,6 +142,15 @@ class VNTaskDisplay {
         console.log('🧹 VNTaskDisplay: Bubbles cleared');
     }
     
+    // NEW: Silently add bubble to DOM without animation (for restoration)
+    addBubbleToDOMSilent(content) {
+        const bubble = document.createElement('div');
+        bubble.className = 'vn-bubble';
+        bubble.innerHTML = content;
+        // No animation - just add it
+        this.elements.bubblesContainer.appendChild(bubble);
+    }
+    
     // Advance to next bubble
     advanceBubble() {
         console.log('👆 VNTaskDisplay: advanceBubble called, index:', this.currentBubbleIndex, 'total:', this.bubbles.length);
@@ -392,6 +401,34 @@ class VNTaskDisplay {
         console.log('✅ VNTaskDisplay: Stage loaded:', stageId);
     }
     
+    // NEW: Restore to a specific bubble index silently (no animations)
+    restoreToBubbleIndex(targetIndex) {
+        console.log('🔄 VNTaskDisplay: Restoring to bubble index:', targetIndex);
+        
+        // Clear any existing bubbles in DOM
+        this.elements.bubblesContainer.innerHTML = '';
+        
+        // Add all bubbles up to target index silently
+        for (let i = 0; i < targetIndex && i < this.bubbles.length; i++) {
+            this.addBubbleToDOMSilent(this.bubbles[i]);
+        }
+        
+        // Update state
+        this.currentBubbleIndex = targetIndex;
+        
+        // Check if all bubbles shown
+        if (this.currentBubbleIndex >= this.bubbles.length) {
+            this.allBubblesShown = true;
+            this.elements.continueIndicator.style.display = 'none';
+            this.showPendingButtons();
+        } else {
+            this.allBubblesShown = false;
+            this.elements.continueIndicator.style.display = 'block';
+        }
+        
+        console.log('✅ VNTaskDisplay: Restored to bubble index', this.currentBubbleIndex);
+    }
+    
     // Load task from definition
     loadTask(taskDefinition, vnData, onComplete) {
         console.log('🎮 VNTaskDisplay: Loading task:', taskDefinition.id);
@@ -474,10 +511,10 @@ class VNTaskDisplay {
             currentStageId: this.currentStageId,
             stageData: this.stageData,
             taskId: this.taskDefinition?.id,
-            taskFilePath: this.taskDefinition?.filePath,  // NEW: Save file path
+            taskFilePath: this.taskDefinition?.filePath,
             allBubblesShown: this.allBubblesShown,
             
-            // NEW: Save complete task context for restoration
+            // Save complete task context for restoration
             taskContext: {
                 setId: this.taskDefinition?.setId,
                 toyId: this.taskDefinition?.toyId,
@@ -860,32 +897,160 @@ export async function restoreVNState() {
                 vnData = parseHTMLToVNFormat(taskContent);
             }
             
-            // Load task into VN
-            currentVN.loadTask(taskDef, vnData, () => {
+            // Load task into VN (but don't show first bubble yet)
+            currentVN.taskDefinition = {
+                ...taskDef,
+                filePath: taskDef.filePath || vnState.taskFilePath
+            };
+            currentVN.onCompleteCallback = () => {
                 if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
                     window.GAME_FUNCTIONS.completeTask();
                 }
-            });
+            };
             
-            // Restore specific state (stage, bubbles shown, etc.)
-            if (vnState.currentStageId && currentVN.stages.length > 0) {
-                // Restore stage data
-                currentVN.stageData = vnState.stageData || {};
+            // Set image
+            if (vnData.image) {
+                currentVN.setImage(vnData.image);
+            }
+            
+            // Handle modules
+            if (vnData.leftModule) {
+                const content = typeof vnData.leftModule.content === 'function'
+                    ? vnData.leftModule.content(currentVN.stageData)
+                    : vnData.leftModule.content;
+                currentVN.setLeftModule(vnData.leftModule.title, content, vnData.leftModule.onMount);
+            }
+            
+            if (vnData.rightModule) {
+                const content = typeof vnData.rightModule.content === 'function'
+                    ? vnData.rightModule.content(currentVN.stageData)
+                    : vnData.rightModule.content;
+                currentVN.setRightModule(vnData.rightModule.title, content, vnData.rightModule.onMount);
+            }
+            
+            // Initialize shared data
+            if (vnData.data) {
+                currentVN.stageData = { ...vnData.data };
+            }
+            
+            // Restore stage data from saved state
+            if (vnState.stageData) {
+                currentVN.stageData = { ...currentVN.stageData, ...vnState.stageData };
+            }
+            
+            // Load stages or bubbles
+            if (vnData.stages && vnData.stages.length > 0) {
+                console.log('🎭 Restoring multi-stage task');
+                currentVN.stages = vnData.stages;
                 
-                // Fast-forward to current stage
-                currentVN.currentStageId = vnState.currentStageId;
-                currentVN.loadStage(vnState.currentStageId);
+                // Find the stage to restore
+                const stageToRestore = vnState.currentStageId || vnData.stages[0].id;
+                const stage = currentVN.stages.find(s => s.id === stageToRestore);
                 
-                // Fast-forward bubbles if needed
-                const targetBubbleIndex = vnState.currentBubbleIndex || 0;
-                while (currentVN.currentBubbleIndex < targetBubbleIndex && currentVN.currentBubbleIndex < currentVN.bubbles.length) {
-                    currentVN.advanceBubble();
+                if (stage) {
+                    currentVN.currentStageId = stageToRestore;
+                    
+                    // Set image for this stage
+                    if (stage.image !== undefined) {
+                        currentVN.setImage(stage.image);
+                    }
+                    
+                    // Handle modules for this stage
+                    if (stage.leftModule !== undefined) {
+                        if (stage.leftModule === null) {
+                            currentVN.clearLeftModule();
+                        } else {
+                            const content = typeof stage.leftModule.content === 'function'
+                                ? stage.leftModule.content(currentVN.stageData)
+                                : stage.leftModule.content;
+                            currentVN.setLeftModule(stage.leftModule.title, content, stage.leftModule.onMount);
+                        }
+                    }
+                    
+                    if (stage.rightModule !== undefined) {
+                        if (stage.rightModule === null) {
+                            currentVN.clearRightModule();
+                        } else {
+                            const content = typeof stage.rightModule.content === 'function'
+                                ? stage.rightModule.content(currentVN.stageData)
+                                : stage.rightModule.content;
+                            currentVN.setRightModule(stage.rightModule.title, content, stage.rightModule.onMount);
+                        }
+                    }
+                    
+                    // Add bubbles
+                    if (stage.bubbles) {
+                        stage.bubbles.forEach(bubble => {
+                            const content = typeof bubble === 'function'
+                                ? bubble(currentVN.stageData)
+                                : (typeof bubble.content === 'function'
+                                    ? bubble.content(currentVN.stageData)
+                                    : (bubble.content || bubble));
+                            currentVN.addBubble(content);
+                        });
+                    }
+                    
+                    // Call onMount if present
+                    if (stage.onMount) {
+                        stage.onMount(currentVN.stageData, currentVN);
+                    }
+                    
+                    // Add buttons
+                    if (stage.choices) {
+                        stage.choices.forEach(choice => {
+                            currentVN.addButton(choice.text, () => {
+                                const nextStage = choice.onSelect(currentVN.stageData);
+                                if (nextStage) {
+                                    currentVN.loadStage(nextStage, choice.data);
+                                }
+                            }, 'choice');
+                        });
+                    } else if (stage.buttons) {
+                        stage.buttons.forEach(btn => {
+                            const btnType = btn.type || 'next';
+                            currentVN.addButton(btn.text, () => {
+                                if (btn.execute) {
+                                    btn.execute(currentVN.stageData);
+                                }
+                                if (btn.onComplete && currentVN.onCompleteCallback) {
+                                    currentVN.onCompleteCallback();
+                                } else if (btn.nextStage) {
+                                    currentVN.loadStage(btn.nextStage, btn.data);
+                                }
+                            }, btnType);
+                        });
+                    } else if (stage.nextStage) {
+                        currentVN.addButton('Continue', () => {
+                            currentVN.loadStage(stage.nextStage);
+                        }, 'next');
+                    } else if (stage.complete) {
+                        currentVN.addButton('✓ Complete', () => {
+                            if (currentVN.onCompleteCallback) {
+                                currentVN.onCompleteCallback();
+                            }
+                        }, 'complete');
+                    }
+                    
+                    // Restore to saved bubble index SILENTLY
+                    const targetBubbleIndex = vnState.currentBubbleIndex || 1;
+                    currentVN.restoreToBubbleIndex(targetBubbleIndex);
                 }
             } else {
-                // Simple task without stages - advance to saved bubble index
-                const targetBubbleIndex = vnState.currentBubbleIndex || 0;
-                while (currentVN.currentBubbleIndex < targetBubbleIndex && currentVN.currentBubbleIndex < currentVN.bubbles.length) {
-                    currentVN.advanceBubble();
+                console.log('💬 Restoring simple task');
+                // Simple task without stages
+                if (vnData.bubbles && vnData.bubbles.length > 0) {
+                    vnData.bubbles.forEach(bubble => currentVN.addBubble(bubble));
+                    
+                    // Add completion button
+                    currentVN.addButton('✓ Complete', () => {
+                        if (currentVN.onCompleteCallback) {
+                            currentVN.onCompleteCallback();
+                        }
+                    }, 'complete');
+                    
+                    // Restore to saved bubble index SILENTLY
+                    const targetBubbleIndex = vnState.currentBubbleIndex || 1;
+                    currentVN.restoreToBubbleIndex(targetBubbleIndex);
                 }
             }
             
