@@ -583,56 +583,7 @@ class VNTaskDisplay {
 let currentVN = null;
 
 // Parse HTML string into VN format (for backward compatibility)
-function parseHTMLToVNFormat(htmlContent) {
-    console.log('🔄 Parsing HTML to VN format');
-    
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlContent, 'text/html');
-    
-    // Extract image
-    const img = doc.querySelector('img');
-    const image = img ? img.src : null;
-    
-    // Remove image from content
-    if (img) img.remove();
-    
-    // Extract bubbles
-    const bubbles = [];
-    const strong = doc.querySelector('strong');
-    const paragraphs = doc.querySelectorAll('p');
-    
-    if (strong || paragraphs.length > 0) {
-        let currentBubble = '';
-        
-        if (strong) {
-            currentBubble = `<strong>${strong.textContent}</strong>`;
-            strong.remove();
-        }
-        
-        let pCount = 0;
-        paragraphs.forEach((p, index) => {
-            if (!p.textContent.trim()) return;
-            
-            currentBubble += `<p>${p.innerHTML}</p>`;
-            pCount++;
-            
-            // Create bubble every 2 paragraphs or at the end
-            if (pCount >= 2 || index === paragraphs.length - 1) {
-                bubbles.push(currentBubble);
-                currentBubble = '';
-                pCount = 0;
-            }
-        });
-        
-        if (currentBubble) {
-            bubbles.push(currentBubble);
-        }
-    }
-    
-    console.log('✅ Parsed:', bubbles.length, 'bubbles, image:', image ? 'yes' : 'no');
-    
-    return { image, bubbles };
-}
+// parseHTMLToVNFormat has been removed - all tasks now use native VN format
 
 // Extract image URLs from current stage only
 function extractCurrentStageImageUrls(vnData, currentStageId = null) {
@@ -728,18 +679,14 @@ export async function preloadTaskImages(taskDefinition, addRemoveTask = null) {
     // Get task content
     const taskContent = taskDefinition.getDifficulty(primaryDifficulty, conditions, difficultyMap);
     
-    // Determine if VN format or HTML string
-    let vnData;
-    if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
-        vnData = taskContent;
-    } else {
-        vnData = parseHTMLToVNFormat(taskContent);
-    }
+    // All tasks should now return VN format
+    const vnData = taskContent;
     
     // Handle add/remove task
     if (addRemoveTask && addRemoveTask.getHTML) {
         const addRemoveHTML = addRemoveTask.getHTML();
-        const parsed = parseHTMLToVNFormat(addRemoveHTML);
+        // addRemoveHTML should also be in VN format now
+        const parsed = addRemoveHTML;
         if (parsed.image) {
             await imagePreloader.preload(parsed.image);
         }
@@ -814,26 +761,18 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
     const taskContent = taskDefinition.getDifficulty(primaryDifficulty, conditions, difficultyMap);
     console.log('✅ Task content received:', typeof taskContent);
     
-    // Determine if VN format or HTML string
-    let vnData;
-    if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
-        // New VN format
-        console.log('✨ Using VN format');
-        vnData = taskContent;
-    } else {
-        // Old HTML format - convert
-        console.log('🔄 Converting HTML format to VN');
-        vnData = parseHTMLToVNFormat(taskContent);
-    }
+    // All tasks should now return VN format
+    const vnData = taskContent;
     
     // Add add/remove task bubbles at the beginning
     if (addRemoveTask && addRemoveTask.getHTML) {
         console.log('🔧 Adding add/remove task bubbles');
         const addRemoveHTML = addRemoveTask.getHTML();
-        const parsed = parseHTMLToVNFormat(addRemoveHTML);
+        // addRemoveHTML should also be in VN format now
+        const parsed = addRemoveHTML;
         
         // Prepend add/remove bubbles
-        if (vnData.bubbles) {
+        if (vnData.bubbles && parsed.bubbles) {
             vnData.bubbles = [...parsed.bubbles, ...vnData.bubbles];
             console.log('✅ Add/remove bubbles prepended, total:', vnData.bubbles.length);
         }
@@ -878,12 +817,8 @@ export async function loadAndDisplaySnakeLadderTask(type, fromPos, toPos) {
     
     const taskContent = task.getDifficulty('medium', conditions, difficultyMap, snakeLadderInfo);
     
-    let vnData;
-    if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
-        vnData = taskContent;
-    } else {
-        vnData = parseHTMLToVNFormat(taskContent);
-    }
+    // All tasks should now return VN format
+    const vnData = taskContent;
     
     // Add snake/ladder info to task definition for restoration
     const taskWithContext = {
@@ -923,12 +858,8 @@ export async function loadAndDisplayFinalChallenge() {
     
     const taskContent = task.getDifficulty(null, conditions, difficultyMap, prizeType);
     
-    let vnData;
-    if (typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)) {
-        vnData = taskContent;
-    } else {
-        vnData = parseHTMLToVNFormat(taskContent);
-    }
+    // All tasks should now return VN format
+    const vnData = taskContent;
     
     // Add prize type to task definition for restoration
     const taskWithContext = {
@@ -1010,9 +941,8 @@ export async function restoreVNState() {
                 const difficultyMap = buildDifficultyMap();
                 const taskContent = taskDef.getDifficulty(null, conditions, difficultyMap, vnState.prizeType);
                 
-                vnData = typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)
-                    ? taskContent
-                    : parseHTMLToVNFormat(taskContent);
+                // All tasks should now return VN format
+                vnData = taskContent;
                     
                 taskDef = {
                     ...taskDef,
@@ -1033,9 +963,8 @@ export async function restoreVNState() {
                 const difficultyMap = buildDifficultyMap();
                 const taskContent = taskDef.getDifficulty('medium', conditions, difficultyMap, snakeLadderInfo);
                 
-                vnData = typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)
-                    ? taskContent
-                    : parseHTMLToVNFormat(taskContent);
+                // All tasks should now return VN format
+                vnData = taskContent;
                     
                 taskDef = {
                     ...taskDef,
@@ -1069,9 +998,8 @@ export async function restoreVNState() {
                 // Regenerate task content
                 const taskContent = taskDef.getDifficulty(primaryDifficulty, conditions, difficultyMap);
                 
-                vnData = typeof taskContent === 'object' && (taskContent.bubbles || taskContent.stages)
-                    ? taskContent
-                    : parseHTMLToVNFormat(taskContent);
+                // All tasks should now return VN format
+                vnData = taskContent;
                     
                 taskDef = {
                     ...taskDef,
