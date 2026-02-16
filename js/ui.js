@@ -1,7 +1,6 @@
 // UI management - menus, settings, toy library, sliders
 
 import { saveGameState } from './state/gameState.js';
-import { setPlayerPosition } from './board/playerMovement.js';
 
 // Initialize UI components
 export function initializeUI() {
@@ -962,41 +961,3 @@ export function restoreUIState(state) {
     console.log('🔧 Triggering toy library render after UI restore');
     renderToyLibrary();
 }
-
-// NEW: Update UI from current game state (for timestamp conflict resolution)
-export function updateUIFromState() {
-    const state = window.GAME_STATE;
-    
-    // Update start/continue button
-    const startButton = document.getElementById('startButton');
-    if (startButton) {
-        if (state.gameStarted) {
-            startButton.textContent = '🔄 Continue Game';
-            startButton.title = 'Continue your saved game';
-        } else {
-            startButton.textContent = '🎮 Start Game';
-            startButton.title = 'Start a new game';
-        }
-    }
-    
-    // If on board/task page, reload that state
-    if (state.gameStarted) {
-        const currentPage = document.querySelector('.page.active');
-        if (currentPage && currentPage.id === 'boardPage') {
-            // Refresh board state
-            if (state.playerPosition > 0) {
-                setPlayerPosition(state.playerPosition);
-            }
-            document.getElementById('turnCounter').textContent = `Turn: ${state.turnCount}`;
-            document.getElementById('diceResult').textContent = state.diceResultText || 'Dice: -';
-        } else if (currentPage && currentPage.id === 'taskPage') {
-            // Refresh task state if needed
-            if (window.restoreVNState) {
-                window.restoreVNState();
-            }
-        }
-    }
-}
-
-// Expose globally
-window.updateUIFromState = updateUIFromState;
