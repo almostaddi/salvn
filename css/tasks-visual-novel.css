@@ -68,12 +68,11 @@
     min-height: 0;
     overflow: hidden;
 }
-
-/* Image container at top - FIXED: shrink-wraps to actual image size */
+/* Image container at top - FIXED: scales proportionally with window */
 .vn-image-container {
     width: 100%;
     max-height: 50vh;
-    min-height: 400px;
+    min-height: 300px; /* Reduced from 400px for better mobile scaling */
     border-radius: 10px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.03);
@@ -86,10 +85,10 @@
 
 .vn-image-container img {
     max-width: 100%;
-    max-height: 50vh;
-    width: 100%; /* Fill container width */
-    height: 100%; /* Fill container height */
-    object-fit: contain; /* Maintain aspect ratio, fit within bounds */
+    max-height: 100%;
+    width: auto; /* Let width adjust naturally */
+    height: auto; /* Let height adjust naturally */
+    object-fit: contain;
     display: block;
 }
 
