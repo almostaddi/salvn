@@ -512,6 +512,7 @@ class VNTaskDisplay {
             console.log('💬 VNTaskDisplay: Simple task (no stages)');
             // Simple task without stages
             this.clearBubbles();
+            this.clearButtons();
             if (vnData.bubbles && vnData.bubbles.length > 0) {
                 // FIX BUG 3: Add ALL bubbles first
                 vnData.bubbles.forEach(bubble => this.addBubble(bubble));
