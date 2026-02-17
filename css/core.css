@@ -47,8 +47,8 @@ body {
     background: var(--primary-gradient);
     background-attachment: fixed; /* Keep gradient fixed while scrolling */
     color: var(--text-primary);
-    display:flex;
-    align-items:center;
+    /* NOTE: No display:flex here - that was misaligning the h1 title.
+       Board page vertical centering is handled per-page in board.css instead. */
 }
 
 /* Main heading */
