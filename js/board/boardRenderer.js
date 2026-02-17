@@ -167,7 +167,7 @@ export class BoardRenderer {
     scale() {
         // Reset scale to get natural dimensions
         this.boardElement.style.transform = 'scale(1)';
-        this.boardElement.style.transformOrigin = 'top center';
+        this.boardElement.style.transformOrigin = 'center';
         
         const boardWidth = this.boardElement.scrollWidth;
         
@@ -184,7 +184,7 @@ export class BoardRenderer {
         
         // Apply scale with top-center origin (board grows downward naturally)
         this.boardElement.style.transform = `scale(${scale})`;
-        this.boardElement.style.transformOrigin = 'top center';
+        this.boardElement.style.transformOrigin = 'center';
         
         console.log(`Board scaled to ${(scale * 100).toFixed(1)}% (width: ${boardWidth}px -> ${Math.round(boardWidth * scale)}px)`);
     }
