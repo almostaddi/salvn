@@ -162,10 +162,14 @@ a:hover {
     display: block;
 }
 
-/* Board page specific */
+/* Board page */
 #boardPage {
-    display: none;
-    width: 100%;
+    overflow: visible;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
 }
 
 #boardPage.active {
