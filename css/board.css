@@ -25,11 +25,6 @@
     min-height: 100vh;
 }
 
-/* Scale wrapper - JS sets transform: scale() here, origin bottom center */
-#boardScaleWrapper {
-    transform-origin: bottom center;
-}
-
 /* Board - natural size */
 #board {
     display: flex;
