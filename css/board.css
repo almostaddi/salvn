@@ -7,10 +7,11 @@
     width: 100%;
     display: flex;
     flex-direction: column;
-    padding-bottom: 100px;
+    align-items: center;
+    padding-bottom: 120px;
 }
 
-/* Board page */
+/* Board page - flex column, pushes board to bottom */
 #boardPage {
     overflow: visible;
     flex: 1;
