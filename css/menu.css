@@ -18,6 +18,8 @@ h1 {
     padding: 20px;
     max-width: 1400px;
     margin: 0 auto;
+    flex: 0 0 auto; /* Don't stretch inside flex body */
+    width: 100%;
 }
 
 /* Button row on home page - horizontal layout */
