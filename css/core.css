@@ -34,21 +34,22 @@
     --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-/* HTML and Body - must grow with content */
+/* HTML and Body - flex column so pages can push content to bottom */
 html {
-    height: auto; /* Allow HTML to grow */
-    min-height: 100%; /* At least viewport height */
+    height: auto;
+    min-height: 100%;
 }
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    height: auto; /* Allow body to grow with content */
-    min-height: 100vh; /* At least viewport height */
+    min-height: 100vh;
+    height: auto;
     background: var(--primary-gradient);
-    background-attachment: fixed; /* Keep gradient fixed while scrolling */
+    background-attachment: fixed;
     color: var(--text-primary);
-    /* NOTE: No display:flex here - that was misaligning the h1 title.
-       Board page vertical centering is handled per-page in board.css instead. */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 /* Main heading */
@@ -61,6 +62,7 @@ h1 {
     animation: float 3s ease-in-out infinite;
     position: relative;
     z-index: 100;
+    flex-shrink: 0;
 }
 
 @keyframes float {
@@ -162,18 +164,14 @@ a:hover {
     display: block;
 }
 
-/* Board page */
+/* Board page specific — overridden in board.css to use flex */
 #boardPage {
-    overflow: visible;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    align-items: center;
+    display: none;
+    width: 100%;
 }
 
 #boardPage.active {
-    display: block;
+    display: flex;
 }
 
 /* Utility classes */
