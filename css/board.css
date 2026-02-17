@@ -25,11 +25,16 @@
     min-height: 100vh;
 }
 
-/* Board - natural size, no transform, no padding-top hack */
+/* Scale wrapper - JS sets transform: scale() here, origin bottom center */
+#boardScaleWrapper {
+    transform-origin: bottom center;
+}
+
+/* Board - natural size */
 #board {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 20px;
     align-items: flex-start;
     margin: 10px auto 5px;
     background: transparent;
