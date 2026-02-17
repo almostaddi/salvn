@@ -13,6 +13,12 @@
     /* NO height constraints - let it grow naturally */
 }
 
+/* Board page specific */
+#boardPage {
+    /* Ensure page doesn't reset scroll when shown */
+    overflow: visible;
+}
+
 /* Board - no height limits! */
 #board {
     display: flex;
