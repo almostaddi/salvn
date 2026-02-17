@@ -28,16 +28,29 @@ function scrollToPlayer(playerPos, instant = true) {
 
 // Scroll to bottom of page (for new games starting at square 1)
 function scrollToBottom() {
-    // Scroll the window to the very bottom
-    window.scrollTo({
-        top: document.documentElement.scrollHeight,
-        behavior: 'auto'
+    // Force scroll to the absolute bottom immediately
+    requestAnimationFrame(() => {
+        const maxScroll = Math.max(
+            document.body.scrollHeight,
+            document.documentElement.scrollHeight,
+            document.body.offsetHeight,
+            document.documentElement.offsetHeight,
+            document.body.clientHeight,
+            document.documentElement.clientHeight
+        );
+        
+        window.scrollTo({
+            top: maxScroll,
+            left: 0,
+            behavior: 'auto'
+        });
+        
+        console.log(`📍 Jumped to bottom of page (${maxScroll}px)`);
     });
-    console.log(`📍 Jumped to bottom of page`);
 }
 
 // Wait for board to be ready, then execute callback
-function waitForBoard(callback, maxAttempts = 20) {
+function waitForBoard(callback, maxAttempts = 30) {
     let attempts = 0;
     
     const checkBoard = () => {
@@ -46,7 +59,12 @@ function waitForBoard(callback, maxAttempts = 20) {
         
         if (hasSquares) {
             console.log('✅ Board ready, executing callback');
-            callback();
+            // Wait one more frame to ensure rendering is complete
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    callback();
+                });
+            });
         } else if (attempts < maxAttempts) {
             attempts++;
             console.log(`⏳ Waiting for board... (attempt ${attempts}/${maxAttempts})`);
@@ -255,8 +273,10 @@ export function onTaskComplete() {
         
         window.showPage('board');
         
-        // Instant scroll to player after returning to board
-        scrollToPlayer(savedPending.from, true);
+        // Wait for board to render, THEN scroll to player
+        waitForBoard(() => {
+            scrollToPlayer(savedPending.from, true);
+        });
         
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🚪 Enter';
@@ -314,8 +334,10 @@ export function onTaskComplete() {
         
         window.showPage('board');
         
-        // Instant scroll to player after returning to board
-        scrollToPlayer(playerPosition, true);
+        // Wait for board to render, THEN scroll to player
+        waitForBoard(() => {
+            scrollToPlayer(playerPosition, true);
+        });
         
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🎲 Roll Dice';
@@ -341,7 +363,7 @@ export function setPlayerPosition(position) {
         if (square) {
             square.appendChild(player);
             
-            // Don't scroll on load - page starts at bottom by default
+            // Don't scroll on load - wait for main.js to trigger scroll after page is ready
         }
     }
 }
