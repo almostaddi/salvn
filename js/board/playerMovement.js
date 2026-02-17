@@ -8,11 +8,29 @@ let currentSquare = 0;
 const player = document.createElement('div');
 player.classList.add('player');
 
+// Scroll to player position smoothly
+function scrollToPlayer(playerPos) {
+    const square = document.getElementById(`square-${playerPos}`);
+    if (square) {
+        // Use scrollIntoView with smooth behavior and center alignment
+        square.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+            inline: 'center'
+        });
+        console.log(`📍 Scrolled to player at square ${playerPos}`);
+    }
+}
+
 // Animate player movement
 export function animatePlayer(start, end, callback, instant = false) {
     if (instant) {
         const targetSquare = document.getElementById(`square-${end}`);
         if (targetSquare) targetSquare.appendChild(player);
+        
+        // Scroll to player after instant movement
+        setTimeout(() => scrollToPlayer(end), 100);
+        
         if (callback) callback();
         return;
     }
@@ -27,6 +45,10 @@ export function animatePlayer(start, end, callback, instant = false) {
         
         if (current === end) {
             clearInterval(interval);
+            
+            // Scroll to player after animation completes
+            setTimeout(() => scrollToPlayer(end), 100);
+            
             if (callback) callback();
         }
     }, 200);
@@ -195,6 +217,10 @@ export function onTaskComplete() {
         window.GAME_FUNCTIONS.saveState();
         
         window.showPage('board');
+        
+        // Scroll to player after returning to board
+        setTimeout(() => scrollToPlayer(savedPending.from), 100);
+        
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🚪 Enter';
         rollDiceButton.disabled = false;
@@ -250,6 +276,10 @@ export function onTaskComplete() {
         window.GAME_FUNCTIONS.saveState();
         
         window.showPage('board');
+        
+        // Scroll to player after returning to board
+        setTimeout(() => scrollToPlayer(playerPosition), 100);
+        
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🎲 Roll Dice';
         rollDiceButton.disabled = false;
@@ -271,7 +301,12 @@ export function setPlayerPosition(position) {
     // Place player on the square
     if (position > 0) {
         const square = document.getElementById(`square-${position}`);
-        if (square) square.appendChild(player);
+        if (square) {
+            square.appendChild(player);
+            
+            // Scroll to player position after a short delay
+            setTimeout(() => scrollToPlayer(position), 300);
+        }
     }
 }
 
@@ -304,3 +339,6 @@ export function resetPlayerState() {
     window.GAME_STATE.gamePhase = 'awaiting_dice_roll';
     player.remove();
 }
+
+// Expose scrollToPlayer for use by main.js
+export { scrollToPlayer };
