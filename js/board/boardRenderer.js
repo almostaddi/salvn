@@ -146,12 +146,14 @@ export class BoardRenderer {
         const isUp    = connCfg?.direction === 'up';
         const isDown  = connCfg?.direction === 'down';
 
-        // Gradient backgrounds (matching original CSS variables)
+        // Gradient backgrounds
+        const isFinal   = number === this.totalSquares;
         const SNAKE_BG  = 'var(--danger-gradient,  linear-gradient(135deg,#ff6b6b 0%,#ee5a6f 100%))';
         const LADDER_BG = 'var(--success-gradient, linear-gradient(135deg,#51cf66 0%,#37b24d 100%))';
+        const FINAL_BG  = 'linear-gradient(135deg,#ffd700 0%,#ffaa00 100%)';
         const BASE_BG   = 'var(--bg-primary, #ffffff)';
-        const bg        = isSnake ? SNAKE_BG : isLadder ? LADDER_BG : BASE_BG;
-        const fg        = (isSnake || isLadder) ? 'var(--button-text,#fff)' : 'var(--text-primary,#333)';
+        const bg        = isFinal ? FINAL_BG : isSnake ? SNAKE_BG : isLadder ? LADDER_BG : BASE_BG;
+        const fg        = (isFinal || isSnake || isLadder) ? 'var(--button-text,#fff)' : 'var(--text-primary,#333)';
 
         const el = document.createElement('div');
         el.id             = `square-${number}`;
@@ -165,7 +167,9 @@ export class BoardRenderer {
             minWidth:     `${sq}px`,
             position:     'relative',
             background:   bg,
-            border:       `${Math.max(1, 3 * s)}px solid var(--text-primary,#333)`,
+            border:       isFinal
+                ? `${Math.max(1, 3 * s)}px solid #ffd700`
+                : `${Math.max(1, 3 * s)}px solid var(--text-primary,#333)`,
             borderRadius: `${4 * s}px`,
             // Connector rounded corners
             ...(connCfg && {
@@ -196,10 +200,31 @@ export class BoardRenderer {
             flexDirection:  'column',
             alignItems:     'center',
             justifyContent: 'center',
+            zIndex:         '1',
+            pointerEvents:  'none',
         });
 
-        // Large emoji for snake/ladder squares
-        if (isSnake || isLadder) {
+        // Final square star emoji
+        if (isFinal) {
+            const star = document.createElement('span');
+            Object.assign(star.style, {
+                position:       'absolute',
+                inset:          '0',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                fontSize:       `${sq * 0.72}px`,
+                lineHeight:     '1',
+                opacity:        '0.55',
+                pointerEvents:  'none',
+                userSelect:     'none',
+            });
+            star.textContent = '⭐';
+            content.appendChild(star);
+        }
+
+        // Emoji watermark — bigger but still semi-transparent
+        if (!isFinal && (isSnake || isLadder)) {
             const emoji = document.createElement('span');
             Object.assign(emoji.style, {
                 position:       'absolute',
@@ -209,6 +234,7 @@ export class BoardRenderer {
                 justifyContent: 'center',
                 fontSize:       `${sq * 0.72}px`,
                 lineHeight:     '1',
+                opacity:        '0.55',
                 pointerEvents:  'none',
                 userSelect:     'none',
             });
@@ -216,20 +242,43 @@ export class BoardRenderer {
             content.appendChild(emoji);
         }
 
-        // Number label — top-left corner for snake/ladder squares, centred otherwise
+        // Number label — always centred at original size
         const numLabel = document.createElement('span');
         Object.assign(numLabel.style, {
-            fontSize:   `${sq * (isSnake || isLadder ? 0.22 : 0.3)}px`,
+            fontSize:   `${sq * 0.3}px`,
             fontWeight: 'bold',
             color:      fg,
             lineHeight: '1',
-            position:   'absolute',
-            top:        `${sq * 0.06}px`,
-            left:       `${sq * 0.08}px`,
+            position:   'relative',
             zIndex:     '1',
         });
         numLabel.textContent = number;
         content.appendChild(numLabel);
+
+        // Destination badge (↓6, ↑38, etc.) — not on final square
+        if (!isFinal && (isSnake || isLadder)) {
+            const dest = isSnake
+                ? `↓${this.snakes[number]}`
+                : `↑${this.ladders[number]}`;
+            const badge = document.createElement('span');
+            Object.assign(badge.style, {
+                position:     'absolute',
+                top:          '50%',
+                left:         '50%',
+                transform:    `translate(-50%, ${sq * 0.18}px)`,
+                fontSize:     `${sq * 0.16}px`,
+                lineHeight:   '1.2',
+                background:   'rgba(0,0,0,0.65)',
+                color:        '#fff',
+                padding:      `${1*s}px ${4*s}px`,
+                borderRadius: `${4*s}px`,
+                whiteSpace:   'nowrap',
+                pointerEvents:'none',
+                zIndex:       '2',
+            });
+            badge.textContent = dest;
+            content.appendChild(badge);
+        }
 
         el.appendChild(content);
 
