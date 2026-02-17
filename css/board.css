@@ -302,7 +302,7 @@
 @media (max-width: 600px) {
     #gameContainer {
         padding: 10px;
-        padding-bottom: 120px;
+        padding-bottom: 1%;
     }
 
     .player {
