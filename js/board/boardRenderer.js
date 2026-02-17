@@ -155,6 +155,7 @@ export class BoardRenderer {
 
         const el = document.createElement('div');
         el.id             = `square-${number}`;
+        el.className      = 'square';
         el.dataset.number = number;
 
         // Outer square styles
@@ -197,7 +198,7 @@ export class BoardRenderer {
             justifyContent: 'center',
         });
 
-        // Emoji watermark
+        // Large emoji for snake/ladder squares
         if (isSnake || isLadder) {
             const emoji = document.createElement('span');
             Object.assign(emoji.style, {
@@ -206,8 +207,8 @@ export class BoardRenderer {
                 display:        'flex',
                 alignItems:     'center',
                 justifyContent: 'center',
-                fontSize:       `${sq * 0.38}px`,
-                opacity:        '0.22',
+                fontSize:       `${sq * 0.72}px`,
+                lineHeight:     '1',
                 pointerEvents:  'none',
                 userSelect:     'none',
             });
@@ -215,43 +216,20 @@ export class BoardRenderer {
             content.appendChild(emoji);
         }
 
-        // Number label
+        // Number label — top-left corner for snake/ladder squares, centred otherwise
         const numLabel = document.createElement('span');
         Object.assign(numLabel.style, {
-            fontSize:   `${sq * 0.3}px`,
+            fontSize:   `${sq * (isSnake || isLadder ? 0.22 : 0.3)}px`,
             fontWeight: 'bold',
             color:      fg,
             lineHeight: '1',
-            position:   'relative',
+            position:   'absolute',
+            top:        `${sq * 0.06}px`,
+            left:       `${sq * 0.08}px`,
             zIndex:     '1',
         });
         numLabel.textContent = number;
         content.appendChild(numLabel);
-
-        // Destination badge (↓6, ↑38, etc.)
-        if (isSnake || isLadder) {
-            const dest = isSnake
-                ? `↓${this.snakes[number]}`
-                : `↑${this.ladders[number]}`;
-            const badge = document.createElement('span');
-            Object.assign(badge.style, {
-                position:     'absolute',
-                top:          '50%',
-                left:         '50%',
-                transform:    `translate(-50%, ${sq * 0.18}px)`,
-                fontSize:     `${sq * 0.16}px`,
-                lineHeight:   '1.2',
-                background:   'rgba(0,0,0,0.65)',
-                color:        '#fff',
-                padding:      `${1*s}px ${4*s}px`,
-                borderRadius: `${4*s}px`,
-                whiteSpace:   'nowrap',
-                pointerEvents:'none',
-                zIndex:       '2',
-            });
-            badge.textContent = dest;
-            content.appendChild(badge);
-        }
 
         el.appendChild(content);
 
