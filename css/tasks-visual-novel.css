@@ -6,7 +6,6 @@
     max-width: 1400px;
     min-width: 800px;
     margin: 0 auto;
-    /* NO min-height here - only apply when active */
 }
 
 /* Only apply layout styles when taskPage is active */
@@ -15,7 +14,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    padding: 0; /* Remove any inherited padding */
+    padding: 0;
 }
 
 /* Main task container - 3 column layout - HIDDEN BY DEFAULT */
@@ -28,7 +27,6 @@
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     overflow: hidden;
     
-    /* CRITICAL FIX: Hidden by default */
     display: none !important;
 }
 
@@ -40,7 +38,7 @@
     height: 100%;
     min-width: 40%;
     overflow: hidden;
-    padding: 15px; /* Move padding here instead of on #taskPage */
+    padding: 15px;
 }
 
 /* Three column layout */
@@ -51,7 +49,7 @@
     background: rgba(255, 255, 255, 0.5);
     border-radius: 10px;
     padding: 15px;
-    display: none; /* Hidden by default, shown when modules are active */
+    display: none;
     overflow: auto;
 }
 
@@ -64,22 +62,25 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
     min-width: 0;
     min-height: 0;
     overflow: hidden;
 }
 
-/* Image container at top - FIXED: scales proportionally with window */
+/* Image container — takes up the bulk of space, never shrinks below a sensible size */
 .vn-image-container {
     width: 100%;
-    max-height: 50vh;
-    min-height: 300px; /* Reduced from 400px for better mobile scaling */
+    /* 
+     * flex: 1 lets the image fill remaining space after the text area 
+     * min-height ensures it never disappears on tiny viewports
+     */
+    flex: 1 1 0;
+    min-height: 120px;
     border-radius: 10px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.03);
     position: relative;
-    flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -88,8 +89,8 @@
 .vn-image-container img {
     max-width: 100%;
     max-height: 100%;
-    width: auto; /* Let width adjust naturally */
-    height: auto; /* Let height adjust naturally */
+    width: auto;
+    height: auto;
     object-fit: contain;
     display: block;
 }
@@ -98,15 +99,18 @@
     display: none;
 }
 
-/* Text bubble area - middle section */
+/* Text bubble area — fixed height, doesn't grow/shrink */
 .vn-text-area {
-    flex: 1;
-    min-height: 250px; /* ADDED: Prevents chat bubbles from disappearing when shrinking */
+    /* Fixed height: enough for a bubble + padding, never pushes image away */
+    flex: 0 0 auto;
+    height: 160px;
+    min-height: 120px;
+    max-height: 200px;
     position: relative;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.05);
     border-radius: 10px;
-    padding: 20px;
+    padding: 15px;
     cursor: pointer;
     user-select: none;
 }
@@ -118,12 +122,12 @@
 /* Text bubble container - scrollable */
 .vn-bubbles-container {
     position: absolute;
-    bottom: 20px;
-    left: 20px;
-    right: 20px;
+    bottom: 15px;
+    left: 15px;
+    right: 15px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
     transition: transform 0.3s ease-out;
 }
 
@@ -132,7 +136,7 @@
     background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     border: 2px solid var(--border-color);
     border-radius: 15px;
-    padding: 10px 25px;
+    padding: 8px 18px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     opacity: 0;
     transform: translateY(20px);
@@ -153,32 +157,31 @@
     pointer-events: none;
 }
 
-/* FIXED: Bubble moves up less distance and stays more visible */
 .vn-bubble.moving-up {
     animation: bubbleMoveUp 0.3s ease-out forwards;
 }
 
 @keyframes bubbleMoveUp {
     to {
-        transform: translateY(-15px); /* REDUCED from -40px to -15px */
-        opacity: 0.3; /* INCREASED from 0.5 to 0.3 for better visibility */
+        transform: translateY(-12px);
+        opacity: 0.3;
     }
 }
 
 /* Bubble content styling */
 .vn-bubble strong {
     display: block;
-    font-size: 20px;
+    font-size: 17px;
     color: var(--border-color);
-    margin-bottom: 12px;
+    margin-bottom: 6px;
     font-weight: 700;
 }
 
 .vn-bubble p {
-    font-size: 16px;
-    line-height: 1.6;
+    font-size: 14px;
+    line-height: 1.5;
     color: var(--text-primary);
-    margin: 8px 0;
+    margin: 4px 0;
 }
 
 .vn-bubble em {
@@ -189,29 +192,29 @@
 /* Continue indicator */
 .vn-continue-indicator {
     position: absolute;
-    bottom: 30px;
-    right: 30px;
-    font-size: 24px;
+    bottom: 10px;
+    right: 15px;
+    font-size: 20px;
     animation: pulse 1.5s ease-in-out infinite;
     pointer-events: none;
     opacity: 0.7;
 }
 
-/* Button area at bottom */
+/* Button area at bottom — compact, fixed height */
 .vn-button-area {
     display: flex;
-    gap: 15px;
+    gap: 10px;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
-    padding: 10px 10px 5px 10px;
-    min-height: 60px;
-    flex-shrink: 0;
+    padding: 6px;
+    flex: 0 0 auto;
+    min-height: 50px;
 }
 
 .vn-button-area button {
-    padding: 12px 30px;
-    font-size: 16px;
+    padding: 10px 24px;
+    font-size: 15px;
     font-weight: bold;
     cursor: pointer;
     color: var(--button-text);
@@ -261,7 +264,7 @@
     box-shadow: 0 6px 20px rgba(250, 82, 82, 0.5);
 }
 
-/* Prize result displays - adapted for VN style */
+/* Prize result displays */
 .vn-prize-result {
     background: white;
     border-radius: 15px;
@@ -273,17 +276,9 @@
 }
 
 @keyframes prizeReveal {
-    0% {
-        transform: scale(0.8);
-        opacity: 0;
-    }
-    50% {
-        transform: scale(1.05);
-    }
-    100% {
-        transform: scale(1);
-        opacity: 1;
-    }
+    0%   { transform: scale(0.8); opacity: 0; }
+    50%  { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
 }
 
 .vn-prize-result.prize-full {
@@ -315,13 +310,13 @@
 @media (max-width: 1200px) {
     .vn-left-module,
     .vn-right-module {
-        display: none !important; /* Hide side modules on smaller screens */
+        display: none !important;
     }
 }
 
 @media (max-width: 768px) {
     #taskPage {
-        min-width: 0; /* Remove min-width on mobile */
+        min-width: 0;
     }
     
     #taskPage.active {
@@ -329,46 +324,36 @@
     }
     
     #instructions.active {
-        padding: 10px;
-        gap: 10px;
+        padding: 8px;
+        gap: 8px;
     }
-    
-    .vn-image-container {
-        max-height: 45vh;
-        min-height: 300px;
-    }
-    
+
     .vn-text-area {
-        min-height: 0;
-        padding: 15px;
+        height: 140px;
+        min-height: 100px;
+        padding: 10px;
     }
-    
-    .vn-bubbles-container {
-        bottom: 15px;
-        left: 15px;
-        right: 15px;
-    }
-    
+
     .vn-bubble {
-        padding: 15px 20px;
+        padding: 8px 14px;
     }
     
     .vn-bubble strong {
-        font-size: 18px;
+        font-size: 15px;
     }
     
     .vn-bubble p {
-        font-size: 14px;
+        font-size: 13px;
     }
     
     .vn-button-area {
-        padding: 5px;
-        min-height: 50px;
+        padding: 4px;
+        min-height: 44px;
     }
     
     .vn-button-area button {
-        padding: 10px 20px;
-        font-size: 14px;
+        padding: 8px 18px;
+        font-size: 13px;
     }
 }
 
@@ -391,9 +376,9 @@
 /* Click hint text */
 .vn-click-hint {
     position: absolute;
-    top: 10px;
+    top: 8px;
     right: 10px;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--text-light);
     opacity: 0.6;
     pointer-events: none;
