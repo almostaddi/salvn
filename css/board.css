@@ -2,7 +2,6 @@
 #gameContainer {
     background: transparent;
     padding: 20px;
-    padding-bottom: 120px; /* Space for fixed controls */
     border-radius: 0;
     box-shadow: none;
     max-width: none;
