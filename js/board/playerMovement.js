@@ -8,17 +8,17 @@ let currentSquare = 0;
 const player = document.createElement('div');
 player.classList.add('player');
 
-// Scroll to player position smoothly
-function scrollToPlayer(playerPos) {
+// Scroll to player position instantly
+function scrollToPlayer(playerPos, instant = true) {
     const square = document.getElementById(`square-${playerPos}`);
     if (square) {
-        // Use scrollIntoView with smooth behavior and center alignment
+        // Use instant scroll by default for better UX when loading pages
         square.scrollIntoView({
-            behavior: 'smooth',
+            behavior: instant ? 'auto' : 'smooth',
             block: 'center',
             inline: 'center'
         });
-        console.log(`📍 Scrolled to player at square ${playerPos}`);
+        console.log(`📍 ${instant ? 'Jumped' : 'Scrolled'} to player at square ${playerPos}`);
     }
 }
 
@@ -28,8 +28,8 @@ export function animatePlayer(start, end, callback, instant = false) {
         const targetSquare = document.getElementById(`square-${end}`);
         if (targetSquare) targetSquare.appendChild(player);
         
-        // Scroll to player after instant movement
-        setTimeout(() => scrollToPlayer(end), 100);
+        // Instant scroll to player after instant movement
+        scrollToPlayer(end, true);
         
         if (callback) callback();
         return;
@@ -46,8 +46,8 @@ export function animatePlayer(start, end, callback, instant = false) {
         if (current === end) {
             clearInterval(interval);
             
-            // Scroll to player after animation completes
-            setTimeout(() => scrollToPlayer(end), 100);
+            // Instant scroll to player after animation completes
+            scrollToPlayer(end, true);
             
             if (callback) callback();
         }
@@ -218,8 +218,8 @@ export function onTaskComplete() {
         
         window.showPage('board');
         
-        // Scroll to player after returning to board
-        setTimeout(() => scrollToPlayer(savedPending.from), 100);
+        // Instant scroll to player after returning to board
+        scrollToPlayer(savedPending.from, true);
         
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🚪 Enter';
@@ -277,8 +277,8 @@ export function onTaskComplete() {
         
         window.showPage('board');
         
-        // Scroll to player after returning to board
-        setTimeout(() => scrollToPlayer(playerPosition), 100);
+        // Instant scroll to player after returning to board
+        scrollToPlayer(playerPosition, true);
         
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🎲 Roll Dice';
@@ -304,8 +304,8 @@ export function setPlayerPosition(position) {
         if (square) {
             square.appendChild(player);
             
-            // Scroll to player position after a short delay
-            setTimeout(() => scrollToPlayer(position), 300);
+            // Instant scroll to player position when loading
+            scrollToPlayer(position, true);
         }
     }
 }
