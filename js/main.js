@@ -11,6 +11,7 @@ import {
 
 // Board components
 import { BoardRenderer } from './board/boardRenderer.js';
+import { ScaleManager   } from './board/scaleManager.js'; 
 import { 
     rollDice, 
     onTaskComplete, 
@@ -47,6 +48,7 @@ import {
 
 // Game components
 let boardRenderer;
+let scaleManager;
 let taskRegistryLoaded = false;
 
 // Show/hide pages
@@ -163,7 +165,7 @@ function validateBoardSize(input) {
     
     if (boardRenderer && window.GAME_STATE.gameStarted) {
         boardRenderer.updateSize(value);
-        boardRenderer.create();
+        scaleManager.init();
     }
     
     saveGameState();
@@ -316,6 +318,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Initialize board EARLY (before showing page)
     const initialBoardSize = savedState?.totalSquares || 100;
     boardRenderer = new BoardRenderer(initialBoardSize);
+    scaleManager  = new ScaleManager(boardRenderer);
     
     // FIX: Restore snakes/ladders from saved state BEFORE creating board
     if (savedState && savedState.boardSnakes && savedState.boardLadders) {
@@ -667,7 +670,7 @@ function startGame() {
     }
     
     // Create board with selected size
-    boardRenderer.create();
+    scaleManager.init();
     
     // Show board page
     showPage('board');
