@@ -1,191 +1,161 @@
-// Board rendering and layout - compensates for upward transforms
+// Board rendering — negative-margin connector approach (no transform / scale).
+//
+//  SQ    = 70 px  — visual face of every square
+//  EXTRA =  9 px  — extra height added to edge-connector squares,
+//                   cancelled by an equal negative margin so the row
+//                   height perceived by the browser stays SQ px.
+//
+//  Connector types:
+//    "up"           → bleed upward   → marginTop:    -EXTRA
+//    "up-right"     → bleed upward   → marginTop:    -EXTRA
+//    "down-left"    → bleed downward → marginBottom: -EXTRA
+//    "down-left-tl" → bleed downward → marginBottom: -EXTRA
+
 export class BoardRenderer {
     constructor(boardSize = 100) {
         this.boardElement = document.getElementById('board');
         this.totalSquares = boardSize;
-        this.boardSize = 10; // Always 10 squares per row
-        this.snakes = {16:6, 47:26, 49:11, 56:53, 62:19, 64:60, 87:24, 93:73, 95:75, 98:78};
-        this.ladders = {1:38, 4:14, 9:31, 21:42, 28:84, 36:44, 51:67, 71:91, 80:99};
+        this.boardSize    = 10;           // squares per row — always 10
+        this.snakes  = { 16:6,  47:26, 49:11, 56:53, 62:19,
+                         64:60, 87:24, 93:73, 95:75, 98:78 };
+        this.ladders = {  1:38,  4:14,  9:31, 21:42, 28:84,
+                         36:44, 51:67, 71:91, 80:99 };
+
+        this.SQ    = 70;
+        this.EXTRA =  9;
     }
-    
-    // Update total squares (for board size changes)
+
     updateSize(newSize) {
         this.totalSquares = newSize;
     }
-    
-    // Calculate maximum shift amount for the entire board
-    getMaxShiftAmount() {
-        // The highest numbered square has the most shift
-        const maxShift = this.getShiftAmount(this.totalSquares);
-        return maxShift;
-    }
-    
-    // Create the board
+
     create() {
         const totalRows = this.totalSquares / this.boardSize;
-        this.boardElement.innerHTML = ''; // Clear existing board
-        
-        // Calculate max shift and add as padding-top to prevent overflow
-        const maxShift = this.getMaxShiftAmount();
-        this.boardElement.style.paddingTop = `${maxShift}px`;
-        
-        console.log(`Board padding-top: ${maxShift}px (compensates for upward transforms)`);
-        
-        // Generate rows from top to bottom
+        this.boardElement.innerHTML = '';
+
+        // Strip any inline styles left over from the old transform-based renderer
+        this.boardElement.style.transform       = '';
+        this.boardElement.style.transformOrigin = '';
+        this.boardElement.style.paddingTop      = '';
+
+        // Rows: top → bottom, highest numbers first
         for (let row = totalRows - 1; row >= 0; row--) {
-            this.createRow(row);
+            this.boardElement.appendChild(this._createRow(row));
         }
-        
-        // Scale board to fit window
-        setTimeout(() => this.scale(), 50);
     }
-    
-    // Create a single row
-    createRow(rowIndex) {
-        const rowDiv = document.createElement('div');
-        rowDiv.className = 'board-row';
-        
-        // Determine direction (alternating left-to-right, right-to-left)
-        const isLeftToRight = rowIndex % 2 === 0;
-        const rowStartNum = rowIndex * this.boardSize + 1;
-        
+
+    // No-op: layout is pure CSS + negative margins; JS scaling not needed.
+    scale() {}
+
+    // ── private ──────────────────────────────────────────────────────────────
+
+    _createRow(rowIndex) {
+        const row = document.createElement('div');
+        row.className = 'board-row';
+
+        const isLTR    = rowIndex % 2 === 0;
+        const rowStart = rowIndex * this.boardSize + 1;
+
         for (let col = 0; col < this.boardSize; col++) {
-            const squareNum = isLeftToRight ? 
-                rowStartNum + col : 
-                rowStartNum + (this.boardSize - 1 - col);
-            
-            const square = this.createSquare(squareNum);
-            rowDiv.appendChild(square);
+            const num = isLTR
+                ? rowStart + col
+                : rowStart + (this.boardSize - 1 - col);
+            row.appendChild(this._createSquare(num));
         }
-        
-        this.boardElement.appendChild(rowDiv);
+        return row;
     }
-    
-    // Calculate dynamic shift amount in pixels
-    getShiftAmount(number) {
-        const startShiftAt = 12;
-        if (number < startShiftAt) {
-            return 0;
-        }
-        
-        // Calculate shift level
-        const shiftLevel = Math.floor((number - startShiftAt) / 10) + 1;
-        
-        // 9px per level
-        return shiftLevel * 9;
+
+    // Connector type for numbers ending in 0 or 1 (the "bend" squares).
+    // All other squares return null.
+    _connectorType(number) {
+        if (number === this.totalSquares || number === 1) return null;
+
+        const endsZero = number % 10 === 0;
+        const endsOne  = number % 10 === 1;
+        if (!endsZero && !endsOne) return null;
+
+        const isOddDecade = Math.floor(number / 10) % 2 === 1;
+        if (endsZero) return isOddDecade ? 'up-right'     : 'up';
+        else          return isOddDecade ? 'down-left'    : 'down-left-tl';
     }
-    
-    // Determine if a square needs a connector and what type
-    getConnectorType(number) {
-        const isFinish = number === this.totalSquares;
-        
-        // No connectors for finish square or square 1
-        if (isFinish || number === 1) {
-            return null;
-        }
-        
-        const endsWithZero = number % 10 === 0;
-        const endsWithOne = number % 10 === 1;
-        
-        if (!endsWithZero && !endsWithOne) {
-            return null; // No connector needed
-        }
-        
-        const decade = Math.floor(number / 10);
-        const isOddDecade = decade % 2 === 1;
-        
-        if (endsWithZero) {
-            // Numbers ending in 0 connect upward
-            return isOddDecade ? 'up-right' : 'up';
-        } else {
-            // Numbers ending in 1 connect downward
-            return isOddDecade ? 'down-left' : 'down-left-tl';
-        }
-    }
-    
-    // Create a single square
-    createSquare(number) {
-        const square = document.createElement('div');
-        
-        // Calculate shift amount
-        const shiftAmount = this.getShiftAmount(number);
-        
-        // Base classes
-        let baseClass = 'square';
-        
-        // Check for snakes and ladders
-        const isSnake = this.snakes[number];
-        const isLadder = this.ladders[number];
-        
-        if (isSnake) {
-            baseClass += ' snake';
-            square.setAttribute('data-destination', '↓' + this.snakes[number]);
-        } else if (isLadder) {
-            baseClass += ' ladder';
-            square.setAttribute('data-destination', '↑' + this.ladders[number]);
-        }
-        
-        square.className = baseClass;
-        square.id = `square-${number}`;
-        square.setAttribute('data-number', number);
-        
-        // Determine connector type
-        const connectorType = this.getConnectorType(number);
-        
-        if (connectorType) {
-            // Add connector class
-            const connectorClass = `square-connector-${connectorType}`;
-            square.className = `${baseClass} ${connectorClass}`;
-            
-            // Create inner div for connector
+
+    _createSquare(number) {
+        const isSnake  = !!this.snakes[number];
+        const isLadder = !!this.ladders[number];
+        const connType = this._connectorType(number);
+        const { SQ, EXTRA } = this;
+
+        const el = document.createElement('div');
+        el.id             = `square-${number}`;
+        el.dataset.number = number;
+
+        // Class list
+        const cls = ['square'];
+        if (isSnake)  { cls.push('snake');  el.dataset.destination = `↓${this.snakes[number]}`; }
+        if (isLadder) { cls.push('ladder'); el.dataset.destination = `↑${this.ladders[number]}`; }
+        if (connType) { cls.push(`square-connector-${connType}`); }
+        el.className = cls.join(' ');
+
+        if (connType) {
+            // "up" connectors (up / up-right) bleed into the row ABOVE.
+            // "down" connectors (down-left / down-left-tl) bleed into the row BELOW.
+            const isUp = connType === 'up' || connType === 'up-right';
+
+            Object.assign(el.style, {
+                width:          `${SQ}px`,
+                minWidth:       `${SQ}px`,
+                height:         `${SQ + EXTRA}px`,
+                minHeight:      `${SQ + EXTRA}px`,
+                marginTop:      isUp  ? `-${EXTRA}px` : '0',
+                marginBottom:   isUp  ? '0'           : `-${EXTRA}px`,
+                display:        'flex',
+                alignItems:     isUp  ? 'flex-end'    : 'flex-start',
+                justifyContent: 'center',
+                position:       'relative',
+                flexShrink:     '0',
+            });
+
+            // Inner zone: SQ × SQ, anchored to the non-bleed side.
+            // This is where the number (and player piece) actually lives.
             const inner = document.createElement('div');
             inner.className = 'square-connector-inner';
+            Object.assign(inner.style, {
+                width:          `${SQ}px`,
+                height:         `${SQ}px`,
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                fontSize:       '24px',
+                fontWeight:     'bold',
+                position:       'relative',
+                flexShrink:     '0',
+            });
             inner.textContent = number;
-            square.appendChild(inner);
+            el.appendChild(inner);
+
         } else {
-            // Regular square - just add number as text content
-            square.textContent = number;
-        }
-        
-        // Apply inline transform for shift
-        if (shiftAmount > 0) {
-            square.style.transform = `translateY(-${shiftAmount}px)`;
-            
-            // Add hover handlers to maintain shift while hovering
-            square.addEventListener('mouseenter', function() {
-                this.style.transform = `translateY(-${shiftAmount}px) scale(1.1)`;
+            // Plain square — exactly SQ × SQ, no extra margins.
+            Object.assign(el.style, {
+                width:      `${SQ}px`,
+                height:     `${SQ}px`,
+                minWidth:   `${SQ}px`,
+                flexShrink: '0',
             });
-            square.addEventListener('mouseleave', function() {
-                this.style.transform = `translateY(-${shiftAmount}px)`;
-            });
+            el.textContent = number;
         }
-        
-        return square;
-    }
-    
-    // Scale board to fit window WIDTH only (allow vertical scroll)
-    scale() {
-        // Reset scale to get natural dimensions
-        this.boardElement.style.transform = 'scale(1)';
-        this.boardElement.style.transformOrigin = 'center';
-        
-        const boardWidth = this.boardElement.scrollWidth;
-        
-        // Get available width
-        const windowWidth = window.innerWidth - 40; // 20px padding on each side
-        
-        // Calculate scale based on WIDTH only
-        const scaleX = windowWidth / boardWidth;
-        
-        // Clamp scale (don't scale up beyond 100%, minimum 50%)
-        const minScale = 0.5;
-        const maxScale = 0.9;
-        const scale = Math.max(Math.min(scaleX, maxScale), minScale);
-        
-        // Apply scale with top-center origin (board grows downward naturally)
-        this.boardElement.style.transform = `scale(${scale})`;
-        this.boardElement.style.transformOrigin = 'center';
-        
-        console.log(`Board scaled to ${(scale * 100).toFixed(1)}% (width: ${boardWidth}px -> ${Math.round(boardWidth * scale)}px)`);
+
+        // Hover highlight (no transform, so no need to preserve a translateY)
+        el.addEventListener('mouseenter', () => {
+            el.style.filter    = 'brightness(1.12)';
+            el.style.zIndex    = '10';
+            el.style.boxShadow = '0 8px 16px rgba(0,0,0,0.35)';
+        });
+        el.addEventListener('mouseleave', () => {
+            el.style.filter    = '';
+            el.style.zIndex    = '';
+            el.style.boxShadow = '';
+        });
+
+        return el;
     }
 }
