@@ -21,8 +21,8 @@ export class BoardRenderer {
         this.ladders = {  1:38,  4:14,  9:31, 21:42, 28:84,
                          36:44, 51:67, 71:91, 80:99 };
 
-        this.SQ    = 70;
-        this.EXTRA =  9;
+        this.SQ    = 65;
+        this.EXTRA =  8;
     }
 
     updateSize(newSize) {
