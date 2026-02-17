@@ -11,14 +11,18 @@
     padding-bottom: 120px;
 }
 
-/* Board page - fills viewport height and pushes board to bottom */
+/* Board page */
 #boardPage {
     overflow: visible;
-    min-height: 100vh;
-    display: flex !important;
+}
+
+/* Board page active - flex layout to push board to bottom */
+#boardPage.active {
+    display: flex;
     flex-direction: column;
     justify-content: flex-end;
     align-items: center;
+    min-height: 100vh;
 }
 
 /* Board - natural size, no transform, no padding-top hack */
