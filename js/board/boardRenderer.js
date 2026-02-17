@@ -34,20 +34,14 @@ export class BoardRenderer {
     }
 
     // ── Compute natural (scale=1) board dimensions ────────────────────────
-    // These are what ScaleManager uses to decide the scale factor.
-    // Must be called whenever totalSquares changes.
     _computeNaturalDimensions() {
-        const cols = this.boardSize;                           // always 10
-        const rows = this.totalSquares / this.boardSize;      // e.g. 1 for 10-sq, 10 for 100-sq
+        const cols = this.boardSize;
+        const rows = this.totalSquares / this.boardSize;
 
-        // Width never changes (always 10 columns)
-        // Width: cols * SQ + (cols-1) * COL_GAP + 2*padding(6) + 2*border(4)
         this.NATURAL_BOARD_W = cols * this.SQ
             + (cols - 1) * this.COL_GAP
             + 2 * 6 + 2 * 4;
 
-        // Height depends on the number of rows
-        // Height: rows * SQ + (rows-1) * ROW_GAP + 2*padding(6) + 2*border(4)
         this.NATURAL_BOARD_H = rows * this.SQ
             + Math.max(0, rows - 1) * this.ROW_GAP
             + 2 * 6 + 2 * 4;
@@ -67,12 +61,10 @@ export class BoardRenderer {
 
         this.boardElement.innerHTML = '';
 
-        // Remove any stale transform/padding from old code
         this.boardElement.style.transform       = '';
         this.boardElement.style.transformOrigin = '';
         this.boardElement.style.paddingTop      = '';
 
-        // Board container styles (scaled)
         Object.assign(this.boardElement.style, {
             display:        'flex',
             flexDirection:  'column',
@@ -86,7 +78,6 @@ export class BoardRenderer {
             margin:         '0 auto',
         });
 
-        // Rows: top → bottom (highest numbers first)
         for (let row = totalRows - 1; row >= 0; row--) {
             this.boardElement.appendChild(this._createRow(row, s));
         }
@@ -146,7 +137,6 @@ export class BoardRenderer {
         const isUp    = connCfg?.direction === 'up';
         const isDown  = connCfg?.direction === 'down';
 
-        // Gradient backgrounds
         const isFinal   = number === this.totalSquares;
         const SNAKE_BG  = 'var(--danger-gradient,  linear-gradient(135deg,#ff6b6b 0%,#ee5a6f 100%))';
         const LADDER_BG = 'var(--success-gradient, linear-gradient(135deg,#51cf66 0%,#37b24d 100%))';
@@ -160,7 +150,6 @@ export class BoardRenderer {
         el.className      = 'square';
         el.dataset.number = number;
 
-        // Outer square styles
         Object.assign(el.style, {
             width:        `${sq}px`,
             height:       `${connCfg ? sq + extra : sq}px`,
@@ -171,7 +160,6 @@ export class BoardRenderer {
                 ? `${Math.max(1, 3 * s)}px solid #ffd700`
                 : `${Math.max(1, 3 * s)}px solid var(--text-primary,#333)`,
             borderRadius: `${4 * s}px`,
-            // Connector rounded corners
             ...(connCfg && {
                 borderTopLeftRadius:     `${(connCfg.borderTopLeftRadius     ?? 4) * s}px`,
                 borderTopRightRadius:    `${(connCfg.borderTopRightRadius    ?? 4) * s}px`,
@@ -182,7 +170,7 @@ export class BoardRenderer {
             marginBottom: isDown ? `${-extra}px` : '0',
             flexShrink:   '0',
             cursor:       'default',
-            transition:   'filter 0.15s, box-shadow 0.15s',
+            transition:   'filter 0.15s, box-shadow 0.15s, outline 0.15s',
             userSelect:   'none',
             boxShadow:    `0 ${2*s}px ${6*s}px rgba(0,0,0,0.15)`,
             scrollMarginTop: '100px',
@@ -204,12 +192,14 @@ export class BoardRenderer {
             pointerEvents:  'none',
         });
 
-        // Final square star emoji
+        // Final square star emoji — centered
         if (isFinal) {
             const star = document.createElement('span');
             Object.assign(star.style, {
                 position:       'absolute',
-                inset:          '0',
+                top:            '50%',
+                left:           '50%',
+                transform:      'translate(-50%, -50%)',
                 display:        'flex',
                 alignItems:     'center',
                 justifyContent: 'center',
@@ -223,12 +213,14 @@ export class BoardRenderer {
             content.appendChild(star);
         }
 
-        // Emoji watermark — bigger but still semi-transparent
+        // Emoji watermark — centered
         if (!isFinal && (isSnake || isLadder)) {
             const emoji = document.createElement('span');
             Object.assign(emoji.style, {
                 position:       'absolute',
-                inset:          '0',
+                top:            '50%',
+                left:           '50%',
+                transform:      'translate(-50%, -50%)',
                 display:        'flex',
                 alignItems:     'center',
                 justifyContent: 'center',
@@ -242,7 +234,7 @@ export class BoardRenderer {
             content.appendChild(emoji);
         }
 
-        // Number label — always centred at original size
+        // Number label — top of content zone, above emoji
         const numLabel = document.createElement('span');
         Object.assign(numLabel.style, {
             fontSize:   `${sq * 0.3}px`,
@@ -250,12 +242,15 @@ export class BoardRenderer {
             color:      fg,
             lineHeight: '1',
             position:   'relative',
-            zIndex:     '1',
+            zIndex:     '2',
+            // Push number to top so it doesn't fight the centered emoji
+            alignSelf:  'center',
+            marginTop:  `${sq * 0.05}px`,
         });
         numLabel.textContent = number;
         content.appendChild(numLabel);
 
-        // Destination badge (↓6, ↑38, etc.) — not on final square
+        // Destination badge (↓6, ↑38, etc.) — bottom of content zone
         if (!isFinal && (isSnake || isLadder)) {
             const dest = isSnake
                 ? `↓${this.snakes[number]}`
@@ -263,9 +258,9 @@ export class BoardRenderer {
             const badge = document.createElement('span');
             Object.assign(badge.style, {
                 position:     'absolute',
-                top:          '50%',
+                bottom:       `${sq * 0.06}px`,
                 left:         '50%',
-                transform:    `translate(-50%, ${sq * 0.18}px)`,
+                transform:    'translateX(-50%)',
                 fontSize:     `${sq * 0.16}px`,
                 lineHeight:   '1.2',
                 background:   'rgba(0,0,0,0.65)',
@@ -274,7 +269,7 @@ export class BoardRenderer {
                 borderRadius: `${4*s}px`,
                 whiteSpace:   'nowrap',
                 pointerEvents:'none',
-                zIndex:       '2',
+                zIndex:       '3',
             });
             badge.textContent = dest;
             content.appendChild(badge);
@@ -287,11 +282,54 @@ export class BoardRenderer {
             el.style.filter    = 'brightness(1.12)';
             el.style.zIndex    = '10';
             el.style.boxShadow = `0 ${8*s}px ${16*s}px rgba(0,0,0,0.35)`;
+
+            // Highlight destination square on snake/ladder hover
+            if (isSnake) {
+                const destNum = this.snakes[number];
+                const destEl = document.getElementById(`square-${destNum}`);
+                if (destEl) {
+                    destEl.dataset.hoverHighlight = 'snake';
+                    destEl.style.outline = `${Math.max(2, 3*s)}px solid #ff4444`;
+                    destEl.style.outlineOffset = '0px';
+                    destEl.style.zIndex = '9';
+                }
+            } else if (isLadder) {
+                const destNum = this.ladders[number];
+                const destEl = document.getElementById(`square-${destNum}`);
+                if (destEl) {
+                    destEl.dataset.hoverHighlight = 'ladder';
+                    destEl.style.outline = `${Math.max(2, 3*s)}px solid #37b24d`;
+                    destEl.style.outlineOffset = '0px';
+                    destEl.style.zIndex = '9';
+                }
+            }
         });
+
         el.addEventListener('mouseleave', () => {
             el.style.filter    = '';
             el.style.zIndex    = '';
             el.style.boxShadow = `0 ${2*s}px ${6*s}px rgba(0,0,0,0.15)`;
+
+            // Remove destination highlight
+            if (isSnake) {
+                const destNum = this.snakes[number];
+                const destEl = document.getElementById(`square-${destNum}`);
+                if (destEl && destEl.dataset.hoverHighlight === 'snake') {
+                    delete destEl.dataset.hoverHighlight;
+                    destEl.style.outline = '';
+                    destEl.style.outlineOffset = '';
+                    destEl.style.zIndex = '';
+                }
+            } else if (isLadder) {
+                const destNum = this.ladders[number];
+                const destEl = document.getElementById(`square-${destNum}`);
+                if (destEl && destEl.dataset.hoverHighlight === 'ladder') {
+                    delete destEl.dataset.hoverHighlight;
+                    destEl.style.outline = '';
+                    destEl.style.outlineOffset = '';
+                    destEl.style.zIndex = '';
+                }
+            }
         });
 
         return el;
