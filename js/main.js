@@ -16,7 +16,10 @@ import {
     onTaskComplete, 
     setPlayerPosition,
     resetPlayerState,
-    animatePlayer
+    animatePlayer,
+    scrollToPlayer,
+    scrollToBottom,
+    waitForBoard
 } from './board/playerMovement.js';
 
 // Task system
@@ -228,6 +231,12 @@ function handleTaskCompletion() {
         
         // Return to board with Enter button
         showPage('board');
+        
+        // Wait for board to render, THEN scroll
+        waitForBoard(() => {
+            scrollToPlayer(savedPending.to, true);
+        });
+        
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🚪 Enter';
         rollDiceButton.disabled = false;
@@ -246,6 +255,12 @@ function handleTaskCompletion() {
         saveGameState();
         
         showPage('board');
+        
+        // Wait for board to render, THEN scroll
+        waitForBoard(() => {
+            scrollToPlayer(window.GAME_STATE.playerPosition, true);
+        });
+        
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🎲 Roll Dice';
         rollDiceButton.disabled = false;
@@ -399,6 +414,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Restore saved game if exists
     if (savedState) {
         restoreSavedGame(savedState);
+    }
+    
+    // CRITICAL: If we're showing the board page, wait for it to fully render then scroll
+    if (initialPage === 'board') {
+        waitForBoard(() => {
+            if (savedState && savedState.playerPosition > 0) {
+                // Game in progress - scroll to player
+                scrollToPlayer(savedState.playerPosition, true);
+            } else {
+                // New game at position 0 - scroll to bottom
+                scrollToBottom();
+            }
+        });
     }
     
     console.log('✅ Game Initialized');
@@ -666,6 +694,11 @@ function startGame() {
     
     // Save state
     saveGameState();
+    
+    // CRITICAL: Wait for board to render, then scroll to bottom for new game
+    waitForBoard(() => {
+        scrollToBottom();
+    });
     
     console.log('🎮 Game Started!');
 }
