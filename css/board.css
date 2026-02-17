@@ -1,4 +1,4 @@
-/* Game container - no height limits! */
+/* Game container */
 #gameContainer {
     background: transparent;
     border-radius: 0;
@@ -8,48 +8,38 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* Fixed bottom padding = controls bar height + comfortable gap.
-       This ensures the board bottom always clears the controls bar
-       at every viewport size. Users scroll up for larger boards. */
     padding-bottom: 120px;
-    /* NO height constraints - let it grow naturally */
 }
 
-/* Board page specific */
+/* Board page */
 #boardPage {
-    /* Ensure page doesn't reset scroll when shown */
     overflow: visible;
 }
 
-/* Board - no height limits! */
+/* Board - natural size, no transform, no padding-top hack */
 #board {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 18px; /* EXTRA * 2 = 9 * 2, matches the React component */
     align-items: flex-start;
     margin: 10px auto 5px;
-    box-shadow: none;
-    /*transform-origin: top center; */
-    transition: transform 0.3s ease;
     background: transparent;
-    scroll-margin-top: 100px; /* Offset for better centering */
-    /* NO height constraints */
+    scroll-margin-top: 100px;
 }
 
 /* Board rows */
 .board-row {
     display: flex;
+    flex-direction: row;
     gap: 2px;
     align-items: flex-end;
     background: transparent;
 }
 
-/* Squares */
+/* ── Base square ─────────────────────────────────────────────────────────── */
+/* Width/height are set by JS inline styles on connector squares.             */
+/* These rules provide visual styling only.                                   */
 .square {
-    width: 70px;
-    height: 70px;
-    min-width: 70px;
-    min-height: 70px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -59,95 +49,63 @@
     font-size: 24px;
     color: var(--text-primary);
     position: relative;
-    transition: all 0.2s ease;
+    transition: filter 0.15s, box-shadow 0.15s;
     border-radius: 4px;
     box-shadow: var(--shadow-sm);
     flex-shrink: 0;
-    scroll-margin-top: 100px; /* Offset for better centering */
+    cursor: default;
+    user-select: none;
+    scroll-margin-top: 100px;
 }
 
+/* Hover — filter/z-index/box-shadow handled inline by JS, no transform here */
 .square:hover {
     background: var(--bg-secondary);
-    z-index: 10;
-    box-shadow: 0 8px 12px rgba(0, 0, 0, 0.3);
     border-color: #555;
 }
 
-/* Connector classes for winding path */
+/* ── Connector outer shells ──────────────────────────────────────────────── */
+/* Width, height, margins, display, and alignment are set by JS.             */
+/* These rules add ONLY the rounded corner for the winding-path bend.        */
+
 .square-connector-up {
-    width: 70px;
-    min-width: 70px;
-    height: 79px;
-    min-height: 79px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    border-bottom-left-radius: 20px;
-    align-self: flex-end;
-    background: var(--bg-primary);
-    border: 3px solid var(--text-primary);
-    flex-shrink: 0;
+    border-bottom-left-radius:  20px;
+    border-top-left-radius:      4px;
+    border-top-right-radius:     4px;
+    border-bottom-right-radius:  4px;
 }
 
 .square-connector-up-right {
-    width: 70px;
-    min-width: 70px;
-    height: 79px;
-    min-height: 79px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
     border-bottom-right-radius: 20px;
-    align-self: flex-end;
-    background: var(--bg-primary);
-    border: 3px solid var(--text-primary);
-    flex-shrink: 0;
+    border-top-left-radius:      4px;
+    border-top-right-radius:     4px;
+    border-bottom-left-radius:   4px;
 }
 
 .square-connector-down-left {
-    width: 70px;
-    min-width: 70px;
-    height: 79px;
-    min-height: 79px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    border-top-right-radius: 20px;
-    background: var(--bg-primary);
-    border: 3px solid var(--text-primary);
-    flex-shrink: 0;
+    border-top-right-radius:    20px;
+    border-top-left-radius:      4px;
+    border-bottom-left-radius:   4px;
+    border-bottom-right-radius:  4px;
 }
 
 .square-connector-down-left-tl {
-    width: 70px;
-    min-width: 70px;
-    height: 79px;
-    min-height: 79px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: center;
-    border-top-left-radius: 20px;
-    background: var(--bg-primary);
-    border: 3px solid var(--text-primary);
-    flex-shrink: 0;
+    border-top-left-radius:     20px;
+    border-top-right-radius:     4px;
+    border-bottom-left-radius:   4px;
+    border-bottom-right-radius:  4px;
 }
 
-/* Connector inner divs */
+/* ── Connector inner zone ────────────────────────────────────────────────── */
+/* Sized by JS (SQ × SQ). Visual styling only.                               */
 .square-connector-inner {
-    width: 70px;
-    height: 70px;
-    min-width: 70px;
-    min-height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    color: inherit;
     font-size: 24px;
     font-weight: bold;
-    color: inherit;
     flex-shrink: 0;
 }
 
-/* Snakes */
+/* ── Snakes ──────────────────────────────────────────────────────────────── */
 .snake {
     background: var(--danger-gradient);
     color: var(--button-text);
@@ -165,6 +123,7 @@
     position: absolute;
     font-size: 2.5em;
     opacity: 0.3;
+    pointer-events: none;
 }
 
 .snake::after {
@@ -177,9 +136,10 @@
     font-size: 0.6em;
     padding: 2px 5px;
     border-radius: 5px;
+    pointer-events: none;
 }
 
-/* Ladders */
+/* ── Ladders ─────────────────────────────────────────────────────────────── */
 .ladder {
     background: var(--success-gradient);
     color: var(--button-text);
@@ -197,6 +157,7 @@
     position: absolute;
     font-size: 2.5em;
     opacity: 0.3;
+    pointer-events: none;
 }
 
 .ladder::after {
@@ -209,9 +170,10 @@
     font-size: 0.6em;
     padding: 2px 5px;
     border-radius: 5px;
+    pointer-events: none;
 }
 
-/* Snake/Ladder destination highlights - FIXED: Maintain transform */
+/* ── Destination highlights ──────────────────────────────────────────────── */
 .square.snake-destination,
 .square.ladder-destination {
     z-index: 10;
@@ -229,12 +191,10 @@
     0%, 100% {
         box-shadow: 0 0 25px rgba(255, 107, 107, 0.9), 0 0 40px rgba(255, 107, 107, 0.4);
         border: 3px solid #ff6b6b;
-        transform: inherit scale(1.05);
     }
     50% {
         box-shadow: 0 0 40px rgba(255, 107, 107, 1), 0 0 60px rgba(255, 107, 107, 0.6);
         border: 3px solid #ff3838;
-        transform: inherit scale(1.1);
     }
 }
 
@@ -242,16 +202,14 @@
     0%, 100% {
         box-shadow: 0 0 25px rgba(81, 207, 102, 0.9), 0 0 40px rgba(81, 207, 102, 0.4);
         border: 3px solid #51cf66;
-        transform: inherit scale(1.05);
     }
     50% {
         box-shadow: 0 0 40px rgba(81, 207, 102, 1), 0 0 60px rgba(81, 207, 102, 0.6);
         border: 3px solid #2fb344;
-        transform: inherit scale(1.1);
     }
 }
 
-/* Player piece */
+/* ── Player piece ────────────────────────────────────────────────────────── */
 .player {
     width: 30px;
     height: 30px;
@@ -260,20 +218,16 @@
     position: absolute;
     z-index: 10;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    animation: pulse 1s ease-in-out infinite;
+    animation: playerPulse 1s ease-in-out infinite;
     border: 3px solid var(--button-text);
 }
 
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
+@keyframes playerPulse {
+    0%, 100% { transform: scale(1); }
+    50%       { transform: scale(1.1); }
 }
 
-/* Controls - Fixed bottom strip */
+/* ── Fixed controls bar ──────────────────────────────────────────────────── */
 #controls {
     position: fixed;
     bottom: 0;
@@ -292,16 +246,14 @@
     flex-wrap: wrap;
 }
 
-/* Control items arranged horizontally */
 #controls > * {
     flex-shrink: 0;
 }
 
-/* Roll dice button */
 #rollDice {
     background: var(--info-gradient);
     box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
-    order: 2; /* Middle position */
+    order: 2;
 }
 
 #rollDice:hover:not(:disabled) {
@@ -309,7 +261,6 @@
     box-shadow: 0 12px 25px rgba(79, 172, 254, 0.5);
 }
 
-/* Test jump input */
 #testJumpInput {
     width: 100px;
     padding: 8px;
@@ -317,10 +268,9 @@
     border-radius: 8px;
     font-size: 14px;
     text-align: center;
-    order: 3; /* Right of button */
+    order: 3;
 }
 
-/* Dice result */
 #diceResult {
     font-size: 24px;
     font-weight: bold;
@@ -331,10 +281,9 @@
     box-shadow: 0 4px 15px rgba(255, 188, 0, 0.3);
     min-width: 120px;
     text-align: center;
-    order: 1; /* Left of button */
+    order: 1;
 }
 
-/* Turn counter */
 #turnCounter {
     font-size: 18px;
     font-weight: bold;
@@ -343,14 +292,14 @@
     border-radius: 15px;
     color: var(--button-text);
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-    order: 4; /* Far right */
+    order: 4;
 }
 
-/* Responsive */
+/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
     #gameContainer {
         padding: 10px;
-        padding-bottom: 120px; /* Same fixed amount on mobile */
+        padding-bottom: 120px;
     }
 
     .square {
@@ -361,28 +310,28 @@
         width: 20px;
         height: 20px;
     }
-    
+
     #controls {
         padding: 10px;
         gap: 10px;
     }
-    
+
     #diceResult {
         font-size: 18px;
         padding: 8px 15px;
         min-width: 90px;
     }
-    
+
     #turnCounter {
         font-size: 14px;
         padding: 8px 15px;
     }
-    
+
     #rollDice {
         padding: 10px 20px;
         font-size: 16px;
     }
-    
+
     #testJumpInput {
         width: 80px;
         padding: 6px;
