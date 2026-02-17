@@ -11,15 +11,29 @@ player.classList.add('player');
 // Scroll to player position instantly
 function scrollToPlayer(playerPos, instant = true) {
     const square = document.getElementById(`square-${playerPos}`);
-    if (square) {
-        // Use instant scroll by default for better UX when loading pages
-        square.scrollIntoView({
-            behavior: instant ? 'auto' : 'smooth',
-            block: 'center',
-            inline: 'center'
-        });
-        console.log(`📍 ${instant ? 'Jumped' : 'Scrolled'} to player at square ${playerPos}`);
+    if (!square) {
+        console.warn(`⚠️ Square ${playerPos} not found yet`);
+        return false;
     }
+    
+    // Use instant scroll by default for better UX when loading pages
+    square.scrollIntoView({
+        behavior: instant ? 'auto' : 'smooth',
+        block: 'center',
+        inline: 'center'
+    });
+    console.log(`📍 ${instant ? 'Jumped' : 'Scrolled'} to player at square ${playerPos}`);
+    return true;
+}
+
+// Scroll to bottom of page (for new games starting at square 1)
+function scrollToBottom() {
+    // Scroll the window to the very bottom
+    window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'auto'
+    });
+    console.log(`📍 Jumped to bottom of page`);
 }
 
 // Animate player movement
@@ -339,5 +353,5 @@ export function resetPlayerState() {
     player.remove();
 }
 
-// Expose scrollToPlayer for use by main.js
-export { scrollToPlayer };
+// Expose scrollToPlayer and scrollToBottom for use by main.js
+export { scrollToPlayer, scrollToBottom };
