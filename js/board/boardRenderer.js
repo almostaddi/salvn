@@ -1,4 +1,4 @@
-// Board rendering — negative-margin connector approach (no transform / scale).
+// Board rendering — no scaling/transforms.
 //
 //  SQ    = 70 px  — visual face of every square
 //  EXTRA =  9 px  — extra height added to edge-connector squares,
@@ -23,13 +23,6 @@ export class BoardRenderer {
 
         this.SQ    = 70;
         this.EXTRA =  9;
-
-        // Board natural width: 10 squares * SQ + 9 gaps * 2px
-        // Keep in sync with #board gap (2px) in CSS
-        this.BOARD_NATURAL_WIDTH = this.SQ * 10 + 2 * 9;
-        this.MAX_SCALE = 0.9;
-
-        this._scaleHandler = () => this.scale();
     }
 
     updateSize(newSize) {
@@ -39,12 +32,9 @@ export class BoardRenderer {
     create() {
         const totalRows = this.totalSquares / this.boardSize;
 
-        // Ensure scale wrapper exists in DOM
-        this._ensureWrapper();
-
         this.boardElement.innerHTML = '';
 
-        // Strip any leftover inline styles
+        // Strip any leftover inline styles from a previous session
         this.boardElement.style.transform       = '';
         this.boardElement.style.transformOrigin = '';
         this.boardElement.style.paddingTop      = '';
@@ -53,49 +43,9 @@ export class BoardRenderer {
         for (let row = totalRows - 1; row >= 0; row--) {
             this.boardElement.appendChild(this._createRow(row));
         }
-
-        // Apply scale immediately after building
-        this.scale();
-
-        // Listen for resize
-        window.removeEventListener('resize', this._scaleHandler);
-        window.addEventListener('resize', this._scaleHandler);
-    }
-
-    scale() {
-        const wrapper = document.getElementById('boardScaleWrapper');
-        if (!wrapper) return;
-
-        const windowWidth = window.innerWidth;
-        const rawScale = windowWidth / this.BOARD_NATURAL_WIDTH;
-        const clampedScale = Math.min(this.MAX_SCALE, rawScale);
-
-        wrapper.style.transform = `scale(${clampedScale})`;
-
-        // When scaled down, the wrapper still occupies its natural size in
-        // the document flow, leaving a gap above the board. We compensate
-        // by pulling it up with a negative margin equal to the height lost.
-        // Height lost = naturalHeight * (1 - scale)
-        const naturalHeight = wrapper.offsetHeight;
-        const heightLost = naturalHeight * (1 - clampedScale);
-        wrapper.style.marginBottom = `-${heightLost}px`;
     }
 
     // ── private ──────────────────────────────────────────────────────────────
-
-    _ensureWrapper() {
-        // If the board is already inside a wrapper, do nothing
-        if (this.boardElement.parentElement &&
-            this.boardElement.parentElement.id === 'boardScaleWrapper') {
-            return;
-        }
-
-        // Create wrapper and insert it where the board currently is
-        const wrapper = document.createElement('div');
-        wrapper.id = 'boardScaleWrapper';
-        this.boardElement.parentNode.insertBefore(wrapper, this.boardElement);
-        wrapper.appendChild(this.boardElement);
-    }
 
     _createRow(rowIndex) {
         const row = document.createElement('div');
