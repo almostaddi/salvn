@@ -1,235 +1,109 @@
-/* Game container */
+/* ============================================================
+   board.css  —  Board page layout
+   Pixel sizes are intentionally ABSENT from squares/rows/gaps;
+   ScaleManager applies all scaled dimensions via inline styles.
+   ============================================================ */
+
+/* ── Game container ─────────────────────────────────────────────────────── */
 #gameContainer {
     background: transparent;
     border-radius: 0;
     box-shadow: none;
     max-width: none;
     width: 100%;
+
+    /* ScaleManager overrides these with exact scaled values */
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-bottom: 110px;
+    justify-content: center;
 }
 
-/* Board page */
+/* ── Board page ─────────────────────────────────────────────────────────── */
 #boardPage {
     overflow: visible;
 }
 
-/* Board page active - flex layout to push board to bottom */
 #boardPage.active {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     align-items: center;
+    /* height is 100vh minus the controls bar — ScaleManager sets paddingBottom */
     min-height: 100vh;
+    overflow: hidden;
 }
 
-/* Board - natural size */
+/* ── Board ──────────────────────────────────────────────────────────────── */
 #board {
-    display: flex;
-    flex-direction: column;
-    gap: 17px;
-    align-items: flex-start;
-    margin: 10px auto 5px;
+    /* Layout + spacing set entirely by ScaleManager via inline style */
+    margin: 0 auto;
     background: transparent;
     scroll-margin-top: 100px;
 }
 
-/* Board rows */
+/* ── Board rows ─────────────────────────────────────────────────────────── */
 .board-row {
-    display: flex;
-    flex-direction: row;
-    gap: 2px;
-    align-items: flex-end;
+    /* flex + gap set by ScaleManager */
     background: transparent;
 }
 
 /* ── Base square ─────────────────────────────────────────────────────────── */
 .square {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    border: 3px solid var(--text-primary);
-    background: var(--bg-primary);
-    font-weight: bold;
-    font-size: 24px;
-    color: var(--text-primary);
+    /* All sizing set by ScaleManager */
     position: relative;
+    font-weight: bold;
     transition: filter 0.15s, box-shadow 0.15s;
-    border-radius: 4px;
-    box-shadow: var(--shadow-sm);
     flex-shrink: 0;
     cursor: default;
     user-select: none;
     scroll-margin-top: 100px;
 }
 
-.square:hover {
-    background: var(--bg-secondary);
-    border-color: #555;
-}
+/* ── Connector shape classes (radius overridden by inline style too,
+      but keep as fallback for non-JS environments) ───────────────────────── */
+.square-connector-up           { border-bottom-left-radius:  20px; }
+.square-connector-up-right     { border-bottom-right-radius: 20px; }
+.square-connector-down-left    { border-top-right-radius:    20px; }
+.square-connector-down-left-tl { border-top-left-radius:     20px; }
 
-/* ── Connector outer shells ──────────────────────────────────────────────── */
-.square-connector-up {
-    border-bottom-left-radius:  20px;
-    border-top-left-radius:      4px;
-    border-top-right-radius:     4px;
-    border-bottom-right-radius:  4px;
-}
+/* ── Snake / Ladder colours ─────────────────────────────────────────────── */
+.snake  { background: var(--danger-gradient);  color: var(--button-text); }
+.ladder { background: var(--success-gradient); color: var(--button-text); }
 
-.square-connector-up-right {
-    border-bottom-right-radius: 20px;
-    border-top-left-radius:      4px;
-    border-top-right-radius:     4px;
-    border-bottom-left-radius:   4px;
-}
-
-.square-connector-down-left {
-    border-top-right-radius:    20px;
-    border-top-left-radius:      4px;
-    border-bottom-left-radius:   4px;
-    border-bottom-right-radius:  4px;
-}
-
-.square-connector-down-left-tl {
-    border-top-left-radius:     20px;
-    border-top-right-radius:     4px;
-    border-bottom-left-radius:   4px;
-    border-bottom-right-radius:  4px;
-}
-
-/* ── Connector inner zone ────────────────────────────────────────────────── */
-.square-connector-inner {
-    color: inherit;
-    font-size: 24px;
-    font-weight: bold;
-    flex-shrink: 0;
-}
-
-/* ── Snakes ──────────────────────────────────────────────────────────────── */
-.snake {
-    background: var(--danger-gradient);
-    color: var(--button-text);
-}
-
-.square-connector-up.snake,
-.square-connector-up-right.snake,
-.square-connector-down-left.snake,
-.square-connector-down-left-tl.snake {
-    background: var(--danger-gradient);
-}
-
-.snake::before {
-    content: '🐍';
-    position: absolute;
-    font-size: 2em;
-    opacity: 0.3;
-    pointer-events: none;
-}
-
-.snake::after {
-    content: attr(data-destination);
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    background: rgba(0, 0, 0, 0.7);
-    color: var(--button-text);
-    font-size: 0.6em;
-    padding: 2px 5px;
-    border-radius: 5px;
-    pointer-events: none;
-}
-
-/* ── Ladders ─────────────────────────────────────────────────────────────── */
-.ladder {
-    background: var(--success-gradient);
-    color: var(--button-text);
-}
-
-.square-connector-up.ladder,
-.square-connector-up-right.ladder,
-.square-connector-down-left.ladder,
-.square-connector-down-left-tl.ladder {
-    background: var(--success-gradient);
-}
-
-.ladder::before {
-    content: '🪜';
-    position: absolute;
-    font-size: 2em;
-    opacity: 0.3;
-    pointer-events: none;
-}
-
-.ladder::after {
-    content: attr(data-destination);
-    position: absolute;
-    bottom: 2px;
-    right: 2px;
-    background: rgba(0, 0, 0, 0.7);
-    color: var(--button-text);
-    font-size: 0.6em;
-    padding: 2px 5px;
-    border-radius: 5px;
-    pointer-events: none;
-}
-
-/* ── Destination highlights ──────────────────────────────────────────────── */
+/* ── Destination highlights ─────────────────────────────────────────────── */
 .square.snake-destination,
 .square.ladder-destination {
     z-index: 10;
 }
-
-.square.snake-destination {
-    animation: pulseRed 1.5s ease-in-out infinite;
-}
-
-.square.ladder-destination {
-    animation: pulseGreen 1.5s ease-in-out infinite;
-}
+.square.snake-destination  { animation: pulseRed   1.5s ease-in-out infinite; }
+.square.ladder-destination { animation: pulseGreen 1.5s ease-in-out infinite; }
 
 @keyframes pulseRed {
-    0%, 100% {
-        box-shadow: 0 0 25px rgba(255, 107, 107, 0.9), 0 0 40px rgba(255, 107, 107, 0.4);
-        border: 3px solid #ff6b6b;
-    }
-    50% {
-        box-shadow: 0 0 40px rgba(255, 107, 107, 1), 0 0 60px rgba(255, 107, 107, 0.6);
-        border: 3px solid #ff3838;
-    }
+    0%, 100% { box-shadow: 0 0 25px rgba(255,107,107,0.9), 0 0 40px rgba(255,107,107,0.4); border-color: #ff6b6b; }
+    50%       { box-shadow: 0 0 40px rgba(255,107,107,1),   0 0 60px rgba(255,107,107,0.6); border-color: #ff3838; }
 }
-
 @keyframes pulseGreen {
-    0%, 100% {
-        box-shadow: 0 0 25px rgba(81, 207, 102, 0.9), 0 0 40px rgba(81, 207, 102, 0.4);
-        border: 3px solid #51cf66;
-    }
-    50% {
-        box-shadow: 0 0 40px rgba(81, 207, 102, 1), 0 0 60px rgba(81, 207, 102, 0.6);
-        border: 3px solid #2fb344;
-    }
+    0%, 100% { box-shadow: 0 0 25px rgba(81,207,102,0.9), 0 0 40px rgba(81,207,102,0.4); border-color: #51cf66; }
+    50%       { box-shadow: 0 0 40px rgba(81,207,102,1),   0 0 60px rgba(81,207,102,0.6); border-color: #2fb344; }
 }
 
-/* ── Player piece ────────────────────────────────────────────────────────── */
+/* ── Player piece ───────────────────────────────────────────────────────── */
 .player {
-    width: 30px;
-    height: 30px;
+    /* width/height set by ScaleManager */
     background: radial-gradient(circle, #4dabf7 0%, #1864ab 100%);
     border-radius: 50%;
     position: absolute;
     z-index: 10;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     animation: playerPulse 1s ease-in-out infinite;
     border: 3px solid var(--button-text);
 }
-
 @keyframes playerPulse {
     0%, 100% { transform: scale(1); }
     50%       { transform: scale(1.1); }
 }
 
-/* ── Fixed controls bar ──────────────────────────────────────────────────── */
+/* ── Fixed controls bar ─────────────────────────────────────────────────── */
 #controls {
     position: fixed;
     bottom: 0;
@@ -238,102 +112,58 @@
     background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(248,249,250,0.98));
     backdrop-filter: blur(10px);
     border-top: 3px solid var(--border-color);
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
     z-index: 1000;
-    padding: 10px 20px;
+
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
     flex-wrap: wrap;
+
+    /* padding + gap set by ScaleManager */
+    padding: 10px 20px;
+    gap: 20px;
 }
 
-#controls > * {
-    flex-shrink: 0;
-}
+#controls > * { flex-shrink: 0; }
 
+/* ── Individual control items (base styles; ScaleManager sets sizes) ─────── */
 #rollDice {
     background: var(--info-gradient);
-    box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+    box-shadow: 0 8px 20px rgba(79,172,254,0.4);
     order: 2;
-    padding:12px 38px;
 }
-
 #rollDice:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 12px 25px rgba(79, 172, 254, 0.5);
+    box-shadow: 0 12px 25px rgba(79,172,254,0.5);
 }
 
 #testJumpInput {
-    width: 100px;
-    padding: 8px;
     border: 2px solid var(--border-color);
     border-radius: 8px;
-    font-size: 14px;
     text-align: center;
     order: 3;
 }
 
 #diceResult {
-    font-size: 24px;
     font-weight: bold;
-    padding: 10px 20px;
     background: var(--warning-gradient);
-    border-radius: 15px;
     color: var(--text-primary);
-    box-shadow: 0 4px 15px rgba(255, 188, 0, 0.3);
-    min-width: 120px;
+    box-shadow: 0 4px 15px rgba(255,188,0,0.3);
     text-align: center;
     order: 1;
 }
 
 #turnCounter {
-    font-size: 18px;
     font-weight: bold;
-    padding: 10px 20px;
     background: var(--primary-gradient);
-    border-radius: 15px;
     color: var(--button-text);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 15px rgba(102,126,234,0.3);
     order: 4;
 }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width: 600px) {
-    #gameContainer {
-        padding: 10px;
-        padding-bottom: 1%;
-    }
-
-    .player {
-        width: 20px;
-        height: 20px;
-    }
-
-    #controls {
-        padding: 10px;
-        gap: 10px;
-    }
-
-    #diceResult {
-        font-size: 18px;
-        padding: 8px 15px;
-        min-width: 90px;
-    }
-
-    #turnCounter {
-        font-size: 14px;
-        padding: 8px 15px;
-    }
-
-    #rollDice {
-        padding: 10px 20px;
-        font-size: 16px;
-    }
-
-    #testJumpInput {
-        width: 80px;
-        padding: 6px;
-        font-size: 12px;
-    }
+/* ── Responsive fallback (ScaleManager handles most of this, but keep
+      as safety net for very small screens / no-JS) ──────────────────────── */
+@media (max-width: 400px) {
+    #controls { padding: 8px; gap: 8px; }
 }
