@@ -28,8 +28,8 @@ export function animatePlayer(start, end, callback, instant = false) {
         const targetSquare = document.getElementById(`square-${end}`);
         if (targetSquare) targetSquare.appendChild(player);
         
-        // Instant scroll to player after instant movement
-        scrollToPlayer(end, true);
+        // Don't scroll after instant movement - let player see where they landed
+        // Scrolling only happens when returning from tasks
         
         if (callback) callback();
         return;
@@ -46,8 +46,8 @@ export function animatePlayer(start, end, callback, instant = false) {
         if (current === end) {
             clearInterval(interval);
             
-            // Instant scroll to player after animation completes
-            scrollToPlayer(end, true);
+            // Don't scroll after dice roll - let player see their movement
+            // Scrolling only happens when returning from tasks
             
             if (callback) callback();
         }
@@ -304,8 +304,7 @@ export function setPlayerPosition(position) {
         if (square) {
             square.appendChild(player);
             
-            // Instant scroll to player position when loading
-            scrollToPlayer(position, true);
+            // Don't scroll on load - page starts at bottom by default
         }
     }
 }
