@@ -47,6 +47,8 @@ body {
     background: var(--primary-gradient);
     background-attachment: fixed; /* Keep gradient fixed while scrolling */
     color: var(--text-primary);
+    display:flex;
+    align-items:center;
 }
 
 /* Main heading */
