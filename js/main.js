@@ -14,7 +14,13 @@ import { BoardRenderer } from './board/boardRenderer.js';
 import { 
     rollDice, 
     onTaskComplete, 
-    setPlayerPosition,
+    setPlayerPosition,    // Window resize - rescale board
+    window.addEventListener('resize', () => {
+        if (boardRenderer) {
+            boardRenderer.scale();
+        }
+    });
+}
     resetPlayerState,
     animatePlayer,
     scrollToPlayer,
@@ -571,7 +577,7 @@ function setupEventListeners() {
         }
     });
     
-
+}
 // Start game
 function startGame() {
     // Validate instruction sets
