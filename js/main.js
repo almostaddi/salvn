@@ -329,7 +329,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('✅ Restored snakes/ladders from saved state');
     }
     
-    boardRenderer.create();
+    scaleManager.init();
     
     // PRE-SET UI elements BEFORE showing page to prevent flash
     if (savedState && savedState.gameStarted) {
