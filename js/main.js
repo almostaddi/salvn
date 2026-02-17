@@ -571,13 +571,6 @@ function setupEventListeners() {
         }
     });
     
-    // Window resize - rescale board
-    window.addEventListener('resize', () => {
-        if (boardRenderer) {
-            boardRenderer.scale();
-        }
-    });
-}
 
 // Start game
 function startGame() {
