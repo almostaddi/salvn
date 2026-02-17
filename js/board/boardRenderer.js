@@ -23,6 +23,13 @@ export class BoardRenderer {
 
         this.SQ    = 70;
         this.EXTRA =  9;
+
+        // Board natural width: 10 squares * SQ + 9 gaps * 2px
+        // Keep in sync with #board gap (2px) in CSS
+        this.BOARD_NATURAL_WIDTH = this.SQ * 10 + 2 * 9;
+        this.MAX_SCALE = 0.9;
+
+        this._scaleHandler = () => this.scale();
     }
 
     updateSize(newSize) {
@@ -31,9 +38,13 @@ export class BoardRenderer {
 
     create() {
         const totalRows = this.totalSquares / this.boardSize;
+
+        // Ensure scale wrapper exists in DOM
+        this._ensureWrapper();
+
         this.boardElement.innerHTML = '';
 
-        // Strip any inline styles left over from the old transform-based renderer
+        // Strip any leftover inline styles
         this.boardElement.style.transform       = '';
         this.boardElement.style.transformOrigin = '';
         this.boardElement.style.paddingTop      = '';
@@ -42,12 +53,49 @@ export class BoardRenderer {
         for (let row = totalRows - 1; row >= 0; row--) {
             this.boardElement.appendChild(this._createRow(row));
         }
+
+        // Apply scale immediately after building
+        this.scale();
+
+        // Listen for resize
+        window.removeEventListener('resize', this._scaleHandler);
+        window.addEventListener('resize', this._scaleHandler);
     }
 
-    // No-op: layout is pure CSS + negative margins; JS scaling not needed.
-    scale() {}
+    scale() {
+        const wrapper = document.getElementById('boardScaleWrapper');
+        if (!wrapper) return;
+
+        const windowWidth = window.innerWidth;
+        const rawScale = windowWidth / this.BOARD_NATURAL_WIDTH;
+        const clampedScale = Math.min(this.MAX_SCALE, rawScale);
+
+        wrapper.style.transform = `scale(${clampedScale})`;
+
+        // When scaled down, the wrapper still occupies its natural size in
+        // the document flow, leaving a gap above the board. We compensate
+        // by pulling it up with a negative margin equal to the height lost.
+        // Height lost = naturalHeight * (1 - scale)
+        const naturalHeight = wrapper.offsetHeight;
+        const heightLost = naturalHeight * (1 - clampedScale);
+        wrapper.style.marginBottom = `-${heightLost}px`;
+    }
 
     // ── private ──────────────────────────────────────────────────────────────
+
+    _ensureWrapper() {
+        // If the board is already inside a wrapper, do nothing
+        if (this.boardElement.parentElement &&
+            this.boardElement.parentElement.id === 'boardScaleWrapper') {
+            return;
+        }
+
+        // Create wrapper and insert it where the board currently is
+        const wrapper = document.createElement('div');
+        wrapper.id = 'boardScaleWrapper';
+        this.boardElement.parentNode.insertBefore(wrapper, this.boardElement);
+        wrapper.appendChild(this.boardElement);
+    }
 
     _createRow(rowIndex) {
         const row = document.createElement('div');
@@ -66,7 +114,6 @@ export class BoardRenderer {
     }
 
     // Connector type for numbers ending in 0 or 1 (the "bend" squares).
-    // All other squares return null.
     _connectorType(number) {
         if (number === this.totalSquares || number === 1) return null;
 
@@ -97,8 +144,6 @@ export class BoardRenderer {
         el.className = cls.join(' ');
 
         if (connType) {
-            // "up" connectors (up / up-right) bleed into the row ABOVE.
-            // "down" connectors (down-left / down-left-tl) bleed into the row BELOW.
             const isUp = connType === 'up' || connType === 'up-right';
 
             Object.assign(el.style, {
@@ -115,8 +160,6 @@ export class BoardRenderer {
                 flexShrink:     '0',
             });
 
-            // Inner zone: SQ × SQ, anchored to the non-bleed side.
-            // This is where the number (and player piece) actually lives.
             const inner = document.createElement('div');
             inner.className = 'square-connector-inner';
             Object.assign(inner.style, {
@@ -134,7 +177,6 @@ export class BoardRenderer {
             el.appendChild(inner);
 
         } else {
-            // Plain square — exactly SQ × SQ, no extra margins.
             Object.assign(el.style, {
                 width:      `${SQ}px`,
                 height:     `${SQ}px`,
@@ -144,7 +186,6 @@ export class BoardRenderer {
             el.textContent = number;
         }
 
-        // Hover highlight (no transform, so no need to preserve a translateY)
         el.addEventListener('mouseenter', () => {
             el.style.filter    = 'brightness(1.12)';
             el.style.zIndex    = '10';
