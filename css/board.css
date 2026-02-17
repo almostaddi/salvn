@@ -2,6 +2,7 @@
 #gameContainer {
     background: transparent;
     padding: 20px;
+    padding-bottom: 120px; /* Space for fixed controls */
     border-radius: 0;
     box-shadow: none;
     max-width: none;
@@ -23,6 +24,7 @@
     transform-origin: top center;
     transition: transform 0.3s ease;
     background: transparent;
+    scroll-margin-top: 100px; /* Offset for better centering */
     /* NO height constraints */
 }
 
@@ -53,6 +55,7 @@
     border-radius: 4px;
     box-shadow: var(--shadow-sm);
     flex-shrink: 0;
+    scroll-margin-top: 100px; /* Offset for better centering */
 }
 
 .square:hover {
@@ -262,36 +265,35 @@
     }
 }
 
-/* Controls */
+/* Controls - Fixed bottom strip */
 #controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(248,249,250,0.98));
+    backdrop-filter: blur(10px);
+    border-top: 3px solid var(--border-color);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    padding: 15px 20px;
     display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    margin-bottom: 20px;
-    margin-top: 20px;
-    text-align: center;
-}
-
-#controls > div:first-child {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 15px;
-}
-
-#controls > div:last-child {
-    display: flex;
-    gap: 15px;
     align-items: center;
     justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* Control items arranged horizontally */
+#controls > * {
+    flex-shrink: 0;
 }
 
 /* Roll dice button */
 #rollDice {
     background: var(--info-gradient);
     box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
+    order: 2; /* Middle position */
 }
 
 #rollDice:hover:not(:disabled) {
@@ -307,36 +309,40 @@
     border-radius: 8px;
     font-size: 14px;
     text-align: center;
+    order: 3; /* Right of button */
 }
 
 /* Dice result */
 #diceResult {
-    font-size: 28px;
+    font-size: 24px;
     font-weight: bold;
-    padding: 15px 30px;
+    padding: 12px 25px;
     background: var(--warning-gradient);
     border-radius: 15px;
     color: var(--text-primary);
     box-shadow: 0 4px 15px rgba(255, 188, 0, 0.3);
-    min-width: 150px;
+    min-width: 120px;
     text-align: center;
+    order: 1; /* Left of button */
 }
 
 /* Turn counter */
 #turnCounter {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: bold;
-    padding: 12px 25px;
+    padding: 10px 20px;
     background: var(--primary-gradient);
     border-radius: 15px;
     color: var(--button-text);
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    order: 4; /* Far right */
 }
 
 /* Responsive */
 @media (max-width: 600px) {
     #gameContainer {
         padding: 10px;
+        padding-bottom: 100px;
     }
 
     .square {
@@ -346,5 +352,32 @@
     .player {
         width: 20px;
         height: 20px;
+    }
+    
+    #controls {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    #diceResult {
+        font-size: 18px;
+        padding: 8px 15px;
+        min-width: 90px;
+    }
+    
+    #turnCounter {
+        font-size: 14px;
+        padding: 8px 15px;
+    }
+    
+    #rollDice {
+        padding: 10px 20px;
+        font-size: 16px;
+    }
+    
+    #testJumpInput {
+        width: 80px;
+        padding: 6px;
+        font-size: 12px;
     }
 }
