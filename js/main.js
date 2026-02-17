@@ -15,7 +15,6 @@ import {
     rollDice, 
     onTaskComplete, 
     setPlayerPosition,    // Window resize - rescale board
-}
     resetPlayerState,
     animatePlayer,
     scrollToPlayer,
