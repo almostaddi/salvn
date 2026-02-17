@@ -4,8 +4,8 @@
 // available viewport without any CSS transform trickery.
 //
 // Base dimensions (scale = 1):
-//   SQ    = 64 px  — square face
-//   EXTRA =  7 px  — connector bleed (negative-margin technique)
+//   SQ      = 64 px  — square face
+//   EXTRA   =  7 px  — connector bleed (negative-margin technique)
 //   ROW_GAP = EXTRA * 2  — gap between rows so bleed doesn't overlap
 //   COL_GAP = 2 px       — gap between squares in a row
 
@@ -29,25 +29,33 @@ export class BoardRenderer {
         // Current scale (updated by ScaleManager)
         this.scale = 1;
 
-        // Natural (scale=1) board dimensions — used by ScaleManager
-        // Width:  10*SQ + 9*COL_GAP + 2*padding(6) + 2*border(4)
-        // Height: 10*SQ + 9*ROW_GAP + 2*padding(6) + 2*border(4)
-        const rows = this.totalSquares / this.boardSize;
-        this.NATURAL_BOARD_W = this.boardSize * this.SQ
-            + (this.boardSize - 1) * this.COL_GAP
+        // Compute natural dimensions for current board size
+        this._computeNaturalDimensions();
+    }
+
+    // ── Compute natural (scale=1) board dimensions ────────────────────────
+    // These are what ScaleManager uses to decide the scale factor.
+    // Must be called whenever totalSquares changes.
+    _computeNaturalDimensions() {
+        const cols = this.boardSize;                           // always 10
+        const rows = this.totalSquares / this.boardSize;      // e.g. 1 for 10-sq, 10 for 100-sq
+
+        // Width never changes (always 10 columns)
+        // Width: cols * SQ + (cols-1) * COL_GAP + 2*padding(6) + 2*border(4)
+        this.NATURAL_BOARD_W = cols * this.SQ
+            + (cols - 1) * this.COL_GAP
             + 2 * 6 + 2 * 4;
+
+        // Height depends on the number of rows
+        // Height: rows * SQ + (rows-1) * ROW_GAP + 2*padding(6) + 2*border(4)
         this.NATURAL_BOARD_H = rows * this.SQ
-            + (rows - 1) * this.ROW_GAP
+            + Math.max(0, rows - 1) * this.ROW_GAP
             + 2 * 6 + 2 * 4;
     }
 
     updateSize(newSize) {
         this.totalSquares = newSize;
-        // Recalculate natural height for new board size
-        const rows = newSize / this.boardSize;
-        this.NATURAL_BOARD_H = rows * this.SQ
-            + (rows - 1) * this.ROW_GAP
-            + 2 * 6 + 2 * 4;
+        this._computeNaturalDimensions();
     }
 
     // ── Public: (re)create the board at the current scale ─────────────────
