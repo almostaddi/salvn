@@ -23,7 +23,7 @@ h1 {
 /* Button row on home page - horizontal layout */
 #homePage > div:first-child {
     text-align: center;
-    margin-bottom: 30px;
+    margin-top: 20px;
     display: flex;
     justify-content: center;
     align-items: center;
