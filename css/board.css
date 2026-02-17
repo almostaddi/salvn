@@ -24,7 +24,7 @@
     flex-direction: column;
     gap: 2px;
     align-items: flex-start;
-    margin: 20px auto;
+    margin: 10px auto 5px;
     box-shadow: none;
     transform-origin: top center;
     transition: transform 0.3s ease;
