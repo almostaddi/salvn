@@ -52,7 +52,7 @@ body {
 /* Main heading */
 h1 {
     font-size: 3em;
-    margin-bottom: 30px;
+    margin-top: 25px;
     text-align: center;
     color: var(--button-text);
     text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
