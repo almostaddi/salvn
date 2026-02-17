@@ -179,7 +179,7 @@ export class BoardRenderer {
         
         // Clamp scale (don't scale up beyond 100%, minimum 50%)
         const minScale = 0.5;
-        const maxScale = 1.0;
+        const maxScale = 0.9;
         const scale = Math.max(Math.min(scaleX, maxScale), minScale);
         
         // Apply scale with top-center origin (board grows downward naturally)
