@@ -256,6 +256,7 @@
     background: var(--info-gradient);
     box-shadow: 0 8px 20px rgba(79, 172, 254, 0.4);
     order: 2;
+    padding:12px 38px;
 }
 
 #rollDice:hover:not(:disabled) {
@@ -276,7 +277,7 @@
 #diceResult {
     font-size: 24px;
     font-weight: bold;
-    padding: 12px 25px;
+    padding: 10px 20px;
     background: var(--warning-gradient);
     border-radius: 15px;
     color: var(--text-primary);
