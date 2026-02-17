@@ -1,26 +1,23 @@
 // ScaleManager — computes a single `scale` value from the viewport
 // and applies it to the board (via BoardRenderer) and the controls bar.
 //
-// It is completely self-contained: it reads DOM measurements once on
-// init, then recalculates on every resize.  It deliberately touches
-// ONLY #board, #controls, and #gameContainer — the menu and task pages
-// are never touched.
+// Key design decisions:
+//   - Scale fits the board into available viewport space (minus controls)
+//   - Controls bar is ALWAYS rendered at scale=1 (fixed size, never scales)
+//   - No whitespace: board is centred in remaining space after controls
 
 export class ScaleManager {
     constructor(boardRenderer) {
         this.renderer = boardRenderer;
 
-        // ── Constants (all unscaled / scale-1 px) ──────────────────────
+        // ── Controls bar constants (always at scale=1, never scaled) ──────
+        this.CTRL_H         = 70;   // natural height of the controls bar
+        this.CTRL_PADDING_V = 10;   // top + bottom padding each
+        this.CTRL_PADDING_H = 20;   // left + right padding each
+        this.CTRL_GAP       = 20;   // gap between items
+        this.OUTER_PADDING  = 16;   // page-level horizontal padding each side
+        this.BOARD_MARGIN   = 12;   // breathing room around the board
 
-        // Controls bar unscaled dimensions
-        this.CTRL_H          = 70;   // approx natural height of the controls bar
-        this.CTRL_PADDING_V  = 10;   // top + bottom padding (each)
-        this.CTRL_PADDING_H  = 20;   // left + right padding (each)
-        this.CTRL_GAP        = 20;   // gap between control items
-        this.OUTER_PADDING   = 16;   // page-level horizontal padding each side
-
-        // After how many px of available height should we start scaling?
-        // (board natural height + controls natural height + some breathing room)
         this._onResizeBound = this._onResize.bind(this);
     }
 
@@ -41,102 +38,98 @@ export class ScaleManager {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
 
-        const { SQ, EXTRA, ROW_GAP, COL_GAP,
-                NATURAL_BOARD_W, NATURAL_BOARD_H } = this.renderer;
+        const { NATURAL_BOARD_W, NATURAL_BOARD_H } = this.renderer;
 
-        // Available width (minus outer page padding)
+        // Available space for the board
+        // Width: viewport minus outer padding
         const availW = vw - this.OUTER_PADDING * 2;
 
-        // Available height for the board portion
-        // (viewport minus controls bar, with a little breathing room)
-        const ctrlNaturalH = this.CTRL_H;
-        const availH = vh - ctrlNaturalH - 24; // 24px breathing room
+        // Height: viewport minus fixed controls bar height minus breathing room
+        const availH = vh - this.CTRL_H - this.BOARD_MARGIN * 2;
 
-        // Scale = fit the board inside available W and available H
+        // Scale = fit board inside available W and H, maintaining aspect ratio
         const scaleW = availW / NATURAL_BOARD_W;
         const scaleH = availH / NATURAL_BOARD_H;
         const scale  = Math.min(scaleW, scaleH);
 
-        // Don't shrink below 0.25 — board becomes unusable
-        const s = Math.max(0.25, scale);
+        // Clamp: don't shrink below 0.2 (unusable) or above 3 (tiny boards go huge)
+        const s = Math.max(0.2, Math.min(3.0, scale));
 
         // Store on renderer so _createSquare uses it
         this.renderer.scale = s;
 
-        // ── Apply to board ────────────────────────────────────────────
+        // ── Rebuild board at new scale ──────────────────────────────────
         this.renderer.create();
 
-        // ── Apply to controls bar ────────────────────────────────────
-        this._styleControls(s);
+        // ── Controls bar: always fixed size (scale=1), never changes ───
+        this._styleControls();
 
-        // ── Centre the board page vertically ─────────────────────────
-        this._styleBoardPage(s);
+        // ── Centre the board in available space above controls bar ──────
+        this._styleBoardPage();
     }
 
-    _styleControls(s) {
+    // Controls bar is ALWAYS at fixed (scale=1) size
+    _styleControls() {
         const controls = document.getElementById('controls');
         if (!controls) return;
 
-        const paddingV = Math.round(this.CTRL_PADDING_V * s);
-        const paddingH = Math.round(this.CTRL_PADDING_H * s);
-        const gap      = Math.round(this.CTRL_GAP * s);
-
+        // Always use fixed padding/gap regardless of board scale
         Object.assign(controls.style, {
-            padding: `${paddingV}px ${paddingH}px`,
-            gap:     `${gap}px`,
+            padding: `${this.CTRL_PADDING_V}px ${this.CTRL_PADDING_H}px`,
+            gap:     `${this.CTRL_GAP}px`,
         });
 
-        // Scale the font / padding of each child button / input / div
+        // Fixed sizes for all control elements
         const diceResult  = document.getElementById('diceResult');
         const rollDice    = document.getElementById('rollDice');
         const turnCounter = document.getElementById('turnCounter');
         const jumpInput   = document.getElementById('testJumpInput');
 
         if (diceResult) {
-            diceResult.style.fontSize    = `${Math.round(18 * s)}px`;
-            diceResult.style.padding     = `${Math.round(8*s)}px ${Math.round(16*s)}px`;
-            diceResult.style.minWidth    = `${Math.round(100 * s)}px`;
-            diceResult.style.borderRadius= `${Math.round(12*s)}px`;
+            diceResult.style.fontSize     = '18px';
+            diceResult.style.padding      = '8px 16px';
+            diceResult.style.minWidth     = '100px';
+            diceResult.style.borderRadius = '12px';
         }
         if (rollDice) {
-            rollDice.style.padding   = `${Math.round(10*s)}px ${Math.round(30*s)}px`;
-            rollDice.style.fontSize  = `${Math.round(16*s)}px`;
+            rollDice.style.padding      = '10px 30px';
+            rollDice.style.fontSize     = '16px';
             rollDice.style.borderRadius = '50px';
         }
         if (turnCounter) {
-            turnCounter.style.fontSize    = `${Math.round(16*s)}px`;
-            turnCounter.style.padding     = `${Math.round(8*s)}px ${Math.round(16*s)}px`;
-            turnCounter.style.borderRadius= `${Math.round(12*s)}px`;
+            turnCounter.style.fontSize     = '16px';
+            turnCounter.style.padding      = '8px 16px';
+            turnCounter.style.borderRadius = '12px';
         }
         if (jumpInput) {
-            jumpInput.style.width    = `${Math.round(80 * s)}px`;
-            jumpInput.style.padding  = `${Math.round(6*s)}px`;
-            jumpInput.style.fontSize = `${Math.round(13*s)}px`;
+            jumpInput.style.width    = '80px';
+            jumpInput.style.padding  = '6px';
+            jumpInput.style.fontSize = '13px';
         }
 
-        // Also scale the player piece
+        // Player piece scales with board
         const player = document.querySelector('.player');
         if (player) {
+            const s = this.renderer.scale;
             const size = Math.round(30 * s);
             player.style.width  = `${size}px`;
             player.style.height = `${size}px`;
         }
     }
 
-    _styleBoardPage(s) {
+    _styleBoardPage() {
         const gameContainer = document.getElementById('gameContainer');
         if (!gameContainer) return;
 
-        // Account for scaled controls bar height so the board
-        // sits centred in the remaining space above it.
-        const ctrlH = Math.round(this.CTRL_H * s);
+        // Board sits centred in the space above the fixed controls bar
         Object.assign(gameContainer.style, {
             display:        'flex',
             flexDirection:  'column',
             alignItems:     'center',
             justifyContent: 'center',
-            minHeight:      `calc(100vh - ${ctrlH}px)`,
-            paddingBottom:  `${ctrlH + 8}px`,
+            minHeight:      `calc(100vh - ${this.CTRL_H}px)`,
+            paddingBottom:  `${this.CTRL_H + this.BOARD_MARGIN}px`,
+            paddingTop:     `${this.BOARD_MARGIN}px`,
         });
     }
 }
