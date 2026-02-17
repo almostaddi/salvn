@@ -11,21 +11,21 @@
     padding-bottom: 120px;
 }
 
-/* Board page - flex column, pushes board to bottom */
+/* Board page - fills viewport height and pushes board to bottom */
 #boardPage {
     overflow: visible;
-    flex: 1;
-    display: flex;
+    min-height: 100vh;
+    display: flex !important;
     flex-direction: column;
     justify-content: flex-end;
-    width: 100%;
+    align-items: center;
 }
 
 /* Board - natural size, no transform, no padding-top hack */
 #board {
     display: flex;
     flex-direction: column;
-    gap: 18px; /* EXTRA * 2 = 9 * 2, matches the React component */
+    gap: 18px;
     align-items: flex-start;
     margin: 10px auto 5px;
     background: transparent;
@@ -42,8 +42,6 @@
 }
 
 /* ── Base square ─────────────────────────────────────────────────────────── */
-/* Width/height are set by JS inline styles on connector squares.             */
-/* These rules provide visual styling only.                                   */
 .square {
     display: flex;
     justify-content: center;
@@ -63,16 +61,12 @@
     scroll-margin-top: 100px;
 }
 
-/* Hover — filter/z-index/box-shadow handled inline by JS, no transform here */
 .square:hover {
     background: var(--bg-secondary);
     border-color: #555;
 }
 
 /* ── Connector outer shells ──────────────────────────────────────────────── */
-/* Width, height, margins, display, and alignment are set by JS.             */
-/* These rules add ONLY the rounded corner for the winding-path bend.        */
-
 .square-connector-up {
     border-bottom-left-radius:  20px;
     border-top-left-radius:      4px;
@@ -102,7 +96,6 @@
 }
 
 /* ── Connector inner zone ────────────────────────────────────────────────── */
-/* Sized by JS (SQ × SQ). Visual styling only.                               */
 .square-connector-inner {
     color: inherit;
     font-size: 24px;
