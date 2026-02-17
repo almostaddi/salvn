@@ -77,7 +77,7 @@ function showPage(pageName) {
     // NEW: Hide/show title based on page
     const mainTitle = document.querySelector('h1');
     if (mainTitle) {
-        if (pageName === 'task') {
+        if (pageName === 'task' || pageName === 'board') {
             mainTitle.style.display = 'none';
         } else {
             mainTitle.style.display = 'block';
