@@ -15,11 +15,6 @@ import {
     rollDice, 
     onTaskComplete, 
     setPlayerPosition,    // Window resize - rescale board
-    window.addEventListener('resize', () => {
-        if (boardRenderer) {
-            boardRenderer.scale();
-        }
-    });
 }
     resetPlayerState,
     animatePlayer,
