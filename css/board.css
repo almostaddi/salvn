@@ -1,7 +1,6 @@
 /* Game container - no height limits! */
 #gameContainer {
     background: transparent;
-    # padding: 20px;
     border-radius: 0;
     box-shadow: none;
     max-width: none;
@@ -9,6 +8,10 @@
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* Fixed bottom padding = controls bar height + comfortable gap.
+       This ensures the board bottom always clears the controls bar
+       at every viewport size. Users scroll up for larger boards. */
+    padding-bottom: 120px;
     /* NO height constraints - let it grow naturally */
 }
 
@@ -347,7 +350,7 @@
 @media (max-width: 600px) {
     #gameContainer {
         padding: 10px;
-        padding-bottom: 100px;
+        padding-bottom: 120px; /* Same fixed amount on mobile */
     }
 
     .square {
