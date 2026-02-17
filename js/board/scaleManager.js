@@ -107,13 +107,18 @@ export class ScaleManager {
             jumpInput.style.fontSize = '13px';
         }
 
-        // Player piece scales with board
+        // Player piece scales with board and must sit above all square content
         const player = document.querySelector('.player');
         if (player) {
             const s = this.renderer.scale;
             const size = Math.round(30 * s);
-            player.style.width  = `${size}px`;
-            player.style.height = `${size}px`;
+            player.style.width     = `${size}px`;
+            player.style.height    = `${size}px`;
+            player.style.zIndex    = '20';
+            player.style.position  = 'absolute';
+            player.style.top       = '50%';
+            player.style.left      = '50%';
+            player.style.transform = 'translate(-50%, -50%)';
         }
     }
 
