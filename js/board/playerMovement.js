@@ -36,6 +36,29 @@ function scrollToBottom() {
     console.log(`📍 Jumped to bottom of page`);
 }
 
+// Wait for board to be ready, then execute callback
+function waitForBoard(callback, maxAttempts = 20) {
+    let attempts = 0;
+    
+    const checkBoard = () => {
+        const board = document.getElementById('board');
+        const hasSquares = board && board.querySelector('.square');
+        
+        if (hasSquares) {
+            console.log('✅ Board ready, executing callback');
+            callback();
+        } else if (attempts < maxAttempts) {
+            attempts++;
+            console.log(`⏳ Waiting for board... (attempt ${attempts}/${maxAttempts})`);
+            setTimeout(checkBoard, 50);
+        } else {
+            console.error('❌ Board failed to load after maximum attempts');
+        }
+    };
+    
+    checkBoard();
+}
+
 // Animate player movement
 export function animatePlayer(start, end, callback, instant = false) {
     if (instant) {
@@ -353,5 +376,5 @@ export function resetPlayerState() {
     player.remove();
 }
 
-// Expose scrollToPlayer and scrollToBottom for use by main.js
-export { scrollToPlayer, scrollToBottom };
+// Expose scrollToPlayer, scrollToBottom, and waitForBoard for use by main.js
+export { scrollToPlayer, scrollToBottom, waitForBoard };
