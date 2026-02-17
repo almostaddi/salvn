@@ -1,7 +1,5 @@
 /* ============================================================
    board.css  —  Board page layout
-   Pixel sizes are intentionally ABSENT from squares/rows/gaps;
-   ScaleManager applies all scaled dimensions via inline styles.
    ============================================================ */
 
 /* ── Game container ─────────────────────────────────────────────────────── */
@@ -12,7 +10,6 @@
     max-width: none;
     width: 100%;
 
-    /* ScaleManager overrides these with exact scaled values */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -28,14 +25,12 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    /* height is 100vh minus the controls bar — ScaleManager sets paddingBottom */
     min-height: 100vh;
     overflow: hidden;
 }
 
 /* ── Board ──────────────────────────────────────────────────────────────── */
 #board {
-    /* Layout + spacing set entirely by ScaleManager via inline style */
     margin: 0 auto;
     background: transparent;
     scroll-margin-top: 100px;
@@ -43,13 +38,11 @@
 
 /* ── Board rows ─────────────────────────────────────────────────────────── */
 .board-row {
-    /* flex + gap set by ScaleManager */
     background: transparent;
 }
 
 /* ── Base square ─────────────────────────────────────────────────────────── */
 .square {
-    /* All sizing set by ScaleManager */
     position: relative;
     font-weight: bold;
     transition: filter 0.15s, box-shadow 0.15s;
@@ -59,8 +52,7 @@
     scroll-margin-top: 100px;
 }
 
-/* ── Connector shape classes (radius overridden by inline style too,
-      but keep as fallback for non-JS environments) ───────────────────────── */
+/* ── Connector shape classes ───────────────────────────────────────────── */
 .square-connector-up           { border-bottom-left-radius:  20px; }
 .square-connector-up-right     { border-bottom-right-radius: 20px; }
 .square-connector-down-left    { border-top-right-radius:    20px; }
@@ -70,7 +62,7 @@
 .snake  { background: var(--danger-gradient);  color: var(--button-text); }
 .ladder { background: var(--success-gradient); color: var(--button-text); }
 
-/* ── Destination highlights ─────────────────────────────────────────────── */
+/* ── Destination highlights (landing animation) ─────────────────────────── */
 .square.snake-destination,
 .square.ladder-destination {
     z-index: 10;
@@ -89,18 +81,27 @@
 
 /* ── Player piece ───────────────────────────────────────────────────────── */
 .player {
-    /* width/height set by ScaleManager */
     background: radial-gradient(circle, #4dabf7 0%, #1864ab 100%);
     border-radius: 50%;
     position: absolute;
-    z-index: 10;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    /* Center within the square's content face */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 20;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.8);
     animation: playerPulse 1s ease-in-out infinite;
-    border: 3px solid var(--button-text);
+    border: 2px solid #ffffff;
+    /* Size set by ScaleManager via inline style */
+    width: 30px;
+    height: 30px;
+    /* Ensure it's always visible */
+    pointer-events: none;
 }
+
 @keyframes playerPulse {
-    0%, 100% { transform: scale(1); }
-    50%       { transform: scale(1.1); }
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50%       { transform: translate(-50%, -50%) scale(1.15); }
 }
 
 /* ── Fixed controls bar ─────────────────────────────────────────────────── */
@@ -120,14 +121,13 @@
     justify-content: center;
     flex-wrap: wrap;
 
-    /* padding + gap set by ScaleManager */
     padding: 10px 20px;
     gap: 20px;
 }
 
 #controls > * { flex-shrink: 0; }
 
-/* ── Individual control items (base styles; ScaleManager sets sizes) ─────── */
+/* ── Individual control items ─────────────────────────────────────────── */
 #rollDice {
     background: var(--info-gradient);
     box-shadow: 0 8px 20px rgba(79,172,254,0.4);
@@ -162,8 +162,7 @@
     order: 4;
 }
 
-/* ── Responsive fallback (ScaleManager handles most of this, but keep
-      as safety net for very small screens / no-JS) ──────────────────────── */
+/* ── Responsive fallback ─────────────────────────────────────────────────── */
 @media (max-width: 400px) {
     #controls { padding: 8px; gap: 8px; }
 }
