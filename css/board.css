@@ -26,7 +26,7 @@
     align-items: flex-start;
     margin: 10px auto 5px;
     box-shadow: none;
-    transform-origin: top center;
+    /*transform-origin: top center; */
     transition: transform 0.3s ease;
     background: transparent;
     scroll-margin-top: 100px; /* Offset for better centering */
