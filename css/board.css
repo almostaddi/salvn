@@ -1,7 +1,7 @@
 /* Game container - no height limits! */
 #gameContainer {
     background: transparent;
-    padding: 20px;
+    # padding: 20px;
     border-radius: 0;
     box-shadow: none;
     max-width: none;
