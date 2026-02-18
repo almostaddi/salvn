@@ -25,6 +25,7 @@ import {
 
 // Task system
 import { loadTaskRegistry } from './tasks/taskSelector.js';
+import './tasks/addRemoveTasks.js';
 import { 
     loadAndDisplayTask,
     loadAndDisplaySnakeLadderTask,
