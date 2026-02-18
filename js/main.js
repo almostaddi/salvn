@@ -15,7 +15,7 @@ import { ScaleManager   } from './board/scaleManager.js';
 import { 
     rollDice, 
     onTaskComplete, 
-    setPlayerPosition,    // Window resize - rescale board
+    setPlayerPosition,
     resetPlayerState,
     animatePlayer,
     scrollToPlayer,
@@ -29,7 +29,7 @@ import {
     loadAndDisplayTask,
     loadAndDisplaySnakeLadderTask,
     loadAndDisplayFinalChallenge,
-    restoreVNState  // NEW: Import VN restoration
+    restoreVNState
 } from './tasks/taskLoader.js';
 
 // UI components
@@ -51,51 +51,95 @@ let boardRenderer;
 let scaleManager;
 let taskRegistryLoaded = false;
 
-// Show/hide pages
-function showPage(pageName) {
-    console.log('🔄 Switching to page:', pageName);
-    
-    // Hide all pages
-    document.querySelectorAll('.page').forEach(page => {
-        page.classList.remove('active');
-    });
-    
-    // CRITICAL FIX: Also hide instructions container when switching away from task page
+// ── Page transition helpers ──────────────────────────────────────────────────
+
+// Tracks what entrance animation the board page should use next
+// 'slide' = slide in from top (game start)
+// 'fade'  = standard fade-in (returning from task)
+// null    = no animation (initial restore / hard refresh)
+let _nextBoardAnim = null;
+
+// Fade-out duration must match the CSS animation duration in transitions.css
+const FADE_OUT_MS = 260;
+
+// Activate a page element with an optional entrance animation
+function _activatePage(pageEl, pageName, animate) {
+    // Strip any leftover animation classes
+    pageEl.classList.remove('page-fade-in', 'page-board-enter', 'page-fade-out');
+
+    // Make the page visible
+    pageEl.classList.add('active');
+
+    if (animate) {
+        if (pageName === 'board' && _nextBoardAnim === 'slide') {
+            pageEl.classList.add('page-board-enter');
+            _nextBoardAnim = null;
+            pageEl.addEventListener('animationend', () => {
+                pageEl.classList.remove('page-board-enter');
+            }, { once: true });
+        } else {
+            pageEl.classList.add('page-fade-in');
+            pageEl.addEventListener('animationend', () => {
+                pageEl.classList.remove('page-fade-in');
+            }, { once: true });
+        }
+    }
+
+    // Hide/show title
+    const mainTitle = document.querySelector('h1');
+    if (mainTitle) {
+        mainTitle.style.display = (pageName === 'task' || pageName === 'board') ? 'none' : 'block';
+    }
+
+    // Hide instructions when leaving task page
     const instructions = document.getElementById('instructions');
     if (instructions && pageName !== 'task') {
         instructions.classList.remove('active');
         console.log('🧹 Instructions hidden');
     }
-    
-    // Show target page
-    const targetPage = document.getElementById(pageName + 'Page');
-    if (targetPage) {
-        targetPage.classList.add('active');
-        console.log('✅ Now showing:', pageName);
-    } else {
-        console.error('❌ Page not found:', pageName + 'Page');
-    }
-    
-    // NEW: Hide/show title based on page
-    const mainTitle = document.querySelector('h1');
-    if (mainTitle) {
-        if (pageName === 'task' || pageName === 'board') {
-            mainTitle.style.display = 'none';
-        } else {
-            mainTitle.style.display = 'block';
-        }
-    }
-    
-    // Update body class and button text based on page
+
+    // Update body classes & reset button label
     const resetBtn = document.getElementById('resetBtn');
     if (pageName === 'home') {
         document.body.classList.add('on-home-page');
         document.body.classList.remove('show-fixed-buttons');
-        resetBtn.textContent = '🔄 Reset Settings';
+        if (resetBtn) resetBtn.textContent = '🔄 Reset Settings';
     } else {
         document.body.classList.remove('on-home-page');
         document.body.classList.add('show-fixed-buttons');
-        resetBtn.textContent = '🔄 Reset';
+        if (resetBtn) resetBtn.textContent = '🔄 Reset';
+    }
+
+    console.log('✅ Now showing:', pageName);
+}
+
+// Show/hide pages with animated transitions
+function showPage(pageName) {
+    console.log('🔄 Switching to page:', pageName);
+
+    const targetPageEl = document.getElementById(pageName + 'Page');
+    if (!targetPageEl) {
+        console.error('❌ Page not found:', pageName + 'Page');
+        return;
+    }
+
+    // Find the currently visible page (if any)
+    const outgoing = document.querySelector('.page.active');
+
+    if (outgoing && outgoing !== targetPageEl) {
+        // Fade out the outgoing page, then show the new one
+        outgoing.classList.remove('page-fade-in', 'page-board-enter');
+        outgoing.classList.add('page-fade-out');
+
+        setTimeout(() => {
+            outgoing.classList.remove('active', 'page-fade-out');
+            _activatePage(targetPageEl, pageName, true);
+        }, FADE_OUT_MS);
+    } else {
+        // No outgoing page — initial load, show without entrance animation
+        // (unless we explicitly want one, e.g. on first game start from home)
+        const isFirstShow = !outgoing;
+        _activatePage(targetPageEl, pageName, !isFirstShow);
     }
 }
 
@@ -104,7 +148,6 @@ function updateClassicRadioState(boardSize) {
     const classicRadio = document.querySelector('input[name="snakesLaddersMode"][value="classic"]');
     if (!classicRadio) return;
     
-    // Classic is always enabled (clickable)
     classicRadio.disabled = false;
     
     const label = classicRadio.parentElement;
@@ -113,7 +156,6 @@ function updateClassicRadioState(boardSize) {
         label.style.cursor = 'pointer';
     }
     
-    // If board size changed from 100 and classic is selected, switch to random
     const isSize100 = boardSize === 100;
     if (!isSize100 && classicRadio.checked) {
         const randomRadio = document.querySelector('input[name="snakesLaddersMode"][value="random"]');
@@ -128,39 +170,21 @@ function updateClassicRadioState(boardSize) {
 function validateBoardSize(input) {
     let value = parseInt(input.value);
     
-    // Handle invalid/empty input
     if (isNaN(value) || input.value === '') {
-        input.value = 100; // Default to 100
+        input.value = 100;
         value = 100;
     }
     
-    // Enforce minimum of 10
-    if (value < 10) {
-        value = 10;
-    }
+    if (value < 10) value = 10;
+    if (value > 1000) value = 1000;
     
-    // Enforce maximum of 1000
-    if (value > 1000) {
-        value = 1000;
-    }
-    
-    // Round to nearest 10
     value = Math.round(value / 10) * 10;
     
-    // Ensure it's within bounds after rounding
-    if (value < 10) {
-        value = 10;
-    }
-    if (value > 1000) {
-        value = 1000;
-    }
+    if (value < 10) value = 10;
+    if (value > 1000) value = 1000;
     
     input.value = value;
-    
-    // Update game state
     window.GAME_STATE.totalSquares = value;
-    
-    // Update classic radio state
     updateClassicRadioState(value);
     
     if (boardRenderer && window.GAME_STATE.gameStarted) {
@@ -180,10 +204,8 @@ function handleSnakesLaddersModeChange(mode) {
     const customLaddersInput = document.getElementById('customLaddersInput');
     
     if (mode === 'custom') {
-        // Show custom inputs
         customInputs.style.display = 'block';
         
-        // Always populate with current values (either from state or empty)
         if (Object.keys(window.GAME_STATE.customSnakes).length > 0) {
             customSnakesInput.value = formatSnakesLaddersForDisplay(window.GAME_STATE.customSnakes);
         }
@@ -191,7 +213,6 @@ function handleSnakesLaddersModeChange(mode) {
             customLaddersInput.value = formatSnakesLaddersForDisplay(window.GAME_STATE.customLadders);
         }
     } else {
-        // Hide custom inputs
         customInputs.style.display = 'none';
     }
     
@@ -200,23 +221,17 @@ function handleSnakesLaddersModeChange(mode) {
 
 // Custom task completion handler
 function handleTaskCompletion() {
-    // Clear current instruction when returning to board
     window.GAME_STATE.currentInstruction = '';
     
-    // Check what phase we're in
     if (window.GAME_STATE.gamePhase === 'awaiting_snake_ladder_task') {
-        // Just completed snake/ladder task, move piece immediately
         const savedPending = window.GAME_STATE.pendingSnakeLadder;
         
-        // Move player to destination instantly (no animation)
         setPlayerPosition(savedPending.to);
         window.GAME_STATE.playerPosition = savedPending.to;
         
         const totalSquares = window.GAME_STATE.totalSquares || 100;
         
-        // Check if final square after snake/ladder
         if (savedPending.to === totalSquares) {
-            // STATE: Ready for final challenge
             window.GAME_STATE.gamePhase = 'awaiting_final_challenge';
             window.GAME_STATE.pendingSnakeLadder = null;
             saveGameState();
@@ -226,15 +241,12 @@ function handleTaskCompletion() {
             return;
         }
         
-        // STATE: Waiting to show normal task at destination
         window.GAME_STATE.gamePhase = 'awaiting_normal_task';
         window.GAME_STATE.pendingSnakeLadder = null;
         saveGameState();
         
-        // Return to board with Enter button
         showPage('board');
         
-        // Wait for board to render, THEN scroll
         waitForBoard(() => {
             scrollToPlayer(savedPending.to, true);
         });
@@ -249,8 +261,6 @@ function handleTaskCompletion() {
             window.displayRandomInstructionWithAddRemove(savedPending.addRemoveTask);
         };
     } else {
-        // Completed normal task, ready for next roll
-        // STATE: Ready for dice roll
         window.GAME_STATE.gamePhase = 'awaiting_dice_roll';
         window.GAME_STATE.pendingSnakeLadder = null;
         window.GAME_STATE.pendingAddRemoveTask = null;
@@ -258,7 +268,6 @@ function handleTaskCompletion() {
         
         showPage('board');
         
-        // Wait for board to render, THEN scroll
         waitForBoard(() => {
             scrollToPlayer(window.GAME_STATE.playerPosition, true);
         });
@@ -275,16 +284,13 @@ function handleTaskCompletion() {
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('🎲 Snakes and Ladders - Initializing...');
     
-    // Initialize state FIRST
     initializeState();
     initializeGameFunctions(handleTaskCompletion);
     
-    // Load saved game state
     const savedState = loadGameState();
     
     // PRE-SET SLIDER DISPLAYS BEFORE SHOWING PAGE (prevents flash)
     if (savedState) {
-        // Prize sliders
         if (savedState.prizeSettings) {
             document.getElementById('fullPercent').textContent = savedState.prizeSettings.full.toFixed(1) + '%';
             document.getElementById('ruinPercent').textContent = savedState.prizeSettings.ruin.toFixed(1) + '%';
@@ -294,7 +300,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('deniedSlider').value = savedState.prizeSettings.denied;
         }
         
-        // Final challenge sliders
         if (savedState.finalChallengeSettings) {
             document.getElementById('strokingPercent').textContent = savedState.finalChallengeSettings.stroking + '%';
             document.getElementById('vibePercent').textContent = savedState.finalChallengeSettings.vibe + '%';
@@ -304,7 +309,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('analSlider').value = savedState.finalChallengeSettings.anal;
         }
         
-        // FIX: Challenge types expanded state (prevent flash)
         if (savedState.challengeTypesExpanded) {
             const toggleBtn = document.getElementById('toggleChallengeTypes');
             const container = document.getElementById('challengeTypesContainer');
@@ -315,12 +319,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     
-    // Initialize board EARLY (before showing page)
     const initialBoardSize = savedState?.totalSquares || 100;
     boardRenderer = new BoardRenderer(initialBoardSize);
     scaleManager  = new ScaleManager(boardRenderer);
     
-    // FIX: Restore snakes/ladders from saved state BEFORE creating board
     if (savedState && savedState.boardSnakes && savedState.boardLadders) {
         window.BOARD_SNAKES = savedState.boardSnakes;
         window.BOARD_LADDERS = savedState.boardLadders;
@@ -331,13 +333,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     scaleManager.init();
     
-    // PRE-SET UI elements BEFORE showing page to prevent flash
     if (savedState && savedState.gameStarted) {
-        // Update turn counter and dice result immediately
         document.getElementById('turnCounter').textContent = `Turn: ${savedState.turnCount}`;
         document.getElementById('diceResult').textContent = savedState.diceResultText || 'Dice: -';
         
-        // Update button text based on phase
         const rollDiceButton = document.getElementById('rollDice');
         const phase = savedState.gamePhase || 'awaiting_dice_roll';
         
@@ -349,59 +348,51 @@ document.addEventListener('DOMContentLoaded', async () => {
             rollDiceButton.textContent = '🎲 Roll Dice';
         }
         
-        // PRE-POSITION the player piece (before showing page)
         if (savedState.playerPosition > 0) {
             setPlayerPosition(savedState.playerPosition);
         }
     }
     
     // Determine which page to show based on game phase
-    let initialPage = 'home'; // Default
+    let initialPage = 'home';
     if (savedState && savedState.gameStarted) {
         const phase = savedState.gamePhase || 'awaiting_dice_roll';
         
         if (savedState.currentInstruction && savedState.currentInstruction.trim() !== '') {
-            // Currently showing a task
             initialPage = 'task';
         } else if (phase === 'awaiting_dice_roll' || 
                    phase === 'awaiting_normal_task' || 
                    phase === 'awaiting_snake_ladder_task' ||
                    phase === 'awaiting_snake_ladder_movement') {
-            // On board, waiting for some action
             initialPage = 'board';
         } else {
-            // Default to board if game started
             initialPage = 'board';
         }
     }
     
     console.log('📄 Initial page:', initialPage, '| Phase:', savedState?.gamePhase);
     
-    // Show the correct page immediately (after UI is pre-set)
-    showPage(initialPage);
+    // Show initial page WITHOUT animation (hard refresh / first load)
+    _activatePage(
+        document.getElementById(initialPage + 'Page'),
+        initialPage,
+        false  // no entrance animation on cold load
+    );
 
-    // Set initial body class for button positioning
     if (initialPage === 'home') {
         document.body.classList.add('on-home-page');
     } else {
         document.body.classList.remove('on-home-page');
     }
     
-    // Initialize UI
     initializeUI();
-    
-    // Initialize classic radio state based on board size
     updateClassicRadioState(savedState?.totalSquares || 100);
     
-    // Initialize custom snakes/ladders display if custom mode is selected
     if (savedState?.snakesLaddersMode === 'custom') {
         const customInputs = document.getElementById('customSnakesLaddersInputs');
-        if (customInputs) {
-            customInputs.style.display = 'block';
-        }
+        if (customInputs) customInputs.style.display = 'block';
     }
     
-    // Load task registry
     console.log('📦 Loading task registry...');
     const registry = await loadTaskRegistry();
     if (registry) {
@@ -411,22 +402,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.warn('⚠️ Failed to load task registry - using fallback tasks');
     }
     
-    // Setup event listeners
     setupEventListeners();
     
-    // Restore saved game if exists
     if (savedState) {
         restoreSavedGame(savedState);
     }
     
-    // CRITICAL: If we're showing the board page, wait for it to fully render then scroll
     if (initialPage === 'board') {
         waitForBoard(() => {
             if (savedState && savedState.playerPosition > 0) {
-                // Game in progress - scroll to player
                 scrollToPlayer(savedState.playerPosition, true);
             } else {
-                // New game at position 0 - scroll to bottom
                 scrollToBottom();
             }
         });
@@ -437,64 +423,39 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Set up event listeners
 function setupEventListeners() {
-    // Start game button
     document.getElementById('startButton').addEventListener('click', startGame);
     
-    // Board size input
     const boardSizeInput = document.getElementById('boardSizeSelect');
     
-    // Prevent non-numeric input
     boardSizeInput.addEventListener('keypress', function(e) {
-        // Only allow numbers
-        if (!/[0-9]/.test(e.key)) {
-            e.preventDefault();
-        }
+        if (!/[0-9]/.test(e.key)) e.preventDefault();
     });
     
-    // Enforce min/max while typing or using arrow keys
     boardSizeInput.addEventListener('input', function(e) {
         let value = parseInt(this.value);
-        
-        // Allow empty during typing
-        if (isNaN(value) || this.value === '') {
-            return;
-        }
-        
-        // Cap at maximum
-        if (value > 1000) {
-            this.value = 1000;
-        }
-        
-        // Don't enforce minimum during typing (wait for blur)
-        // This allows user to type "5" on their way to "50"
-        
-        // Update classic radio state immediately based on input value
+        if (isNaN(value) || this.value === '') return;
+        if (value > 1000) this.value = 1000;
         updateClassicRadioState(parseInt(this.value) || 100);
     });
     
-    // Validate and round on blur (when user clicks away)
     boardSizeInput.addEventListener('blur', function() {
         validateBoardSize(this);
     });
     
-    // Validate and round on Enter key
     boardSizeInput.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             validateBoardSize(this);
-            this.blur(); // Remove focus
+            this.blur();
         }
     });
     
-    // Player name input
     document.getElementById('playerNameInput').addEventListener('input', function() {
         window.GAME_STATE.playerName = this.value;
         saveGameState();
     });
     
-    // Snakes and Ladders mode radio buttons
     document.querySelectorAll('input[name="snakesLaddersMode"]').forEach(radio => {
         radio.addEventListener('change', function() {
-            // If Classic is selected and board size is not 100, change it to 100
             if (this.value === 'classic') {
                 const boardSizeInput = document.getElementById('boardSizeSelect');
                 if (boardSizeInput && parseInt(boardSizeInput.value) !== 100) {
@@ -506,13 +467,11 @@ function setupEventListeners() {
         });
     });
     
-    // Snakes and Ladders difficulty dropdown
     document.getElementById('snakesLaddersDifficulty').addEventListener('change', function() {
         window.GAME_STATE.snakesLaddersDifficulty = this.value;
         saveGameState();
     });
     
-    // Custom snakes and ladders inputs
     document.getElementById('customSnakesInput').addEventListener('input', function() {
         window.GAME_STATE.customSnakes = parseCustomSnakesLadders(this.value);
         saveGameState();
@@ -523,42 +482,34 @@ function setupEventListeners() {
         saveGameState();
     });
     
-    // Generate custom button
     document.getElementById('generateCustomBtn').addEventListener('click', () => {
         window.generateAndPopulateCustom();
     });
     
-    // Reset button - check which page we're on
     document.getElementById('resetBtn').addEventListener('click', () => {
         const isOnHomePage = document.body.classList.contains('on-home-page');
         if (isOnHomePage) {
-            // On home page - show reset settings modal
             document.getElementById('resetSettingsModal').classList.add('active');
         } else {
-            // On board/task page - show reset game modal
             document.getElementById('resetModal').classList.add('active');
         }
     });
     
-    // Patch notes button
     document.getElementById('patchNotesBtn').addEventListener('click', () => {
         document.getElementById('patchNotesModal').classList.add('active');
     });
     
-    // Modal close buttons
     document.querySelectorAll('.close-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.target.closest('.modal').classList.remove('active');
         });
     });
     
-    // Reset game modal buttons
     document.getElementById('confirmReset').addEventListener('click', resetGame);
     document.getElementById('cancelReset').addEventListener('click', () => {
         document.getElementById('resetModal').classList.remove('active');
     });
     
-    // Reset settings modal buttons
     document.getElementById('confirmResetSettings').addEventListener('click', () => {
         resetSettings();
         document.getElementById('resetSettingsModal').classList.remove('active');
@@ -567,24 +518,21 @@ function setupEventListeners() {
         document.getElementById('resetSettingsModal').classList.remove('active');
     });
     
-    // Close modals when clicking outside
     window.addEventListener('click', (e) => {
         if (e.target.classList.contains('modal')) {
             e.target.classList.remove('active');
         }
     });
-    
 }
+
 // Start game
 function startGame() {
-    // Validate instruction sets
     const selectedSets = window.GAME_STATE.selectedSets;
     if (selectedSets.length === 0) {
         alert('⚠️ Please select at least one instruction set before starting!');
         return;
     }
     
-    // Validate toys
     const hasToys = Object.values(window.GAME_STATE.toyQuantities).some(qty => qty > 0);
     const hasCheckedToys = Object.values(window.GAME_STATE.toyChecked).some(checked => checked);
     
@@ -593,49 +541,40 @@ function startGame() {
         return;
     }
     
-    // Validate player name
     const playerName = document.getElementById('playerNameInput').value.trim();
     if (!playerName) {
         alert('⚠️ Please enter your name before starting!');
         return;
     }
     
-    // Validate task registry
     if (!taskRegistryLoaded) {
         alert('⚠️ Task system is still loading. Please wait a moment and try again.');
         return;
     }
     
-    // Get board size - validate it first
     const boardSizeInput = document.getElementById('boardSizeSelect');
     validateBoardSize(boardSizeInput);
     const boardSize = parseInt(boardSizeInput.value);
     
-    // Set player name and board size
     window.GAME_STATE.playerName = playerName;
     window.GAME_STATE.totalSquares = boardSize;
     boardRenderer.updateSize(boardSize);
     
-    // Generate or apply snakes and ladders based on mode
     const mode = window.GAME_STATE.snakesLaddersMode;
     
     if (mode === 'classic') {
-        // Use classic snakes and ladders (only for 100-square board)
         window.BOARD_SNAKES = {16:6, 47:26, 49:11, 56:53, 62:19, 64:60, 87:24, 93:73, 95:75, 98:78};
         window.BOARD_LADDERS = {1:38, 4:14, 9:31, 21:42, 28:84, 36:44, 51:67, 71:91, 80:99};
     } else if (mode === 'random') {
-        // Generate random snakes and ladders with selected difficulty
         const difficulty = window.GAME_STATE.snakesLaddersDifficulty || 'medium';
         const generated = generateRandomSnakesAndLadders(boardSize, difficulty);
         window.BOARD_SNAKES = generated.snakes;
         window.BOARD_LADDERS = generated.ladders;
         console.log(`Generated random snakes/ladders (${difficulty}):`, window.BOARD_SNAKES, window.BOARD_LADDERS);
     } else if (mode === 'custom') {
-        // Use custom snakes and ladders
         window.BOARD_SNAKES = { ...window.GAME_STATE.customSnakes };
         window.BOARD_LADDERS = { ...window.GAME_STATE.customLadders };
         
-        // Validate custom configuration
         const errors = validateCustomSnakesLadders(
             window.BOARD_SNAKES, 
             window.BOARD_LADDERS, 
@@ -644,54 +583,43 @@ function startGame() {
         
         if (errors.length > 0) {
             alert('⚠️ Custom snakes/ladders have errors:\n\n' + errors.join('\n'));
-            // Don't start the game or set gameStarted flag
             return;
         }
-        
-        console.log('Using custom snakes:', window.BOARD_SNAKES);
-        console.log('Using custom ladders:', window.BOARD_LADDERS);
     }
     
-    // FIX: Save snakes/ladders to game state for persistence
     window.GAME_STATE.boardSnakes = window.BOARD_SNAKES;
     window.GAME_STATE.boardLadders = window.BOARD_LADDERS;
     
-    // Only set gameStarted AFTER all validation passes
     window.GAME_STATE.gameStarted = true;
     window.GAME_STATE.gamePhase = 'awaiting_dice_roll';
     
-    // Update board renderer with new snakes/ladders
     boardRenderer.snakes = window.BOARD_SNAKES;
     boardRenderer.ladders = window.BOARD_LADDERS;
     
-    // Handle cage "start worn" option
     if (window.GAME_STATE.cageWorn && window.GAME_STATE.toyChecked['cage']) {
         window.addToyToBodyPart('Pe', 'cage');
     }
     
-    // Create board with selected size
     scaleManager.init();
     
-    // Show board page
+    // ── Flag the board page to slide in from the top ──────────────────────
+    _nextBoardAnim = 'slide';
+
     showPage('board');
     
-    // Reset turn counter
     window.GAME_STATE.turnCount = 0;
     document.getElementById('turnCounter').textContent = 'Turn: 0';
     document.getElementById('diceResult').textContent = 'Dice: -';
     window.GAME_STATE.diceResultText = 'Dice: -';
     
-    // ✅ FIX: Reset roll dice button to initial state
     const rollDiceButton = document.getElementById('rollDice');
     rollDiceButton.textContent = '🎲 Roll Dice';
     rollDiceButton.disabled = false;
     rollDiceButton.onclick = null;
     rollDiceButton.onclick = rollDice;
     
-    // Save state
     saveGameState();
     
-    // CRITICAL: Wait for board to render, then scroll to bottom for new game
     waitForBoard(() => {
         scrollToBottom();
     });
@@ -704,28 +632,18 @@ function restoreSavedGame(state) {
     console.log('💾 Restoring saved game...', state);
     console.log('📍 Game phase:', state.gamePhase);
     
-    // Restore UI state
     restoreUIState(state);
     
-    // If game was in progress, restore board
     if (state.gameStarted) {
-        // Note: Board already created and player already positioned in DOMContentLoaded
-        
         const rollDiceButton = document.getElementById('rollDice');
         const phase = state.gamePhase || 'awaiting_dice_roll';
         
-        // Restore based on game phase
         if (state.currentInstruction && state.currentInstruction.trim() !== '') {
-            // Was viewing a task - restore VN state
-            // NEW: Call VN restoration
             restoreVNState();
             
         } else if (phase === 'awaiting_snake_ladder_task') {
-            // Waiting to show snake/ladder task
-            // Button text already set to Enter
             rollDiceButton.disabled = false;
             
-            // Highlight destination
             if (state.pendingSnakeLadder) {
                 const destSquare = document.getElementById(`square-${state.pendingSnakeLadder.to}`);
                 if (destSquare) {
@@ -735,7 +653,6 @@ function restoreSavedGame(state) {
                 }
                 
                 rollDiceButton.onclick = () => {
-                    // Don't remove highlight yet - keep it until we move
                     showPage('task');
                     window.displaySnakeLadderTask(
                         state.pendingSnakeLadder.type,
@@ -745,16 +662,12 @@ function restoreSavedGame(state) {
                 };
             }
         } else if (phase === 'awaiting_normal_task') {
-            // Waiting to show normal task
-            // Button text already set to Enter
             rollDiceButton.disabled = false;
             rollDiceButton.onclick = () => {
                 showPage('task');
                 window.displayRandomInstructionWithAddRemove(state.pendingAddRemoveTask);
             };
         } else {
-            // awaiting_dice_roll or default
-            // Button text already set to Roll Dice
             rollDiceButton.disabled = false;
             rollDiceButton.onclick = rollDice;
         }
@@ -767,7 +680,6 @@ function restoreSavedGame(state) {
 function resetGame() {
     console.log('🔄 Resetting game...');
     
-    // Only reset game progress state, not settings
     window.GAME_STATE.gameStarted = false;
     window.GAME_STATE.playerPosition = 0;
     window.GAME_STATE.turnCount = 0;
@@ -784,11 +696,10 @@ function resetGame() {
     window.GAME_STATE.diceResultText = 'Dice: -';
     window.GAME_STATE.pendingSnakeLadder = null;
     window.GAME_STATE.gamePhase = 'awaiting_dice_roll';
-    window.GAME_STATE.vnState = null; // NEW: Reset VN state
-    window.GAME_STATE.boardSnakes = {}; // Reset board state
+    window.GAME_STATE.vnState = null;
+    window.GAME_STATE.boardSnakes = {};
     window.GAME_STATE.boardLadders = {};
     
-    // Reset body part state
     window.GAME_STATE.bodyPartState = {
         Mo: { name: "Mo", items: [] },
         Ba: { name: "Ba", items: [] },
@@ -800,33 +711,26 @@ function resetGame() {
         Pe: { name: "Pe", items: [] }
     };
     
-    // Reset player state
     resetPlayerState();
     
-    // Reset UI elements (but keep settings)
     document.getElementById('turnCounter').textContent = 'Turn: 0';
     document.getElementById('diceResult').textContent = 'Dice: -';
     document.getElementById('testJumpInput').value = '';
     
-    // Reset roll dice button
     const rollDiceButton = document.getElementById('rollDice');
     rollDiceButton.textContent = '🎲 Roll Dice';
     rollDiceButton.disabled = false;
     rollDiceButton.onclick = null;
     rollDiceButton.onclick = rollDice;
     
-    // Clear instructions
     const instructions = document.getElementById('instructions');
     instructions.classList.remove('active');
     instructions.innerHTML = '';
     
-    // Save state
     saveGameState();
     
-    // Close modal
     document.getElementById('resetModal').classList.remove('active');
     
-    // Show home page
     showPage('home');
     
     console.log('✅ Game reset complete');
@@ -836,26 +740,19 @@ function resetGame() {
 function resetSettings() {
     console.log('🔄 Resetting settings...');
     
-    // Clear localStorage completely
     resetGameState();
     resetPlayerState();
     
-    // Reset ALL UI elements to defaults
     document.getElementById('playerNameInput').value = '';
     document.getElementById('boardSizeSelect').value = '100';
     
-    // Reset instruction set checkboxes
     document.querySelectorAll('#instructionSetCheckboxes input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
     });
     
-    // Reset prize sliders to defaults
     window.GAME_STATE.prizeSettings = { full: 33, ruin: 33, denied: 34 };
-    
-    // Reset final challenge sliders to defaults
     window.GAME_STATE.finalChallengeSettings = { stroking: 33, vibe: 33, anal: 34 };
     
-    // Reset final challenge types
     window.GAME_STATE.finalChallengeTypes = {
         stroking_icyhot: false,
         stroking_icewater: false,
@@ -867,14 +764,12 @@ function resetSettings() {
         anal_vibe: false
     };
     
-    // Reset final challenge difficulties
     window.GAME_STATE.finalChallengeDifficulties = {
         stroking: 'medium',
         vibe: 'medium',
         anal: 'medium'
     };
     
-    // Reset final challenge modifier chances
     window.GAME_STATE.finalChallengeModifierChances = {
         stroking_icyhot: 10,
         stroking_icewater: 10,
@@ -888,13 +783,8 @@ function resetSettings() {
         pf: 10
     };
     
-    // Reset final challenge modifiers (CE, PF)
-    window.GAME_STATE.finalChallengeModifiers = {
-        ce: false,
-        pf: false
-    };
+    window.GAME_STATE.finalChallengeModifiers = { ce: false, pf: false };
     
-    // Reset snakes/ladders mode and difficulty
     const classicRadio = document.querySelector('input[name="snakesLaddersMode"][value="classic"]');
     if (classicRadio) classicRadio.checked = true;
     handleSnakesLaddersModeChange('classic');
@@ -903,33 +793,28 @@ function resetSettings() {
     if (difficultyDropdown) difficultyDropdown.value = 'medium';
     window.GAME_STATE.snakesLaddersDifficulty = 'medium';
     
-    // Reset all final challenge checkboxes
     ['stroking_icyhot', 'stroking_icewater', 'stroking_ktb', 'stroking_ballsqueeze', 'stroking_2finger',
      'vibe_icyhot', 'vibe_icewater', 'anal_vibe'].forEach(id => {
         const checkbox = document.getElementById(id);
         if (checkbox) checkbox.checked = false;
     });
     
-    // Reset modifier checkboxes (CE, PF)
     ['ce', 'pf'].forEach(mod => {
         const checkbox = document.getElementById(`modifier_${mod}`);
         if (checkbox) checkbox.checked = false;
     });
     
-    // Reset all modifier chance inputs
     ['stroking_icyhot', 'stroking_icewater', 'stroking_ktb', 'stroking_ballsqueeze', 'stroking_2finger',
      'vibe_icyhot', 'vibe_icewater', 'anal_vibe', 'ce', 'pf'].forEach(id => {
         const input = document.getElementById(`${id}_chance`);
         if (input) input.value = 10;
     });
     
-    // Reset final challenge difficulty dropdowns
     ['stroking', 'vibe', 'anal'].forEach(type => {
         const dropdown = document.getElementById(`${type}Difficulty`);
         if (dropdown) dropdown.value = 'medium';
     });
     
-    // Update prize slider displays
     document.getElementById('fullPercent').textContent = '33%';
     document.getElementById('ruinPercent').textContent = '33%';
     document.getElementById('deniedPercent').textContent = '34%';
@@ -937,7 +822,6 @@ function resetSettings() {
     document.getElementById('ruinSlider').value = 33;
     document.getElementById('deniedSlider').value = 34;
     
-    // Update final challenge slider displays
     document.getElementById('strokingPercent').textContent = '33%';
     document.getElementById('vibePercent').textContent = '33%';
     document.getElementById('analPercent').textContent = '34%';
@@ -945,7 +829,6 @@ function resetSettings() {
     document.getElementById('vibeSlider').value = 33;
     document.getElementById('analSlider').value = 34;
     
-    // Re-initialize UI completely
     initializeUI();
     
     console.log('✅ Settings reset complete');
