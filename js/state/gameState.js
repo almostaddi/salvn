@@ -29,6 +29,7 @@ export function initializeState() {
             Pe: { name: "Pe", items: [] }
         },
         playerName: '',
+        playerPronouns: 'he/him',
         toySetEnabled: {},
         toyChecked: {},
         cageLocked: false,
@@ -193,6 +194,7 @@ export function resetGameState() {
     window.GAME_STATE.lastSelectedSet = {};
     window.GAME_STATE.completedOnlyOnceTasks = {};
     window.GAME_STATE.playerName = '';
+    window.GAME_STATE.playerPronouns = 'he/him';
     window.GAME_STATE.selectedSets = [];
     window.GAME_STATE.toyDifficulties = {};
     window.GAME_STATE.toyQuantities = {};
@@ -267,6 +269,7 @@ export function getTaskConditions() {
     return {
         // Player info
         name: window.GAME_STATE.playerName || 'Player',
+        pronouns: window.GAME_STATE.playerPronouns || 'he/him',
         playerPosition: window.GAME_STATE.playerPosition,
         turnCount: window.GAME_STATE.turnCount,
         
