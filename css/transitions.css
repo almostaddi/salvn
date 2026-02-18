@@ -25,18 +25,22 @@
 }
 
 /* ── Incoming page sits on top and plays its entrance animation ──────────── */
-/* The OLD page stays visible in normal flow underneath — no overlay needed  */
+/* z-index: 1001 ensures it renders above the fixed controls bar (z-index: 1000) */
 .page-entering-fade {
     position: fixed;
     inset: 0;
-    z-index: 100;
+    z-index: 1001;
+    background: var(--primary-gradient);
+    background-attachment: fixed;
     animation: snl-fadeIn 0.65s ease both;
 }
 
 .page-entering-slide {
     position: fixed;
     inset: 0;
-    z-index: 100;
+    z-index: 1001;
+    background: var(--primary-gradient);
+    background-attachment: fixed;
     animation: snl-slideInFromTop 1.0s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
