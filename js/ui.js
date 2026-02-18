@@ -7,6 +7,7 @@ export function initializeUI() {
     setupInstructionSetCheckboxes();
     setupSliders();
     setupFinalChallengeUI();
+    setupPronounSelector();
     renderToyLibrary();
 }
 
@@ -82,6 +83,16 @@ function setupSliders() {
         }
         
         updateSliderDisplays();
+    });
+}
+
+// Pronoun setup
+function setupPronounSelector() {
+    const select = document.getElementById('playerPronounsSelect');
+    if (!select) return;
+    select.addEventListener('change', function() {
+        window.GAME_STATE.playerPronouns = this.value;
+        saveGameState();
     });
 }
 
@@ -938,6 +949,10 @@ export function restoreUIState(state) {
     
     // Restore player name
     document.getElementById('playerNameInput').value = state.playerName;
+    const pronounsSelect = document.getElementById('playerPronounsSelect');
+    if (pronounsSelect && state.playerPronouns) {
+        pronounsSelect.value = state.playerPronouns;
+    }
     
     // Restore board size
     document.getElementById('boardSizeSelect').value = state.totalSquares;
