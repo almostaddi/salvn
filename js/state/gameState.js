@@ -30,11 +30,12 @@ export function initializeState() {
         },
         playerName: '',
         playerPronouns: 'he/him',
-        // Body type configuration
+        // Body type configuration (checkboxes - player checks which parts they have)
         bodyType: {
-            lower: 'Pe',       // 'Pe' (penis) or 'Pu' (pussy)
-            torso: 'Chest',    // 'Chest' or 'Breasts'
-            hasBa: true        // true = has Ba (balls/butt area), false = no Ba
+            pe: true,        // Penis
+            pu: false,       // Pussy
+            breasts: false,  // Breasts
+            ba: true         // Balls/Butt Area
         },
         toySetEnabled: {},
         toyChecked: {},
@@ -142,10 +143,16 @@ export function loadGameState() {
         
         // Ensure bodyType exists with defaults for old saves
         if (!window.GAME_STATE.bodyType) {
+            window.GAME_STATE.bodyType = { pe: true, pu: false, breasts: false, ba: true };
+        }
+        // Migrate old radio-based format to new checkbox format
+        if (window.GAME_STATE.bodyType.lower !== undefined) {
+            const old = window.GAME_STATE.bodyType;
             window.GAME_STATE.bodyType = {
-                lower: 'Pe',
-                torso: 'Chest',
-                hasBa: true
+                pe: old.lower === 'Pe',
+                pu: old.lower === 'Pu',
+                breasts: old.torso === 'Breasts',
+                ba: old.hasBa !== false
             };
         }
         
@@ -210,7 +217,7 @@ export function resetGameState() {
     window.GAME_STATE.completedOnlyOnceTasks = {};
     window.GAME_STATE.playerName = '';
     window.GAME_STATE.playerPronouns = 'he/him';
-    window.GAME_STATE.bodyType = { lower: 'Pe', torso: 'Chest', hasBa: true };
+    window.GAME_STATE.bodyType = { pe: true, pu: false, breasts: false, ba: true };
     window.GAME_STATE.selectedSets = [];
     window.GAME_STATE.toyDifficulties = {};
     window.GAME_STATE.toyQuantities = {};
@@ -282,22 +289,13 @@ export function resetGameState() {
 
 // Get the set of body parts this player actually has, based on bodyType settings
 export function getPlayerBodyParts() {
-    const bodyType = window.GAME_STATE.bodyType || { lower: 'Pe', torso: 'Chest', hasBa: true };
+    const bodyType = window.GAME_STATE.bodyType || { pe: true, pu: false, breasts: false, ba: true };
     const parts = new Set(['Mo', 'As', 'Ha', 'Bo']); // Always present
 
-    // Lower body
-    parts.add(bodyType.lower); // 'Pe' or 'Pu'
-
-    // Torso
-    if (bodyType.torso === 'Breasts') {
-        parts.add('Ni'); // nipples present with breasts
-    }
-    // Chest still has nipples technically, but task authors may restrict
-    // Keep Ni available for both to avoid over-restricting; tasks use 'Breasts' check if needed
-    parts.add('Ni');
-
-    // Ba
-    if (bodyType.hasBa) {
+    if (bodyType.pe)      parts.add('Pe');
+    if (bodyType.pu)      parts.add('Pu');
+    if (bodyType.breasts) parts.add('Ni'); // nipples via breasts
+    if (bodyType.ba) {
         parts.add('Ba');
         parts.add('Bu');
     }
@@ -315,7 +313,7 @@ export function getTaskConditions() {
         turnCount: window.GAME_STATE.turnCount,
 
         // Body type
-        bodyType: window.GAME_STATE.bodyType || { lower: 'Pe', torso: 'Chest', hasBa: true },
+        bodyType: window.GAME_STATE.bodyType || { pe: true, pu: false, breasts: false, ba: true },
         
         // Turn count tracking
         getTurnCountForSet: (setId) => window.GAME_STATE.turnCountBySet[setId] || 0,
