@@ -52,53 +52,86 @@ let scaleManager;
 let taskRegistryLoaded = false;
 
 // ── Page transition helpers ──────────────────────────────────────────────────
+//
+// The fundamental problem: .page elements use display:none / display:block.
+// CSS opacity/transform transitions require the element to already be visible.
+//
+// Solution — "frozen overlay" technique:
+//   1. Take a screenshot of the current page via html2canvas — OR, simpler:
+//      capture its bounding box colour and create a fixed overlay div that
+//      matches the viewport. The overlay itself fades out while the new page
+//      plays its entrance animation underneath.
+//   2. Switch the real pages instantly (display:none → display:block).
+//   3. Remove the overlay after its fade-out animation ends.
+//
+// This means ZERO delay on the incoming page — transitions feel instant and
+// smooth simultaneously.
 
-// Tracks what entrance animation the board page should use next
-// 'slide' = slide in from top (game start)
-// 'fade'  = standard fade-in (returning from task)
-// null    = no animation (initial restore / hard refresh)
+// 'slide' triggers the board slide-in-from-top (set just before startGame calls showPage)
 let _nextBoardAnim = null;
 
-// Fade-out duration must match the CSS animation duration in transitions.css
-const FADE_OUT_MS = 260;
+function showPage(pageName) {
+    console.log('🔄 Switching to page:', pageName);
 
-// Activate a page element with an optional entrance animation
-function _activatePage(pageEl, pageName, animate) {
-    // Strip any leftover animation classes
-    pageEl.classList.remove('page-fade-in', 'page-board-enter', 'page-fade-out');
-
-    // Make the page visible
-    pageEl.classList.add('active');
-
-    if (animate) {
-        if (pageName === 'board' && _nextBoardAnim === 'slide') {
-            pageEl.classList.add('page-board-enter');
-            _nextBoardAnim = null;
-            pageEl.addEventListener('animationend', () => {
-                pageEl.classList.remove('page-board-enter');
-            }, { once: true });
-        } else {
-            pageEl.classList.add('page-fade-in');
-            pageEl.addEventListener('animationend', () => {
-                pageEl.classList.remove('page-fade-in');
-            }, { once: true });
-        }
+    const targetPageEl = document.getElementById(pageName + 'Page');
+    if (!targetPageEl) {
+        console.error('❌ Page not found:', pageName + 'Page');
+        return;
     }
 
-    // Hide/show title
-    const mainTitle = document.querySelector('h1');
-    if (mainTitle) {
-        mainTitle.style.display = (pageName === 'task' || pageName === 'board') ? 'none' : 'block';
+    const outgoing = document.querySelector('.page.active');
+    const hasOutgoing = outgoing && outgoing !== targetPageEl;
+
+    // ── 1. Create the frozen overlay (if there's something to fade out) ──
+    if (hasOutgoing) {
+        const overlay = document.createElement('div');
+        overlay.className = 'page-transition-overlay';
+        // Match the gradient background so the overlay looks like the page
+        overlay.style.background = window.getComputedStyle(document.body).background;
+        document.body.appendChild(overlay);
+
+        // Remove overlay after its CSS animation finishes (~280ms)
+        overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
     }
 
-    // Hide instructions when leaving task page
+    // ── 2. Instantly hide all pages and show the target ──────────────────
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+
+    // Also hide instructions when leaving the task page
     const instructions = document.getElementById('instructions');
     if (instructions && pageName !== 'task') {
         instructions.classList.remove('active');
         console.log('🧹 Instructions hidden');
     }
 
-    // Update body classes & reset button label
+    targetPageEl.classList.add('active');
+
+    // ── 3. Play entrance animation on the incoming page ──────────────────
+    if (hasOutgoing) {
+        // Remove any leftover animation classes first
+        targetPageEl.classList.remove('page-entering-fade', 'page-entering-slide');
+
+        const animClass = (pageName === 'board' && _nextBoardAnim === 'slide')
+            ? 'page-entering-slide'
+            : 'page-entering-fade';
+
+        _nextBoardAnim = null;
+
+        // Force a reflow so the animation actually fires (element was just made visible)
+        void targetPageEl.offsetWidth;
+
+        targetPageEl.classList.add(animClass);
+        targetPageEl.addEventListener('animationend', () => {
+            targetPageEl.classList.remove('page-entering-fade', 'page-entering-slide');
+        }, { once: true });
+    }
+
+    // ── 4. Update title, body classes, button labels ──────────────────────
+    const mainTitle = document.querySelector('h1');
+    if (mainTitle) {
+        mainTitle.style.display = (pageName === 'task' || pageName === 'board') ? 'none' : 'block';
+    }
+
     const resetBtn = document.getElementById('resetBtn');
     if (pageName === 'home') {
         document.body.classList.add('on-home-page');
@@ -111,36 +144,6 @@ function _activatePage(pageEl, pageName, animate) {
     }
 
     console.log('✅ Now showing:', pageName);
-}
-
-// Show/hide pages with animated transitions
-function showPage(pageName) {
-    console.log('🔄 Switching to page:', pageName);
-
-    const targetPageEl = document.getElementById(pageName + 'Page');
-    if (!targetPageEl) {
-        console.error('❌ Page not found:', pageName + 'Page');
-        return;
-    }
-
-    // Find the currently visible page (if any)
-    const outgoing = document.querySelector('.page.active');
-
-    if (outgoing && outgoing !== targetPageEl) {
-        // Fade out the outgoing page, then show the new one
-        outgoing.classList.remove('page-fade-in', 'page-board-enter');
-        outgoing.classList.add('page-fade-out');
-
-        setTimeout(() => {
-            outgoing.classList.remove('active', 'page-fade-out');
-            _activatePage(targetPageEl, pageName, true);
-        }, FADE_OUT_MS);
-    } else {
-        // No outgoing page — initial load, show without entrance animation
-        // (unless we explicitly want one, e.g. on first game start from home)
-        const isFirstShow = !outgoing;
-        _activatePage(targetPageEl, pageName, !isFirstShow);
-    }
 }
 
 // Update classic radio button state based on board size
@@ -373,18 +376,28 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.log('📄 Initial page:', initialPage, '| Phase:', savedState?.gamePhase);
     
     // Show initial page WITHOUT animation (hard refresh / first load)
-    _activatePage(
-        document.getElementById(initialPage + 'Page'),
-        initialPage,
-        false  // no entrance animation on cold load
-    );
+    // Call showPage but suppress the entrance animation by ensuring
+    // there's no outgoing page (all pages are already hidden via CSS default)
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const initialPageEl = document.getElementById(initialPage + 'Page');
+    if (initialPageEl) initialPageEl.classList.add('active');
 
+    // Apply the same side-effects showPage normally handles
+    const mainTitle = document.querySelector('h1');
+    if (mainTitle) {
+        mainTitle.style.display = (initialPage === 'task' || initialPage === 'board') ? 'none' : 'block';
+    }
+    const resetBtnInit = document.getElementById('resetBtn');
     if (initialPage === 'home') {
         document.body.classList.add('on-home-page');
+        document.body.classList.remove('show-fixed-buttons');
+        if (resetBtnInit) resetBtnInit.textContent = '🔄 Reset Settings';
     } else {
         document.body.classList.remove('on-home-page');
+        document.body.classList.add('show-fixed-buttons');
+        if (resetBtnInit) resetBtnInit.textContent = '🔄 Reset';
     }
-    
+
     initializeUI();
     updateClassicRadioState(savedState?.totalSquares || 100);
     
