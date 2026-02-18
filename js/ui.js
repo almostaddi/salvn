@@ -427,42 +427,62 @@ function createToyLibraryItem(toyId, toyData) {
     const item = document.createElement('div');
     item.className = 'toy-library-item';
     
-    // Toy header with checkbox and name
+    // Single row: [checkbox] [name — grows] [Qty: input] (cage skips qty)
     const header = document.createElement('div');
     header.className = 'toy-header';
-    
-    const checkboxWrapper = document.createElement('div');
-    checkboxWrapper.className = 'toy-checkbox-wrapper';
+    header.style.cssText = 'display: flex; align-items: center; gap: 8px;';
     
     const checkbox = document.createElement('input');
     checkbox.type = 'checkbox';
     checkbox.checked = window.GAME_STATE.toyChecked[toyId];
+    checkbox.style.cssText = 'flex-shrink: 0; width: 16px; height: 16px; cursor: pointer; accent-color: #667eea;';
     checkbox.addEventListener('change', () => {
         window.GAME_STATE.toyChecked[toyId] = checkbox.checked;
-        
-        // Don't reset values, just grey out/ungrey controls
-        // The game logic will treat unchecked toys as 0/unselected
-        
         updateToyEnabledStates(toyId, toyData, item);
         updateContinuousTaskProbabilities();
         saveGameState();
     });
-    checkboxWrapper.appendChild(checkbox);
+    header.appendChild(checkbox);
     
     const nameSpan = document.createElement('span');
     nameSpan.className = 'toy-name';
     nameSpan.textContent = toyData.name;
-    
-    header.appendChild(checkboxWrapper);
+    nameSpan.style.cssText = 'flex: 1; font-size: 15px; font-weight: 600;';
     header.appendChild(nameSpan);
+    
+    // Inline quantity for non-cage toys
+    if (toyId !== 'cage') {
+        const toyKeys = toyData.sets.map(s => `${s.setId}_${toyId}`);
+        const toyQuantity = window.GAME_STATE.toyQuantities[toyKeys[0]] || 1;
+        
+        const qtyWrapper = document.createElement('label');
+        qtyWrapper.style.cssText = 'display: flex; align-items: center; gap: 4px; flex-shrink: 0; font-size: 13px; color: #555; margin: 0;';
+        
+        const qtyText = document.createTextNode('Qty:');
+        qtyWrapper.appendChild(qtyText);
+        
+        const qtyInput = document.createElement('input');
+        qtyInput.type = 'number';
+        qtyInput.min = '1';
+        qtyInput.value = toyQuantity;
+        qtyInput.disabled = !window.GAME_STATE.toyChecked[toyId];
+        qtyInput.className = 'toy-quantity-input';
+        qtyInput.style.cssText = 'width: 52px; padding: 2px 6px; font-size: 13px; margin: 0;';
+        qtyInput.addEventListener('change', function() {
+            const newQty = Math.max(1, parseInt(this.value) || 1);
+            toyKeys.forEach(key => { window.GAME_STATE.toyQuantities[key] = newQty; });
+            this.value = newQty;
+            saveGameState();
+        });
+        qtyWrapper.appendChild(qtyInput);
+        header.appendChild(qtyWrapper);
+    }
+    
     item.appendChild(header);
     
-    // Special handling for cage toy
+    // Cage worn/locked controls on their own row
     if (toyId === 'cage') {
         item.appendChild(createCageControls(toyId, toyData));
-    } else {
-        // Regular toy controls (quantity)
-        item.appendChild(createToyControls(toyId, toyData));
     }
     
     // Set difficulty section (only if sets are available)
@@ -548,36 +568,6 @@ function createCageControls(toyId, toyData) {
     return controls;
 }
 
-// Create toy controls (quantity input)
-function createToyControls(toyId, toyData) {
-    const controls = document.createElement('div');
-    controls.className = 'toy-controls';
-    
-    const qtyLabel = document.createElement('label');
-    qtyLabel.textContent = 'Qty:';
-    controls.appendChild(qtyLabel);
-    
-    const toyKeys = toyData.sets.map(s => `${s.setId}_${toyId}`);
-    const toyQuantity = window.GAME_STATE.toyQuantities[toyKeys[0]] || 1;
-    
-    const qtyInput = document.createElement('input');
-    qtyInput.type = 'number';
-    qtyInput.min = '1';
-    qtyInput.value = toyQuantity;
-    qtyInput.disabled = !window.GAME_STATE.toyChecked[toyId];
-    qtyInput.className = 'toy-quantity-input';
-    qtyInput.addEventListener('change', function() {
-        const newQty = Math.max(1, parseInt(this.value) || 1);
-        toyKeys.forEach(key => {
-            window.GAME_STATE.toyQuantities[key] = newQty;
-        });
-        // DON'T call renderToyLibrary here - just update the value and save
-        this.value = newQty;
-        saveGameState();
-    });
-    controls.appendChild(qtyInput);
-    
-    return controls;
 }
 
 // Create set difficulty section (wrapped in collapsible container)
