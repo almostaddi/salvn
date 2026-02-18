@@ -28,13 +28,10 @@ export default {
         const maxBa = 20;
         const availableSpace = maxBa - baCount;
         const { pronouns } = conditions;
-        // Helper for subject/object/possessive:
         const [subject, object] = pronouns.split('/');
-        // subject = 'he', object = 'him'
         
         // Dynamic task based on state
         if (availableSpace < 5) {
-            // Not enough space - show error stage
             return {
                 image: 'https://picsum.photos/seed/pegs_error/800/600',
                 bubbles: [
@@ -42,7 +39,7 @@ export default {
                     `<p>Ba already has ${baCount} pegs. Max is ${maxBa}.</p>`,
                     `<p>Can only add ${availableSpace} more. Remove some pegs first!</p>`
                 ],
-                complete: true // No actual task, just info
+                complete: true
             };
         }
         
@@ -50,23 +47,22 @@ export default {
         return {
             image: 'https://picsum.photos/seed/pegs_intro/800/600',
             
-            // Initial bubbles
             bubbles: [
                 '<strong>📥 Clothes Pegs Task</strong>',
                 `<p>You currently have ${currentPegs} pegs attached total.</p>`,
                 hasManyPegs 
-                    ? `<p><em>Wow, that's a lot of pegs already! You're doing great.</em></p>`
-                    : `<p>Let's add some more pegs to Ba.</p>`
+                    ? `<p><em>Wow, that is a lot of pegs already! You are doing great.</em></p>`
+                    : `<p>Let us add some more pegs to Ba.</p>`
             ],
             
-            // Shared data across stages
             data: {
                 targetCount: 5,
                 actualCount: 0,
-                difficulty: difficulty
+                difficulty: difficulty,
+                subject: subject,
+                object: object
             },
             
-            // Multi-stage task
             stages: [
                 // Stage 1: Choose location preference
                 {
@@ -74,7 +70,7 @@ export default {
                     image: 'https://picsum.photos/seed/pegs_choose/800/600',
                     bubbles: [
                         '<strong>Placement Style</strong>',
-                        '<p>Let's see where ${subject} wants to place the pegs...</p>'
+                        function(data) { return `<p>Let us see where ${data.subject} wants to place the pegs...</p>`; }
                     ],
                     choices: [
                         {
@@ -90,7 +86,7 @@ export default {
                             onSelect: function(data) {
                                 data.placement = 'concentrated';
                                 data.bonus = 'That will be more intense!';
-                                data.targetCount += 2; // Punishment for harder choice
+                                data.targetCount += 2;
                                 return 'prepare';
                             }
                         }
@@ -106,7 +102,7 @@ export default {
                         vn.clearBubbles();
                         vn.addBubble('<strong>Prepare Ba</strong>');
                         vn.addBubble(`<p>${data.bonus}</p>`);
-                        vn.addBubble(`<p>You'll need to attach ${data.targetCount} pegs.</p>`);
+                        vn.addBubble(`<p>You will need to attach ${data.targetCount} pegs.</p>`);
                         vn.addBubble('<p>Make sure Ba is clean and ready.</p>');
                         vn.advanceBubble();
                     },
@@ -124,7 +120,6 @@ export default {
                     id: 'attach',
                     image: 'https://picsum.photos/seed/pegs_attach/800/600',
                     
-                    // Add progress module
                     leftModule: {
                         title: 'Progress',
                         content: function(data) {
@@ -166,7 +161,6 @@ export default {
                             nextStage: 'verify',
                             type: 'next',
                             execute: function(data) {
-                                // Actually add pegs to game state
                                 for (let i = 0; i < data.targetCount; i++) {
                                     window.addToyToBodyPart('Ba', 'pegs');
                                     data.actualCount++;
@@ -181,12 +175,12 @@ export default {
                 {
                     id: 'verify',
                     image: 'https://picsum.photos/seed/pegs_verify/800/600',
-                    leftModule: null, // Remove progress module
+                    leftModule: null,
                     bubbles: [],
                     onMount: function(data, vn) {
                         vn.clearBubbles();
                         vn.addBubble('<strong>Verification</strong>');
-                        vn.addBubble(`<p>Great! You've attached ${data.targetCount} pegs to Ba.</p>`);
+                        vn.addBubble(`<p>Great! You have attached ${data.targetCount} pegs to Ba.</p>`);
                         vn.addBubble('<p>How do they feel?</p>');
                         vn.advanceBubble();
                     },
@@ -195,7 +189,7 @@ export default {
                             text: 'Comfortable',
                             onSelect: function(data) {
                                 data.feeling = 'comfortable';
-                                data.feedback = 'Good! That means they\'re placed correctly.';
+                                data.feedback = 'Good! That means they are placed correctly.';
                                 return 'complete';
                             }
                         },
@@ -203,7 +197,7 @@ export default {
                             text: 'Intense',
                             onSelect: function(data) {
                                 data.feeling = 'intense';
-                                data.feedback = 'Perfect! That\'s exactly how they should feel.';
+                                data.feedback = 'Perfect! That is exactly how they should feel.';
                                 return 'complete';
                             }
                         },
@@ -211,7 +205,7 @@ export default {
                             text: 'Too much',
                             onSelect: function(data) {
                                 data.feeling = 'too_much';
-                                data.feedback = 'Don\'t worry, you\'ll get used to it. Keep them on!';
+                                data.feedback = 'Do not worry, you will get used to it. Keep them on!';
                                 return 'complete';
                             }
                         }
@@ -228,15 +222,14 @@ export default {
                         vn.addBubble('<strong>🎉 Task Complete!</strong>');
                         vn.addBubble(`<p>${data.feedback}</p>`);
                         
-                        // Dynamic response based on all choices
                         if (data.placement === 'concentrated' && data.feeling === 'intense') {
-                            vn.addBubble('<p><em>You chose the hard way and you\'re feeling it. Impressive!</em></p>');
+                            vn.addBubble('<p><em>You chose the hard way and you are feeling it. Impressive!</em></p>');
                         }
                         
                         vn.addBubble('<p>The pegs will stay on for now. You can continue the game.</p>');
                         vn.advanceBubble();
                     },
-                    complete: true // Mark as final stage
+                    complete: true
                 }
             ]
         };
