@@ -314,7 +314,7 @@ input[name="snakesLaddersMode"][value="random"] ~ * {
 }
 
 .toy-name {
-    flex: 1;
+    margin-right: 8px;
 }
 
 .toy-controls {
