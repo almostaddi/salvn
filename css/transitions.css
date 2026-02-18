@@ -1,51 +1,46 @@
 /* ============================================================
    transitions.css — Page transition animations
+
+   Strategy: pages normally use display:none / display:block.
+   CSS opacity transitions don't work when toggling display.
+   
+   Instead we:
+     1. Clone the outgoing page, position it fixed on top, fade it out
+     2. Show the incoming page normally and play an entrance animation
+   This keeps both visually present during the crossfade.
    ============================================================ */
 
-/* ── Base page transition setup ─────────────────────────────────────────── */
-.page {
-    /* Pages need to support opacity transitions */
-    transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+/* ── Keyframes ───────────────────────────────────────────────────────────── */
+@keyframes snl-slideInFromTop {
+    0%   { opacity: 0; transform: translateY(-50px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Slide-in from top (board page on game start) ────────────────────────── */
-@keyframes slideInFromTop {
-    0% {
-        transform: translateY(-60px);
-        opacity: 0;
-    }
-    100% {
-        transform: translateY(0);
-        opacity: 1;
-    }
-}
-
-/* ── Fade in ─────────────────────────────────────────────────────────────── */
-@keyframes fadeIn {
+@keyframes snl-fadeIn {
     0%   { opacity: 0; }
     100% { opacity: 1; }
 }
 
-/* ── Fade out ────────────────────────────────────────────────────────────── */
-@keyframes fadeOut {
+@keyframes snl-fadeOut {
     0%   { opacity: 1; }
     100% { opacity: 0; }
 }
 
-/* ── Animation classes applied by JS ─────────────────────────────────────── */
-
-/* Board slides in from top when game starts */
-.page-board-enter {
-    animation: slideInFromTop 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-/* General fade-in (board/task transitions) */
-.page-fade-in {
-    animation: fadeIn 0.3s ease forwards;
-}
-
-/* General fade-out — used briefly before switching pages */
-.page-fade-out {
-    animation: fadeOut 0.25s ease forwards;
+/* ── Outgoing overlay snapshot — fixed on top, fades away ───────────────── */
+.page-transition-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
     pointer-events: none;
+    background: var(--bg-primary, #fff);
+    animation: snl-fadeOut 0.28s ease forwards;
+}
+
+/* ── Incoming page entrance animations ──────────────────────────────────── */
+.page-entering-fade {
+    animation: snl-fadeIn 0.32s ease both;
+}
+
+.page-entering-slide {
+    animation: snl-slideInFromTop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
