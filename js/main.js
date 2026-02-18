@@ -82,47 +82,38 @@ function showPage(pageName) {
     const outgoing = document.querySelector('.page.active');
     const hasOutgoing = outgoing && outgoing !== targetPageEl;
 
-    // ── 1. Create the frozen overlay (if there's something to fade out) ──
-    if (hasOutgoing) {
-        const overlay = document.createElement('div');
-        overlay.className = 'page-transition-overlay';
-        // Match the gradient background so the overlay looks like the page
-        overlay.style.background = window.getComputedStyle(document.body).background;
-        document.body.appendChild(overlay);
-
-        // Remove overlay after its CSS animation finishes (~280ms)
-        overlay.addEventListener('animationend', () => overlay.remove(), { once: true });
-    }
-
-    // ── 2. Instantly hide all pages and show the target ──────────────────
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-
-    // Also hide instructions when leaving the task page
+    // ── 1. Hide instructions when leaving the task page ───────────────────
     const instructions = document.getElementById('instructions');
     if (instructions && pageName !== 'task') {
         instructions.classList.remove('active');
         console.log('🧹 Instructions hidden');
     }
 
+    // ── 2. Show target page (outgoing stays visible in normal flow) ───────
+    // Remove any leftover animation classes from a previous transition
+    targetPageEl.classList.remove('page-entering-fade', 'page-entering-slide');
     targetPageEl.classList.add('active');
 
-    // ── 3. Play entrance animation on the incoming page ──────────────────
+    // ── 3. Play entrance animation — new page overlays old one ───────────
     if (hasOutgoing) {
-        // Remove any leftover animation classes first
-        targetPageEl.classList.remove('page-entering-fade', 'page-entering-slide');
-
         const animClass = (pageName === 'board' && _nextBoardAnim === 'slide')
             ? 'page-entering-slide'
             : 'page-entering-fade';
 
         _nextBoardAnim = null;
 
-        // Force a reflow so the animation actually fires (element was just made visible)
+        // Force reflow so browser registers the class addition as a new animation
         void targetPageEl.offsetWidth;
 
         targetPageEl.classList.add(animClass);
+
+        // After animation: remove class + fixed positioning, hide outgoing page
         targetPageEl.addEventListener('animationend', () => {
             targetPageEl.classList.remove('page-entering-fade', 'page-entering-slide');
+            // Now safe to hide the old page (it was hidden behind the animation)
+            if (outgoing && outgoing !== targetPageEl) {
+                outgoing.classList.remove('active');
+            }
         }, { once: true });
     }
 
