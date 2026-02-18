@@ -38,13 +38,12 @@ export class BoardRenderer {
         const cols = this.boardSize;
         const rows = this.totalSquares / this.boardSize;
 
+        // No border/padding since we removed them from the board element
         this.NATURAL_BOARD_W = cols * this.SQ
-            + (cols - 1) * this.COL_GAP
-            + 2 * 6 + 2 * 4;
+            + (cols - 1) * this.COL_GAP;
 
         this.NATURAL_BOARD_H = rows * this.SQ
-            + Math.max(0, rows - 1) * this.ROW_GAP
-            + 2 * 6 + 2 * 4;
+            + Math.max(0, rows - 1) * this.ROW_GAP;
     }
 
     updateSize(newSize) {
@@ -71,10 +70,11 @@ export class BoardRenderer {
             gap:            `${ROW_GAP * s}px`,
             alignItems:     'flex-start',
             background:     'transparent',
-            padding:        `${6 * s}px`,
-            border:         `${4 * s}px solid var(--border-color, #c8a96e)`,
-            borderRadius:   `${6 * s}px`,
-            boxShadow:      `0 ${8*s}px ${40*s}px rgba(0,0,0,0.4)`,
+            // No border, no padding, no box-shadow — clean look on gradient bg
+            padding:        '0',
+            border:         'none',
+            borderRadius:   '0',
+            boxShadow:      'none',
             margin:         '0 auto',
         });
 
