@@ -11,36 +11,36 @@
    ============================================================ */
 
 /* ── Keyframes ───────────────────────────────────────────────────────────── */
+
+/* Board slides in from fully off-screen above */
 @keyframes snl-slideInFromTop {
-    0%   { opacity: 0; transform: translateY(-50px); }
+    0%   { opacity: 1; transform: translateY(-100vh); }
     100% { opacity: 1; transform: translateY(0); }
 }
 
+/* New page fades in on top of the old one */
 @keyframes snl-fadeIn {
     0%   { opacity: 0; }
     100% { opacity: 1; }
 }
 
-@keyframes snl-fadeOut {
-    0%   { opacity: 1; }
-    100% { opacity: 0; }
-}
-
-/* ── Outgoing overlay snapshot — fixed on top, fades away ───────────────── */
-.page-transition-overlay {
+/* ── Incoming page sits on top and plays its entrance animation ──────────── */
+/* The OLD page stays visible in normal flow underneath — no overlay needed  */
+.page-entering-fade {
     position: fixed;
     inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    background: var(--bg-primary, #fff);
-    animation: snl-fadeOut 0.28s ease forwards;
-}
-
-/* ── Incoming page entrance animations ──────────────────────────────────── */
-.page-entering-fade {
+    z-index: 100;
     animation: snl-fadeIn 0.32s ease both;
 }
 
 .page-entering-slide {
-    animation: snl-slideInFromTop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    animation: snl-slideInFromTop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ── Outgoing overlay (kept for safety, no longer used) ─────────────────── */
+.page-transition-overlay {
+    display: none;
 }
