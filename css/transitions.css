@@ -30,14 +30,14 @@
     position: fixed;
     inset: 0;
     z-index: 100;
-    animation: snl-fadeIn 0.32s ease both;
+    animation: snl-fadeIn 0.65s ease both;
 }
 
 .page-entering-slide {
     position: fixed;
     inset: 0;
     z-index: 100;
-    animation: snl-slideInFromTop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: snl-slideInFromTop 1.0s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 /* ── Outgoing overlay (kept for safety, no longer used) ─────────────────── */
