@@ -532,6 +532,155 @@ function setupEventListeners() {
     });
 }
 
+// ── Paste this function into main.js BEFORE the startGame() function ──────
+// Then call logGameStateOnStart() at the END of startGame(), just before
+// the console.log('🎮 Game Started!') line.
+
+function logGameStateOnStart() {
+    const gs = window.GAME_STATE;
+    const conditions = window.getConditions ? window.getConditions() : null;
+
+    console.group('%c🎲 GAME STARTED — Full State Dump', 'font-size:16px;font-weight:bold;color:#667eea');
+
+    // ── Player ──────────────────────────────────────────────────────────────
+    console.group('%c👤 Player', 'font-weight:bold;color:#51cf66');
+    console.log('Name:', gs.playerName);
+    console.log('Pronouns:', gs.playerPronouns);
+    console.log('Body type flags:', gs.bodyType);
+    if (window.getPlayerBodyParts) {
+        const playerParts = [...window.getPlayerBodyParts()];
+        console.log('Available body parts (player has):', playerParts);
+    }
+    console.groupEnd();
+
+    // ── Board ────────────────────────────────────────────────────────────────
+    console.group('%c🎯 Board', 'font-weight:bold;color:#4facfe');
+    console.log('Total squares:', gs.totalSquares);
+    console.log('Snakes/Ladders mode:', gs.snakesLaddersMode);
+    console.log('Snakes/Ladders difficulty:', gs.snakesLaddersDifficulty);
+    console.log('Snakes:', window.BOARD_SNAKES);
+    console.log('Ladders:', window.BOARD_LADDERS);
+    console.groupEnd();
+
+    // ── Selected Sets ────────────────────────────────────────────────────────
+    console.group('%c🎮 Selected Instruction Sets', 'font-weight:bold;color:#f59f0b');
+    console.log('Sets:', gs.selectedSets);
+    console.groupEnd();
+
+    // ── Toys ─────────────────────────────────────────────────────────────────
+    console.group('%c🧸 Toys', 'font-weight:bold;color:#ff6b6b');
+
+    const toyChecked   = gs.toyChecked    || {};
+    const toySetEnable = gs.toySetEnabled || {};
+    const toyQty       = gs.toyQuantities  || {};
+    const toyDiff      = gs.toyDifficulties || {};
+    const toyMod       = gs.toyModifiers    || {};
+
+    // Build a combined view grouped by toyId
+    const toyRows = {};
+    for (const [key, qty] of Object.entries(toyQty)) {
+        const idx = key.indexOf('_');
+        const setId = key.substring(0, idx);
+        const toyId = key.substring(idx + 1);
+        if (!toyRows[toyId]) toyRows[toyId] = [];
+        toyRows[toyId].push({
+            toyKey: key,
+            setId,
+            qty,
+            checked: toyChecked[toyId] !== false,
+            setEnabled: toySetEnable[key] !== false,
+            difficulty: toyDiff[key] || 'medium',
+            addChance: toyMod[key]?.addChance ?? '—',
+            removeChance: toyMod[key]?.removeChance ?? '—',
+        });
+    }
+
+    for (const [toyId, rows] of Object.entries(toyRows)) {
+        const isChecked = toyChecked[toyId] !== false;
+        console.group(`%c${isChecked ? '✅' : '❌'} ${toyId}`, 'font-weight:bold');
+        rows.forEach(r => {
+            const active = r.checked && r.setEnabled;
+            console.log(
+                `%c${active ? '▶' : '▷'} [${r.setId}]  qty:${r.qty}  diff:${r.difficulty}  add:${r.addChance}%  remove:${r.removeChance}%  setEnabled:${r.setEnabled}`,
+                active ? 'color:#333' : 'color:#aaa'
+            );
+        });
+        console.groupEnd();
+    }
+
+    console.log('Cage worn at start:', gs.cageWorn);
+    console.log('Cage locked:', gs.cageLocked);
+    console.groupEnd();
+
+    // ── Body Part State ────────────────────────────────────────────────────
+    console.group('%c🦴 Body Part State (initial)', 'font-weight:bold;color:#a78bfa');
+    const bodyParts = gs.bodyPartState || {};
+    for (const [key, part] of Object.entries(bodyParts)) {
+        const items = part.items || [];
+        const playerHas = window.playerHasBodyPart ? window.playerHasBodyPart(key) : '?';
+        console.log(
+            `${playerHas ? '✅' : '🚫'} ${key.padEnd(4)}:`,
+            items.length > 0 ? items : '(empty)'
+        );
+    }
+    console.groupEnd();
+
+    // ── Free Body Parts ────────────────────────────────────────────────────
+    console.group('%c🆓 Free Body Parts (empty + player has)', 'font-weight:bold;color:#51cf66');
+    if (conditions && window.getPlayerBodyParts) {
+        const allParts = ['Mo', 'Ba', 'Bu', 'As', 'Ni', 'Ha', 'Bo', 'Pe', 'Pu', 'Br'];
+        const playerParts = [...window.getPlayerBodyParts()];
+        const freeParts = allParts.filter(bp => playerParts.includes(bp) && conditions.bodyPartEmpty(bp));
+        console.log('Free parts:', freeParts);
+    } else {
+        console.log('(conditions not available)');
+    }
+    console.groupEnd();
+
+    // ── Prize & Challenge Settings ────────────────────────────────────────
+    console.group('%c🏆 Prize & Final Challenge Settings', 'font-weight:bold;color:#ffd93d');
+    console.log('Prize probabilities:', gs.prizeSettings);
+    console.log('Final challenge weights:', gs.finalChallengeSettings);
+    console.log('Challenge types enabled:', gs.finalChallengeTypes);
+    console.log('Challenge difficulties:', gs.finalChallengeDifficulties);
+    console.log('Modifiers (CE/PF):', gs.finalChallengeModifiers);
+    console.log('Modifier chances:', gs.finalChallengeModifierChances);
+    console.groupEnd();
+
+    // ── Available Toys (task selector perspective) ────────────────────────
+    console.group('%c🔍 Available Toys for Task Selection', 'font-weight:bold;color:#4facfe');
+    if (conditions) {
+        const available = {};
+        for (const setId of gs.selectedSets) {
+            for (const [key, enabled] of Object.entries(toySetEnable)) {
+                if (!enabled) continue;
+                const idx = key.indexOf('_');
+                const set = key.substring(0, idx);
+                const tid = key.substring(idx + 1);
+                if (set !== setId) continue;
+                if (toyChecked[tid] === false) continue;
+                const total = toyQty[key] || 1;
+                const inUse = conditions.countToy(tid);
+                const avail = total - inUse;
+                if (available[tid] === undefined || available[tid] < avail) {
+                    available[tid] = avail;
+                }
+            }
+        }
+        console.table(
+            Object.entries(available).map(([id, qty]) => ({
+                toyId: id,
+                totalQty: toyQty[Object.keys(toyQty).find(k => k.endsWith('_' + id))] || qty,
+                inUse: conditions.countToy(id),
+                availableForTasks: qty,
+            }))
+        );
+    }
+    console.groupEnd();
+
+    console.groupEnd(); // end top-level group
+}
+
 // Start game
 function startGame() {
     const selectedSets = window.GAME_STATE.selectedSets;
@@ -631,7 +780,7 @@ function startGame() {
         scrollToBottom();
     });
     
-    console.log('🎮 Game Started!');
+    logGameStateOnStart();
 }
 
 // Restore saved game
