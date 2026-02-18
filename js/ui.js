@@ -8,6 +8,7 @@ export function initializeUI() {
     setupSliders();
     setupFinalChallengeUI();
     setupPronounSelector();
+    setupBodyTypeRadios();
     renderToyLibrary();
 }
 
@@ -93,6 +94,36 @@ function setupPronounSelector() {
     select.addEventListener('change', function() {
         window.GAME_STATE.playerPronouns = this.value;
         saveGameState();
+    });
+}
+
+// Setup body type radio buttons
+function setupBodyTypeRadios() {
+    // Lower body radios (Pe / Pu)
+    document.querySelectorAll('input[name="bodyLower"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (!window.GAME_STATE.bodyType) window.GAME_STATE.bodyType = {};
+            window.GAME_STATE.bodyType.lower = this.value;
+            saveGameState();
+        });
+    });
+
+    // Torso radios (Chest / Breasts)
+    document.querySelectorAll('input[name="bodyTorso"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (!window.GAME_STATE.bodyType) window.GAME_STATE.bodyType = {};
+            window.GAME_STATE.bodyType.torso = this.value;
+            saveGameState();
+        });
+    });
+
+    // BA radios (yes / no)
+    document.querySelectorAll('input[name="bodyBa"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (!window.GAME_STATE.bodyType) window.GAME_STATE.bodyType = {};
+            window.GAME_STATE.bodyType.hasBa = (this.value === 'yes');
+            saveGameState();
+        });
     });
 }
 
@@ -952,6 +983,21 @@ export function restoreUIState(state) {
     const pronounsSelect = document.getElementById('playerPronounsSelect');
     if (pronounsSelect && state.playerPronouns) {
         pronounsSelect.value = state.playerPronouns;
+    }
+    
+    // Restore body type radio buttons
+    if (state.bodyType) {
+        const lowerVal = state.bodyType.lower || 'Pe';
+        const lowerRadio = document.querySelector(`input[name="bodyLower"][value="${lowerVal}"]`);
+        if (lowerRadio) lowerRadio.checked = true;
+
+        const torsoVal = state.bodyType.torso || 'Chest';
+        const torsoRadio = document.querySelector(`input[name="bodyTorso"][value="${torsoVal}"]`);
+        if (torsoRadio) torsoRadio.checked = true;
+
+        const baVal = state.bodyType.hasBa !== false ? 'yes' : 'no';
+        const baRadio = document.querySelector(`input[name="bodyBa"][value="${baVal}"]`);
+        if (baRadio) baRadio.checked = true;
     }
     
     // Restore board size
