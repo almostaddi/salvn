@@ -27,6 +27,10 @@ export default {
         const baCount = conditions.countToyInBodyPart('pegs', 'Ba');
         const maxBa = 20;
         const availableSpace = maxBa - baCount;
+        const { pronouns } = conditions;
+        // Helper for subject/object/possessive:
+        const [subject, object] = pronouns.split('/');
+        // subject = 'he', object = 'him'
         
         // Dynamic task based on state
         if (availableSpace < 5) {
@@ -70,7 +74,7 @@ export default {
                     image: 'https://picsum.photos/seed/pegs_choose/800/600',
                     bubbles: [
                         '<strong>Placement Style</strong>',
-                        '<p>How would you like to place the pegs?</p>'
+                        '<p>Let's see where ${subject} wants to place the pegs...</p>'
                     ],
                     choices: [
                         {
