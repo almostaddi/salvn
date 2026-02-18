@@ -1,6 +1,6 @@
 // Task selection logic - manifest is source of truth for requirements
 
-import { getTaskConditions, hasRegularToys, getPlayerBodyParts } from '../state/gameState.js';
+import { getTaskConditions, hasRegularToys, getPlayerBodyParts, playerHasBodyPart } from '../state/gameState.js';
 import { getClothesPegMax } from '../data/instructionSets.js';
 
 let taskRegistry = null;
@@ -219,31 +219,28 @@ function getAvailableToys() {
     const toyChecked = window.GAME_STATE.toyChecked;
     const toySetEnabled = window.GAME_STATE.toySetEnabled;
     const conditions = getTaskConditions();
-    
+
     for (const setId of selectedSets) {
         for (const [toyKey, enabled] of Object.entries(toySetEnabled)) {
-            // FIX: treat undefined as enabled (only skip if explicitly false)
             if (enabled === false) continue;
-            
-            const [set, ...toyIdParts] = toyKey.split('_');
+
+            const underscoreIdx = toyKey.indexOf('_');
+            const set = toyKey.substring(0, underscoreIdx);
+            const toyId = toyKey.substring(underscoreIdx + 1);
             if (set !== setId) continue;
-            
-            const toyId = toyIdParts.join('_');
-            // FIX: treat undefined toyChecked as checked (only skip if explicitly false)
+
             if (toyChecked[toyId] === false) continue;
-            
-            // Get total quantity and in-use count
+
             const totalQuantity = window.GAME_STATE.toyQuantities[toyKey] || 1;
             const inUse = conditions.countToy(toyId);
             const availableQuantity = totalQuantity - inUse;
-            
-            // Store the maximum available quantity across all sets
-            if (!available[toyId] || available[toyId] < availableQuantity) {
+
+            if (available[toyId] === undefined || available[toyId] < availableQuantity) {
                 available[toyId] = availableQuantity;
             }
         }
     }
-    
+
     return available;
 }
 
@@ -297,8 +294,9 @@ function meetsBasicRequirements(taskMeta, availableToys, freeBodyParts, holdingT
             const toyId = capacityReq.toy;
             const spaceNeeded = capacityReq.spaceNeeded || 1;
 
-            // BODY TYPE CHECK: skip task if required body part doesn't belong to this player
-            if (!playerBodyParts.has(bodyPart)) {
+            // Skip task if player doesn't have this body part (Pe, Pu, Ba, Bu are gated;
+            // Ni, Mo, As, Ha, Bo are universal and always pass this check)
+            if (!playerHasBodyPart(bodyPart)) {
                 return false;
             }
             
