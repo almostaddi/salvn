@@ -23,7 +23,7 @@ const DIFFICULTY_PRESETS = {
         maxJumpPercent: 50,
         maxFallPercent: 30,
         snakesPerRow: 1,
-        laddersPerRow: 2,
+        laddersPerRow: 1.5,
         maxAnyPerRow: 4
     },
     medium: {
@@ -40,7 +40,7 @@ const DIFFICULTY_PRESETS = {
         minFallPercent: 10,
         maxJumpPercent: 30,
         maxFallPercent: 50,
-        snakesPerRow: 2,
+        snakesPerRow: 1.5,
         laddersPerRow: 1,
         maxAnyPerRow: 4
     }
