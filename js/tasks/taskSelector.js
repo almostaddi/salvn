@@ -1,6 +1,6 @@
 // Task selection logic - manifest is source of truth for requirements
 
-import { getTaskConditions, hasRegularToys } from '../state/gameState.js';
+import { getTaskConditions, hasRegularToys, getPlayerBodyParts } from '../state/gameState.js';
 import { getClothesPegMax } from '../data/instructionSets.js';
 
 let taskRegistry = null;
@@ -245,14 +245,16 @@ function getAvailableToys() {
     return available;
 }
 
-// Get free body parts
+// Get free body parts (empty AND belonging to this player's body)
 function getFreeBodyParts() {
     const conditions = getTaskConditions();
+    const playerBodyParts = getPlayerBodyParts();
     const bodyParts = ['Mo', 'Ba', 'Bu', 'As', 'Ni', 'Ha', 'Bo', 'Pe'];
     const free = [];
     
     for (const bp of bodyParts) {
-        if (conditions.bodyPartEmpty(bp)) {
+        // Only include parts this player actually has
+        if (playerBodyParts.has(bp) && conditions.bodyPartEmpty(bp)) {
             free.push(bp);
         }
     }
@@ -271,6 +273,7 @@ function getHoldingToys() {
 function meetsBasicRequirements(taskMeta, availableToys, freeBodyParts, holdingToys) {
     const requires = taskMeta.requires || { toys: [], freeBodyParts: [], notHolding: [], bodyPartCapacity: [] };
     const conditions = getTaskConditions();
+    const playerBodyParts = getPlayerBodyParts();
     
     // Check required toys with quantities (inventory check only)
     if (requires.toys && requires.toys.length > 0) {
@@ -291,6 +294,11 @@ function meetsBasicRequirements(taskMeta, availableToys, freeBodyParts, holdingT
             const bodyPart = capacityReq.bodyPart;
             const toyId = capacityReq.toy;
             const spaceNeeded = capacityReq.spaceNeeded || 1;
+
+            // BODY TYPE CHECK: skip task if required body part doesn't belong to this player
+            if (!playerBodyParts.has(bodyPart)) {
+                return false;
+            }
             
             // Get max capacity for this body part
             const maxCount = getClothesPegMax(bodyPart);
@@ -316,6 +324,10 @@ function meetsBasicRequirements(taskMeta, availableToys, freeBodyParts, holdingT
     // Check free body parts needed (for non-stackable toys)
     if (requires.freeBodyParts && requires.freeBodyParts.length > 0) {
         for (const bp of requires.freeBodyParts) {
+            // BODY TYPE CHECK: if the player doesn't have this body part, task is unavailable
+            if (!playerBodyParts.has(bp)) {
+                return false;
+            }
             // Body part must be completely empty
             if (!freeBodyParts.includes(bp)) {
                 return false;
@@ -350,6 +362,7 @@ export function selectNextTask() {
     console.log('  Available toys:', availableToys);
     console.log('  Free body parts:', freeBodyParts);
     console.log('  Holding:', holdingToys);
+    console.log('  Player body parts:', [...getPlayerBodyParts()]);
     
     // Collect eligible NON-FALLBACK tasks from selected sets
     const eligibleTasks = [];
@@ -379,7 +392,7 @@ export function selectNextTask() {
                 continue;
             }
             
-            // Check basic requirements from manifest
+            // Check basic requirements from manifest (includes body type check)
             if (!meetsBasicRequirements(taskMeta, availableToys, freeBodyParts, holdingToys)) {
                 continue;
             }
