@@ -568,8 +568,6 @@ function createCageControls(toyId, toyData) {
     return controls;
 }
 
-}
-
 // Create set difficulty section (wrapped in collapsible container)
 function createSetDifficultySection(toyId, toyData) {
     // Collapsible wrapper - hidden by default, shown when toggle is on
