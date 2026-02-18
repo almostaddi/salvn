@@ -241,7 +241,7 @@ function handleTaskCompletion() {
         
         showPage('board');
         
-         const SLIDE_MS = 600; // slightly longer than animation (0.55s)
+         const SLIDE_MS = 1050; // slightly longer than animation (0.55s)
          setTimeout(() => {
              waitForBoard(() => {
                  scrollToBottom();
