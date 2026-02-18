@@ -20,24 +20,6 @@
                 "baseWeight": 1
             },
             {
-                "file": "js/tasks/dressup/pegs_simple.js",
-                "id": "dressup_pegs_simple",
-                "toyId": "pegs",
-                "type": "standard",
-                "isFallback": false,
-                "requires": {
-                    "toys": [
-                        { "toy": "pegs", "quantity": 2 }
-                    ],
-                    "freeBodyParts": [],
-                    "notHolding": [],
-                    "bodyPartCapacity": [
-                        { "bodyPart": "Ni", "toy": "pegs", "spaceNeeded": 2 }
-                    ]
-                },
-                "baseWeight": 1
-            },
-            {
                 "file": "js/tasks/dressup/fallback.js",
                 "id": "dressup_fallback",
                 "toyId": "hand",
