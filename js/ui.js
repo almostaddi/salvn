@@ -259,6 +259,9 @@ function updateFinalChallengeDisplays() {
     saveGameState();
 }
 
+// Track whether set details are expanded across the toy list
+let setDetailsExpanded = false;
+
 // Render toy library
 let isRendering = false;
 export function renderToyLibrary() {
@@ -271,6 +274,11 @@ export function renderToyLibrary() {
     
     isRendering = true;
     console.trace('Call stack:');
+    
+    // Sync expand state from saved game state if available
+    if (window.GAME_STATE.setDetailsExpanded !== undefined) {
+        setDetailsExpanded = window.GAME_STATE.setDetailsExpanded;
+    }
     
     updateSelectedSets();
     
@@ -381,6 +389,24 @@ export function renderToyLibrary() {
         }
     }
     
+    // Add toggle button at the top of the toy list (before toys)
+    const toggleBtn = document.createElement('button');
+    toggleBtn.type = 'button';
+    toggleBtn.id = 'toggleSetDetailsBtn';
+    toggleBtn.textContent = setDetailsExpanded ? '▼ Hide Set Details' : '▶ Show Set Details';
+    toggleBtn.style.cssText = 'width: 100%; text-align: left; padding: 6px 12px; margin-bottom: 8px; font-size: 13px; background: linear-gradient(to bottom, #ffffff, #f1f3f5); border: 1px solid #adb5bd; border-radius: 6px; color: #495057; font-weight: 600; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.1);';
+    toggleBtn.addEventListener('click', () => {
+        setDetailsExpanded = !setDetailsExpanded;
+        window.GAME_STATE.setDetailsExpanded = setDetailsExpanded;
+        toggleBtn.textContent = setDetailsExpanded ? '▼ Hide Set Details' : '▶ Show Set Details';
+        // Show/hide all set-difficulty sections
+        container.querySelectorAll('.set-difficulty-collapsible').forEach(el => {
+            el.style.display = setDetailsExpanded ? 'block' : 'none';
+        });
+        saveGameState();
+    });
+    container.insertBefore(toggleBtn, container.firstChild);
+
     // Render each toy
     for (const [toyId, toyData] of Object.entries(allToys)) {
         const toyItem = createToyLibraryItem(toyId, toyData);
@@ -554,10 +580,16 @@ function createToyControls(toyId, toyData) {
     return controls;
 }
 
-// Create set difficulty section
+// Create set difficulty section (wrapped in collapsible container)
 function createSetDifficultySection(toyId, toyData) {
+    // Collapsible wrapper - hidden by default, shown when toggle is on
+    const wrapper = document.createElement('div');
+    wrapper.className = 'set-difficulty-collapsible';
+    wrapper.style.display = setDetailsExpanded ? 'block' : 'none';
+
     const section = document.createElement('div');
     section.className = 'set-difficulty';
+    wrapper.appendChild(section);
     
     toyData.sets.forEach(setInfo => {
         const toyKey = `${setInfo.setId}_${toyId}`;
@@ -701,7 +733,7 @@ function createSetDifficultySection(toyId, toyData) {
         section.appendChild(setItem);
     });
     
-    return section;
+    return wrapper;
 }
 
 // Update toy enabled states when toy checkbox changes
@@ -991,6 +1023,11 @@ export function restoreUIState(state) {
             const pfInput = document.getElementById('modifier_pf_chance');
             if (pfInput) pfInput.value = state.finalChallengeModifierChances.pf;
         }
+    }
+    
+    // Restore set details expanded state
+    if (state.setDetailsExpanded !== undefined) {
+        setDetailsExpanded = state.setDetailsExpanded;
     }
     
     isRestoringUI = false;
