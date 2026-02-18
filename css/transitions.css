@@ -1,0 +1,51 @@
+/* ============================================================
+   transitions.css — Page transition animations
+   ============================================================ */
+
+/* ── Base page transition setup ─────────────────────────────────────────── */
+.page {
+    /* Pages need to support opacity transitions */
+    transition: opacity 0.35s ease, transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Slide-in from top (board page on game start) ────────────────────────── */
+@keyframes slideInFromTop {
+    0% {
+        transform: translateY(-60px);
+        opacity: 0;
+    }
+    100% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ── Fade in ─────────────────────────────────────────────────────────────── */
+@keyframes fadeIn {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* ── Fade out ────────────────────────────────────────────────────────────── */
+@keyframes fadeOut {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ── Animation classes applied by JS ─────────────────────────────────────── */
+
+/* Board slides in from top when game starts */
+.page-board-enter {
+    animation: slideInFromTop 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* General fade-in (board/task transitions) */
+.page-fade-in {
+    animation: fadeIn 0.3s ease forwards;
+}
+
+/* General fade-out — used briefly before switching pages */
+.page-fade-out {
+    animation: fadeOut 0.25s ease forwards;
+    pointer-events: none;
+}
