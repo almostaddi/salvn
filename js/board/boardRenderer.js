@@ -72,9 +72,9 @@ export class BoardRenderer {
             alignItems:     'flex-start',
             background:     'transparent',
             padding:        `${6 * s}px`,
-            border:         'none',          // ← removed border
-            borderRadius:   '0',
-            boxShadow:      'none',          // ← removed box shadow
+            border:         `${4 * s}px solid var(--border-color, #c8a96e)`,
+            borderRadius:   `${6 * s}px`,
+            boxShadow:      `0 ${8*s}px ${40*s}px rgba(0,0,0,0.4)`,
             margin:         '0 auto',
         });
 
@@ -157,8 +157,8 @@ export class BoardRenderer {
             position:     'relative',
             background:   bg,
             border:       isFinal
-                ? `${Math.max(1, 2 * s)}px solid #ffd700`
-                : `${Math.max(1, 2 * s)}px solid rgba(0,0,0,0.15)`,
+                ? `${Math.max(1, 3 * s)}px solid #ffd700`
+                : `${Math.max(1, 3 * s)}px solid var(--text-primary,#333)`,
             borderRadius: `${4 * s}px`,
             ...(connCfg && {
                 borderTopLeftRadius:     `${(connCfg.borderTopLeftRadius     ?? 4) * s}px`,
@@ -177,7 +177,6 @@ export class BoardRenderer {
         });
 
         // ── Content zone (the visible SQ×SQ face) ────────────────────────
-        // This is the actual square face where number, emoji, and badge live.
         const content = document.createElement('div');
         Object.assign(content.style, {
             position:       'absolute',
@@ -188,67 +187,89 @@ export class BoardRenderer {
             display:        'flex',
             flexDirection:  'column',
             alignItems:     'center',
-            justifyContent: 'flex-start',  // stack from top
+            justifyContent: 'center',
             zIndex:         '1',
             pointerEvents:  'none',
-            overflow:       'hidden',
         });
 
-        // ── Number label — top of content zone ───────────────────────────
+        // Final square star emoji — centered
+        if (isFinal) {
+            const star = document.createElement('span');
+            Object.assign(star.style, {
+                position:       'absolute',
+                top:            '50%',
+                left:           '50%',
+                transform:      'translate(-50%, -50%)',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                fontSize:       `${sq * 0.72}px`,
+                lineHeight:     '1',
+                opacity:        '0.55',
+                pointerEvents:  'none',
+                userSelect:     'none',
+            });
+            star.textContent = '⭐';
+            content.appendChild(star);
+        }
+
+        // Emoji watermark — centered
+        if (!isFinal && (isSnake || isLadder)) {
+            const emoji = document.createElement('span');
+            Object.assign(emoji.style, {
+                position:       'absolute',
+                top:            '50%',
+                left:           '50%',
+                transform:      'translate(-50%, -50%)',
+                display:        'flex',
+                alignItems:     'center',
+                justifyContent: 'center',
+                fontSize:       `${sq * 0.72}px`,
+                lineHeight:     '1',
+                opacity:        '0.55',
+                pointerEvents:  'none',
+                userSelect:     'none',
+            });
+            emoji.textContent = isSnake ? '🐍' : '🪜';
+            content.appendChild(emoji);
+        }
+
+        // Number label — top of content zone, above emoji
         const numLabel = document.createElement('span');
         Object.assign(numLabel.style, {
-            fontSize:      `${sq * 0.27}px`,
-            fontWeight:    'bold',
-            color:         fg,
-            lineHeight:    '1',
-            position:      'relative',
-            zIndex:        '2',
-            marginTop:     `${sq * 0.06}px`,
-            textAlign:     'center',
-            display:       'block',
-            width:         '100%',
+            fontSize:   `${sq * 0.3}px`,
+            fontWeight: 'bold',
+            color:      fg,
+            lineHeight: '1',
+            position:   'relative',
+            zIndex:     '2',
+            // Push number to top so it doesn't fight the centered emoji
+            alignSelf:  'center',
+            marginTop:  `${sq * 0.05}px`,
         });
         numLabel.textContent = number;
         content.appendChild(numLabel);
 
-        // ── Emoji watermark — centered in remaining space ─────────────────
-        if (isFinal || isSnake || isLadder) {
-            const emoji = document.createElement('span');
-            Object.assign(emoji.style, {
-                fontSize:      `${sq * 0.50}px`,
-                lineHeight:    '1',
-                opacity:       '0.6',
-                pointerEvents: 'none',
-                userSelect:    'none',
-                display:       'flex',
-                alignItems:    'center',
-                justifyContent:'center',
-                flex:          '1',           // fill remaining height
-                width:         '100%',
-            });
-            emoji.textContent = isFinal ? '⭐' : isSnake ? '🐍' : '🪜';
-            content.appendChild(emoji);
-        }
-
-        // ── Destination badge — bottom of content zone ────────────────────
+        // Destination badge (↓6, ↑38, etc.) — bottom of content zone
         if (!isFinal && (isSnake || isLadder)) {
             const dest = isSnake
                 ? `↓${this.snakes[number]}`
                 : `↑${this.ladders[number]}`;
             const badge = document.createElement('span');
             Object.assign(badge.style, {
-                fontSize:      `${sq * 0.16}px`,
-                lineHeight:    '1.2',
-                background:    'rgba(0,0,0,0.60)',
-                color:         '#fff',
-                padding:       `${1*s}px ${4*s}px`,
-                borderRadius:  `${4*s}px`,
-                whiteSpace:    'nowrap',
-                pointerEvents: 'none',
-                zIndex:        '3',
-                marginBottom:  `${sq * 0.05}px`,
-                display:       'block',
-                textAlign:     'center',
+                position:     'absolute',
+                bottom:       `${sq * 0.06}px`,
+                left:         '50%',
+                transform:    'translateX(-50%)',
+                fontSize:     `${sq * 0.16}px`,
+                lineHeight:   '1.2',
+                background:   'rgba(0,0,0,0.65)',
+                color:        '#fff',
+                padding:      `${1*s}px ${4*s}px`,
+                borderRadius: `${4*s}px`,
+                whiteSpace:   'nowrap',
+                pointerEvents:'none',
+                zIndex:       '3',
             });
             badge.textContent = dest;
             content.appendChild(badge);
@@ -262,6 +283,7 @@ export class BoardRenderer {
             el.style.zIndex    = '10';
             el.style.boxShadow = `0 ${8*s}px ${16*s}px rgba(0,0,0,0.35)`;
 
+            // Highlight destination square on snake/ladder hover
             if (isSnake) {
                 const destNum = this.snakes[number];
                 const destEl = document.getElementById(`square-${destNum}`);
@@ -288,6 +310,7 @@ export class BoardRenderer {
             el.style.zIndex    = '';
             el.style.boxShadow = `0 ${2*s}px ${6*s}px rgba(0,0,0,0.15)`;
 
+            // Remove destination highlight
             if (isSnake) {
                 const destNum = this.snakes[number];
                 const destEl = document.getElementById(`square-${destNum}`);
