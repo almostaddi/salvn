@@ -97,31 +97,15 @@ function setupPronounSelector() {
     });
 }
 
-// Setup body type radio buttons
+// Setup body type checkboxes
 function setupBodyTypeRadios() {
-    // Lower body radios (Pe / Pu)
-    document.querySelectorAll('input[name="bodyLower"]').forEach(radio => {
-        radio.addEventListener('change', function() {
+    ['bodyPe', 'bodyPu', 'bodyBreasts', 'bodyBa'].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('change', function() {
             if (!window.GAME_STATE.bodyType) window.GAME_STATE.bodyType = {};
-            window.GAME_STATE.bodyType.lower = this.value;
-            saveGameState();
-        });
-    });
-
-    // Torso radios (Chest / Breasts)
-    document.querySelectorAll('input[name="bodyTorso"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (!window.GAME_STATE.bodyType) window.GAME_STATE.bodyType = {};
-            window.GAME_STATE.bodyType.torso = this.value;
-            saveGameState();
-        });
-    });
-
-    // BA radios (yes / no)
-    document.querySelectorAll('input[name="bodyBa"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (!window.GAME_STATE.bodyType) window.GAME_STATE.bodyType = {};
-            window.GAME_STATE.bodyType.hasBa = (this.value === 'yes');
+            const key = id.replace('body', '').toLowerCase(); // pe, pu, breasts, ba
+            window.GAME_STATE.bodyType[key] = this.checked;
             saveGameState();
         });
     });
@@ -985,19 +969,13 @@ export function restoreUIState(state) {
         pronounsSelect.value = state.playerPronouns;
     }
     
-    // Restore body type radio buttons
+    // Restore body type checkboxes
     if (state.bodyType) {
-        const lowerVal = state.bodyType.lower || 'Pe';
-        const lowerRadio = document.querySelector(`input[name="bodyLower"][value="${lowerVal}"]`);
-        if (lowerRadio) lowerRadio.checked = true;
-
-        const torsoVal = state.bodyType.torso || 'Chest';
-        const torsoRadio = document.querySelector(`input[name="bodyTorso"][value="${torsoVal}"]`);
-        if (torsoRadio) torsoRadio.checked = true;
-
-        const baVal = state.bodyType.hasBa !== false ? 'yes' : 'no';
-        const baRadio = document.querySelector(`input[name="bodyBa"][value="${baVal}"]`);
-        if (baRadio) baRadio.checked = true;
+        const map = { bodyPe: 'pe', bodyPu: 'pu', bodyBreasts: 'breasts', bodyBa: 'ba' };
+        for (const [elId, key] of Object.entries(map)) {
+            const el = document.getElementById(elId);
+            if (el && state.bodyType[key] !== undefined) el.checked = state.bodyType[key];
+        }
     }
     
     // Restore board size
