@@ -447,7 +447,7 @@ function createToyLibraryItem(toyId, toyData) {
     const nameSpan = document.createElement('span');
     nameSpan.className = 'toy-name';
     nameSpan.textContent = toyData.name;
-    nameSpan.style.cssText = 'flex: 1; font-size: 15px; font-weight: 600;';
+    nameSpan.style.cssText = 'font-size: 15px; font-weight: 600;';
     header.appendChild(nameSpan);
     
     // Inline quantity for non-cage toys
