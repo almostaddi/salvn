@@ -30,6 +30,12 @@ export function initializeState() {
         },
         playerName: '',
         playerPronouns: 'he/him',
+        // Body type configuration
+        bodyType: {
+            lower: 'Pe',       // 'Pe' (penis) or 'Pu' (pussy)
+            torso: 'Chest',    // 'Chest' or 'Breasts'
+            hasBa: true        // true = has Ba (balls/butt area), false = no Ba
+        },
         toySetEnabled: {},
         toyChecked: {},
         cageLocked: false,
@@ -134,6 +140,15 @@ export function loadGameState() {
         Object.assign(window.GAME_STATE, state);
         window.GAME_STATE.disabledTasks = new Set(state.disabledTasks || []);
         
+        // Ensure bodyType exists with defaults for old saves
+        if (!window.GAME_STATE.bodyType) {
+            window.GAME_STATE.bodyType = {
+                lower: 'Pe',
+                torso: 'Chest',
+                hasBa: true
+            };
+        }
+        
         // FIX: Ensure CE and PF modifiers are properly restored
         if (!window.GAME_STATE.finalChallengeModifiers) {
             window.GAME_STATE.finalChallengeModifiers = { ce: false, pf: false };
@@ -195,6 +210,7 @@ export function resetGameState() {
     window.GAME_STATE.completedOnlyOnceTasks = {};
     window.GAME_STATE.playerName = '';
     window.GAME_STATE.playerPronouns = 'he/him';
+    window.GAME_STATE.bodyType = { lower: 'Pe', torso: 'Chest', hasBa: true };
     window.GAME_STATE.selectedSets = [];
     window.GAME_STATE.toyDifficulties = {};
     window.GAME_STATE.toyQuantities = {};
@@ -264,6 +280,31 @@ export function resetGameState() {
     };
 }
 
+// Get the set of body parts this player actually has, based on bodyType settings
+export function getPlayerBodyParts() {
+    const bodyType = window.GAME_STATE.bodyType || { lower: 'Pe', torso: 'Chest', hasBa: true };
+    const parts = new Set(['Mo', 'As', 'Ha', 'Bo']); // Always present
+
+    // Lower body
+    parts.add(bodyType.lower); // 'Pe' or 'Pu'
+
+    // Torso
+    if (bodyType.torso === 'Breasts') {
+        parts.add('Ni'); // nipples present with breasts
+    }
+    // Chest still has nipples technically, but task authors may restrict
+    // Keep Ni available for both to avoid over-restricting; tasks use 'Breasts' check if needed
+    parts.add('Ni');
+
+    // Ba
+    if (bodyType.hasBa) {
+        parts.add('Ba');
+        parts.add('Bu');
+    }
+
+    return parts;
+}
+
 // Get condition helpers for tasks
 export function getTaskConditions() {
     return {
@@ -272,6 +313,9 @@ export function getTaskConditions() {
         pronouns: window.GAME_STATE.playerPronouns || 'he/him',
         playerPosition: window.GAME_STATE.playerPosition,
         turnCount: window.GAME_STATE.turnCount,
+
+        // Body type
+        bodyType: window.GAME_STATE.bodyType || { lower: 'Pe', torso: 'Chest', hasBa: true },
         
         // Turn count tracking
         getTurnCountForSet: (setId) => window.GAME_STATE.turnCountBySet[setId] || 0,
@@ -458,3 +502,4 @@ window.getConditions = getTaskConditions;
 window.canAddToyToBodyPart = canAddToyToBodyPart;
 window.addToyToBodyPart = addToyToBodyPart;
 window.removeToyFromBodyPart = removeToyFromBodyPart;
+window.getPlayerBodyParts = getPlayerBodyParts;
