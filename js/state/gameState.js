@@ -24,6 +24,7 @@ export function initializeState() {
             Bu: { name: "Bu", items: [] },
             As: { name: "As", items: [] },
             Ni: { name: "Ni", items: [] },
+            Br: { name: "Br", items: [] },
             Ha: { name: "Ha", items: [] },
             Bo: { name: "Bo", items: [] },
             Pe: { name: "Pe", items: [] }
@@ -34,7 +35,7 @@ export function initializeState() {
         bodyType: {
             pe: true,        // Penis
             pu: false,       // Pussy
-            breasts: false,  // Breasts
+            breasts: false,  // Breasts (breast-specific tasks only; Ni is universal)
             ba: true         // Balls/Butt Area
         },
         toySetEnabled: {},
@@ -81,7 +82,7 @@ export function initializeState() {
         currentInstruction: '',
         diceResultText: 'Dice: -',
         pendingSnakeLadder: null,
-        challengeTypesExpanded: false, // FIX BUG 1: Track toggle state
+        challengeTypesExpanded: false,
         
         // Task selection control
         forceNextTask: null,
@@ -176,7 +177,6 @@ export function loadGameState() {
                 pf: 10
             };
         } else {
-            // Ensure CE and PF are present even if they weren't in the saved state
             if (window.GAME_STATE.finalChallengeModifierChances.ce === undefined) {
                 window.GAME_STATE.finalChallengeModifierChances.ce = 10;
             }
@@ -190,7 +190,7 @@ export function loadGameState() {
             window.GAME_STATE.snakesLaddersDifficulty = 'medium';
         }
         
-        // FIX BUG 1: Ensure challengeTypesExpanded exists
+        // FIX: Ensure challengeTypesExpanded exists
         if (window.GAME_STATE.challengeTypesExpanded === undefined) {
             window.GAME_STATE.challengeTypesExpanded = false;
         }
@@ -272,7 +272,7 @@ export function resetGameState() {
         ce: false,
         pf: false
     };
-    window.GAME_STATE.challengeTypesExpanded = false; // FIX BUG 1: Reset toggle state
+    window.GAME_STATE.challengeTypesExpanded = false;
     
     // Reset body part state
     window.GAME_STATE.bodyPartState = {
@@ -281,26 +281,46 @@ export function resetGameState() {
         Bu: { name: "Bu", items: [] },
         As: { name: "As", items: [] },
         Ni: { name: "Ni", items: [] },
+        Br: { name: "Br", items: [] },
         Ha: { name: "Ha", items: [] },
         Bo: { name: "Bo", items: [] },
         Pe: { name: "Pe", items: [] }
     };
 }
 
+// Body parts that require specific anatomy flags to be present
+const ANATOMY_GATED_PARTS = {
+    'Pe': (bodyType) => bodyType.pe,
+    'Pu': (bodyType) => bodyType.pu,
+    'Ba': (bodyType) => bodyType.ba,
+    'Bu': (bodyType) => bodyType.ba,
+    'Br': (bodyType) => bodyType.breasts, // Breasts — distinct from Ni
+    // Ni is universal - all genders have nipples, not gated on breasts
+};
+
 // Get the set of body parts this player actually has, based on bodyType settings
 export function getPlayerBodyParts() {
     const bodyType = window.GAME_STATE.bodyType || { pe: true, pu: false, breasts: false, ba: true };
-    const parts = new Set(['Mo', 'As', 'Ha', 'Bo']); // Always present
+    // Mo, As, Ha, Bo, Ni are universal — always present regardless of body type
+    const parts = new Set(['Mo', 'As', 'Ha', 'Bo', 'Ni']);
 
-    if (bodyType.pe)      parts.add('Pe');
-    if (bodyType.pu)      parts.add('Pu');
-    if (bodyType.breasts) parts.add('Ni'); // nipples via breasts
+    if (bodyType.pe) parts.add('Pe');
+    if (bodyType.pu) parts.add('Pu');
+    if (bodyType.breasts) parts.add('Br'); // Breasts — distinct from Ni
     if (bodyType.ba) {
         parts.add('Ba');
         parts.add('Bu');
     }
 
     return parts;
+}
+
+// Check if a body part is anatomy-gated for this player
+export function playerHasBodyPart(bodyPart) {
+    const bodyType = window.GAME_STATE.bodyType || { pe: true, pu: false, breasts: false, ba: true };
+    const gate = ANATOMY_GATED_PARTS[bodyPart];
+    if (!gate) return true; // Not gated = universally available
+    return gate(bodyType);
 }
 
 // Get condition helpers for tasks
@@ -501,3 +521,4 @@ window.canAddToyToBodyPart = canAddToyToBodyPart;
 window.addToyToBodyPart = addToyToBodyPart;
 window.removeToyFromBodyPart = removeToyFromBodyPart;
 window.getPlayerBodyParts = getPlayerBodyParts;
+window.playerHasBodyPart = playerHasBodyPart;
