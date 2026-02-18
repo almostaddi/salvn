@@ -241,9 +241,12 @@ function handleTaskCompletion() {
         
         showPage('board');
         
-        waitForBoard(() => {
-            scrollToPlayer(savedPending.to, true);
-        });
+         const SLIDE_MS = 600; // slightly longer than animation (0.55s)
+         setTimeout(() => {
+             waitForBoard(() => {
+                 scrollToBottom();
+             });
+         }, SLIDE_MS);
         
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🚪 Enter';
