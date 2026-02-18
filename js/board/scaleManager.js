@@ -11,13 +11,12 @@ export class ScaleManager {
         this.renderer = boardRenderer;
 
         // ── Controls bar constants (always at scale=1, never scaled) ──────
-        this.CTRL_H         = 88;   // natural height of the controls bar (increased)
-        this.CTRL_PADDING_V = 12;   // top + bottom padding each
+        this.CTRL_H         = 70;   // natural height of the controls bar
+        this.CTRL_PADDING_V = 10;   // top + bottom padding each
         this.CTRL_PADDING_H = 20;   // left + right padding each
         this.CTRL_GAP       = 20;   // gap between items
         this.OUTER_PADDING  = 16;   // page-level horizontal padding each side
         this.BOARD_MARGIN   = 12;   // breathing room around the board
-        this.BOARD_SCALE_FACTOR = 0.88; // Shrink board to 88% of max fit
 
         this._onResizeBound = this._onResize.bind(this);
     }
@@ -42,7 +41,10 @@ export class ScaleManager {
         const { NATURAL_BOARD_W, NATURAL_BOARD_H } = this.renderer;
 
         // Available space for the board
+        // Width: viewport minus outer padding
         const availW = vw - this.OUTER_PADDING * 2;
+
+        // Height: viewport minus fixed controls bar height minus breathing room
         const availH = vh - this.CTRL_H - this.BOARD_MARGIN * 2;
 
         // Scale = fit board inside available W and H, maintaining aspect ratio
@@ -50,8 +52,8 @@ export class ScaleManager {
         const scaleH = availH / NATURAL_BOARD_H;
         const scale  = Math.min(scaleW, scaleH);
 
-        // Apply board scale factor to make it slightly smaller
-        const s = Math.max(0.2, Math.min(3.0, scale * this.BOARD_SCALE_FACTOR));
+        // Clamp: don't shrink below 0.2 (unusable) or above 3 (tiny boards go huge)
+        const s = Math.max(0.2, Math.min(3.0, scale));
 
         // Store on renderer so _createSquare uses it
         this.renderer.scale = s;
@@ -71,40 +73,41 @@ export class ScaleManager {
         const controls = document.getElementById('controls');
         if (!controls) return;
 
+        // Always use fixed padding/gap regardless of board scale
         Object.assign(controls.style, {
             padding: `${this.CTRL_PADDING_V}px ${this.CTRL_PADDING_H}px`,
             gap:     `${this.CTRL_GAP}px`,
         });
 
-        // Larger sizes for all control elements
+        // Fixed sizes for all control elements
         const diceResult  = document.getElementById('diceResult');
         const rollDice    = document.getElementById('rollDice');
         const turnCounter = document.getElementById('turnCounter');
         const jumpInput   = document.getElementById('testJumpInput');
 
         if (diceResult) {
-            diceResult.style.fontSize     = '20px';
-            diceResult.style.padding      = '10px 20px';
-            diceResult.style.minWidth     = '120px';
-            diceResult.style.borderRadius = '14px';
+            diceResult.style.fontSize     = '18px';
+            diceResult.style.padding      = '8px 16px';
+            diceResult.style.minWidth     = '100px';
+            diceResult.style.borderRadius = '12px';
         }
         if (rollDice) {
-            rollDice.style.padding      = '13px 36px';
-            rollDice.style.fontSize     = '19px';
+            rollDice.style.padding      = '10px 30px';
+            rollDice.style.fontSize     = '16px';
             rollDice.style.borderRadius = '50px';
         }
         if (turnCounter) {
-            turnCounter.style.fontSize     = '20px';
-            turnCounter.style.padding      = '10px 20px';
-            turnCounter.style.borderRadius = '14px';
+            turnCounter.style.fontSize     = '16px';
+            turnCounter.style.padding      = '8px 16px';
+            turnCounter.style.borderRadius = '12px';
         }
         if (jumpInput) {
-            jumpInput.style.width    = '90px';
-            jumpInput.style.padding  = '8px';
-            jumpInput.style.fontSize = '15px';
+            jumpInput.style.width    = '80px';
+            jumpInput.style.padding  = '6px';
+            jumpInput.style.fontSize = '13px';
         }
 
-        // Player piece scales with board
+        // Player piece scales with board and must sit above all square content
         const player = document.querySelector('.player');
         if (player) {
             const s = this.renderer.scale;
@@ -123,6 +126,7 @@ export class ScaleManager {
         const gameContainer = document.getElementById('gameContainer');
         if (!gameContainer) return;
 
+        // Board sits centred in the space above the fixed controls bar
         Object.assign(gameContainer.style, {
             display:        'flex',
             flexDirection:  'column',
