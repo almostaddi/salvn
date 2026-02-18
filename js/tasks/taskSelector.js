@@ -222,13 +222,15 @@ function getAvailableToys() {
     
     for (const setId of selectedSets) {
         for (const [toyKey, enabled] of Object.entries(toySetEnabled)) {
-            if (!enabled) continue;
+            // FIX: treat undefined as enabled (only skip if explicitly false)
+            if (enabled === false) continue;
             
             const [set, ...toyIdParts] = toyKey.split('_');
             if (set !== setId) continue;
             
             const toyId = toyIdParts.join('_');
-            if (!toyChecked[toyId]) continue;
+            // FIX: treat undefined toyChecked as checked (only skip if explicitly false)
+            if (toyChecked[toyId] === false) continue;
             
             // Get total quantity and in-use count
             const totalQuantity = window.GAME_STATE.toyQuantities[toyKey] || 1;
@@ -300,7 +302,7 @@ function meetsBasicRequirements(taskMeta, availableToys, freeBodyParts, holdingT
                 return false;
             }
             
-            // Get max capacity for this body part
+            // Get max capacity for this body part (physical constraint, not inventory)
             const maxCount = getClothesPegMax(bodyPart);
             
             // Get current count in body part
@@ -381,14 +383,14 @@ export function selectNextTask() {
                 continue;
             }
             
-            // Check if toy/set is enabled
+            // FIX: Check if toy/set is enabled — treat undefined as enabled
             const toyKey = `${taskMeta.setId}_${taskMeta.toyId}`;
-            if (!window.GAME_STATE.toySetEnabled[toyKey]) {
+            if (window.GAME_STATE.toySetEnabled[toyKey] === false) {
                 continue;
             }
             
-            // Check if toy is checked
-            if (!window.GAME_STATE.toyChecked[taskMeta.toyId]) {
+            // FIX: Check if toy is checked — treat undefined as checked
+            if (window.GAME_STATE.toyChecked[taskMeta.toyId] === false) {
                 continue;
             }
             
