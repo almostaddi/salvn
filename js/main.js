@@ -1042,4 +1042,4 @@ window.displayRandomInstructionWithAddRemove = async (addRemoveTask) => {
 };
 
 window.displaySnakeLadderTask = loadAndDisplaySnakeLadderTask;
-window.displayFinalChallenge = loadAndDisplayFinalChallenge;
+window.displayFinalChallenge = loadAndDisplayFinalChallenge; 
