@@ -98,11 +98,14 @@ h1 {
     transform: translateY(0) !important;
 }
 
+/* FIX ISSUE 2: Stable column widths to prevent jump on reset */
 .settings-column-left,
 .settings-column-right {
     flex: 1 1 0;
     min-width: 300px;
     max-width: 100%;
+    /* Force explicit width calculation to prevent layout shift */
+    width: calc(50% - 10px); /* 50% minus half of the 20px gap */
 }
 
 .settings-column-left {
@@ -116,8 +119,10 @@ h1 {
     
     .settings-column-left,
     .settings-column-right {
-        width: 50%;
-        flex: 1 1 50%;
+        width: calc(50% - 10px); /* Enforce 50% width minus half gap */
+        flex: 1 1 calc(50% - 10px);
+        min-width: 300px;
+        max-width: calc(50% - 10px); /* Prevent growth beyond 50% */
     }
 }
 
@@ -128,6 +133,9 @@ h1 {
     padding: 15px;
     border: 2px solid #667eea;
     margin-bottom: 20px;
+    /* Prevent content from pushing column width */
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .settings-section h3 {
@@ -245,6 +253,10 @@ input[name="snakesLaddersMode"][value="random"] ~ * {
     padding: 15px;
     margin-bottom: 15px;
     border: 2px solid #e9ecef;
+    /* Prevent content from pushing column width */
+    box-sizing: border-box;
+    width: 100%;
+    overflow: hidden; /* Prevent horizontal overflow */
 }
 
 /* Continuous task probability display */
@@ -285,6 +297,9 @@ input[name="snakesLaddersMode"][value="random"] ~ * {
     margin-bottom: 8px;
     transition: all 0.3s ease;
     background: white;
+    /* Prevent content from pushing column width */
+    box-sizing: border-box;
+    width: 100%;
 }
 
 .toy-library-item:hover {
@@ -669,5 +684,6 @@ input[type="range"]::-moz-range-thumb {
     .settings-column-left,
     .settings-column-right {
         min-width: 100%;
+        width: 100%;
     }
 }
