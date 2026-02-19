@@ -770,31 +770,21 @@ function startGame() {
     rollDiceButton.onclick = null;
     rollDiceButton.onclick = rollDice;
     
-    saveGameState();
+ saveGameState();
     
-   // Hide home page BEFORE scrolling to prevent visible snap
-   document.getElementById('homePage').style.visibility = 'hidden';
-   
-   // Pre-scroll document to the bottom so when boardPage slides in
-   // the board is already at the correct position.
-   // The slide-in animation covers the full viewport so no snap is visible.
-   window.scrollTo(0, document.body.scrollHeight + 99999);
-
+   // Set the board animation type
    _nextBoardAnim = 'slide';
+   
+   // Switch to board page first
    showPage('board');
    
-   // Restore visibility after transition starts (won't be visible anyway due to animation overlay)
-   setTimeout(() => {
-       const homePage = document.getElementById('homePage');
-       if (homePage) homePage.style.visibility = '';
-   }, 50);
-
-   // After the slide animation completes, confirm scroll is at bottom.
+   // AFTER switching pages, scroll the board page to bottom
+   // The board page starts at top, we scroll it down so player piece is visible
    setTimeout(() => {
        waitForBoard(() => {
            scrollToBottom();
        });
-   }, 1100);
+   }, 50); // Small delay to let page switch complete
     
     logGameStateOnStart();
 }
