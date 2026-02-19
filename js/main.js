@@ -772,6 +772,9 @@ function startGame() {
     
     saveGameState();
     
+   // Hide home page BEFORE scrolling to prevent visible snap
+   document.getElementById('homePage').style.visibility = 'hidden';
+   
    // Pre-scroll document to the bottom so when boardPage slides in
    // the board is already at the correct position.
    // The slide-in animation covers the full viewport so no snap is visible.
@@ -779,6 +782,12 @@ function startGame() {
 
    _nextBoardAnim = 'slide';
    showPage('board');
+   
+   // Restore visibility after transition starts (won't be visible anyway due to animation overlay)
+   setTimeout(() => {
+       const homePage = document.getElementById('homePage');
+       if (homePage) homePage.style.visibility = '';
+   }, 50);
 
    // After the slide animation completes, confirm scroll is at bottom.
    setTimeout(() => {
