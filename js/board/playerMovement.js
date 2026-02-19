@@ -285,6 +285,7 @@ export function onTaskComplete() {
         
         // Continue button moves the piece
         rollDiceButton.onclick = () => {
+            // Immediately disable button and clear handler to prevent double-clicks
             rollDiceButton.disabled = true;
             rollDiceButton.onclick = null;
             
@@ -312,16 +313,22 @@ export function onTaskComplete() {
                 window.GAME_STATE.pendingSnakeLadder = null;
                 window.GAME_FUNCTIONS.saveState();
                 
-                // Stay on board, show Continue button for the destination square task
-                rollDiceButton.textContent = '🚪 Enter';
-                rollDiceButton.disabled = false;
-                rollDiceButton.onclick = null;
-                
-                // Second continue: show the normal task at destination square
-                rollDiceButton.onclick = () => {
-                    window.showPage('task');
-                    window.displayRandomInstructionWithAddRemove(savedPending.addRemoveTask);
-                };
+                // Use requestAnimationFrame to ensure button setup happens after animation completes
+                requestAnimationFrame(() => {
+                    // Stay on board, show Continue button for the destination square task
+                    rollDiceButton.textContent = '🚪 Enter';
+                    rollDiceButton.disabled = false;
+                    
+                    // Second continue: show the normal task at destination square
+                    rollDiceButton.onclick = () => {
+                        // Prevent double-clicks on this button too
+                        rollDiceButton.disabled = true;
+                        rollDiceButton.onclick = null;
+                        
+                        window.showPage('task');
+                        window.displayRandomInstructionWithAddRemove(savedPending.addRemoveTask);
+                    };
+                });
             }, true);
         };
     } else {
