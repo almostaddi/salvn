@@ -52,7 +52,7 @@ export default {
                 `<p>You currently have ${currentPegs} pegs attached total.</p>`,
                 hasManyPegs 
                     ? `<p><em>Wow, that is a lot of pegs already! You are doing great.</em></p>`
-                    : `<p>Let us add some more pegs to Ba.</p>`
+                    : `<p>Let us add some more pegs.</p>`
             ],
             
             data: {
@@ -70,7 +70,7 @@ export default {
                     image: 'https://picsum.photos/seed/pegs_choose/800/600',
                     bubbles: [
                         '<strong>Placement Style</strong>',
-                        function(data) { return `<p>Let us see where ${data.subject} wants to place the pegs...</p>`; }
+                        function(data) { return `<p>Lets see where ${data.subject} wants to place the pegs...</p>`; }
                     ],
                     choices: [
                         {
@@ -86,7 +86,7 @@ export default {
                             onSelect: function(data) {
                                 data.placement = 'concentrated';
                                 data.bonus = 'That will be more intense!';
-                                data.targetCount += 2;
+                                data.targetCount -= 2;
                                 return 'prepare';
                             }
                         }
@@ -100,10 +100,10 @@ export default {
                     bubbles: [],
                     onMount: function(data, vn) {
                         vn.clearBubbles();
-                        vn.addBubble('<strong>Prepare Ba</strong>');
+                        vn.addBubble('<strong>Prepare Your Balls</strong>');
                         vn.addBubble(`<p>${data.bonus}</p>`);
                         vn.addBubble(`<p>You will need to attach ${data.targetCount} pegs.</p>`);
-                        vn.addBubble('<p>Make sure Ba is clean and ready.</p>');
+                        vn.addBubble('<p>Make sure you are ready.</p>');
                         vn.advanceBubble();
                     },
                     buttons: [
