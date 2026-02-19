@@ -8,7 +8,19 @@ let currentSquare = 0;
 const player = document.createElement('div');
 player.classList.add('player');
 
-// Scroll to player position instantly
+// Check if player is visible in viewport
+function isPlayerVisible() {
+    const playerRect = player.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+    
+    // Check if player is within viewport (with some margin)
+    return (
+        playerRect.top >= 0 &&
+        playerRect.bottom <= viewportHeight
+    );
+}
+
+// Scroll to player position with smart detection
 function scrollToPlayer(playerPos, instant = true) {
     const square = document.getElementById(`square-${playerPos}`);
     if (!square) {
@@ -16,37 +28,37 @@ function scrollToPlayer(playerPos, instant = true) {
         return false;
     }
     
-    // Use instant scroll by default for better UX when loading pages
+    // Only scroll if player is not visible
+    if (!instant && isPlayerVisible()) {
+        console.log('📍 Player already visible, skipping scroll');
+        return true;
+    }
+    
+    // Scroll with player centered in viewport
     square.scrollIntoView({
         behavior: instant ? 'auto' : 'smooth',
         block: 'center',
         inline: 'center'
     });
-    console.log(`📍 ${instant ? 'Jumped' : 'Scrolled'} to player at square ${playerPos}`);
+    console.log(`📍 ${instant ? 'Jumped' : 'Scrolled'} to player at square ${playerPos} (centered)`);
     return true;
 }
 
 // Scroll to bottom of page (for new games starting at square 1)
 function scrollToBottom() {
     // Force scroll to the absolute bottom immediately
-    requestAnimationFrame(() => {
-        const maxScroll = Math.max(
-            document.body.scrollHeight,
-            document.documentElement.scrollHeight,
-            document.body.offsetHeight,
-            document.documentElement.offsetHeight,
-            document.body.clientHeight,
-            document.documentElement.clientHeight
-        );
-        
-        window.scrollTo({
-            top: maxScroll,
-            left: 0,
-            behavior: 'auto'
-        });
-        
-        console.log(`📍 Jumped to bottom of page (${maxScroll}px)`);
+    const maxScroll = Math.max(
+        document.body.scrollHeight,
+        document.documentElement.scrollHeight
+    );
+    
+    window.scrollTo({
+        top: maxScroll,
+        left: 0,
+        behavior: 'auto'
     });
+    
+    console.log(`📍 Scrolled to bottom (${maxScroll}px)`);
 }
 
 // Wait for board to be ready, then execute callback
@@ -273,9 +285,9 @@ export function onTaskComplete() {
         
         window.showPage('board');
         
-        // Wait for board to render, THEN scroll to player
+        // Wait for board to render, THEN scroll to player (only if not visible)
         waitForBoard(() => {
-            scrollToPlayer(savedPending.from, true);
+            scrollToPlayer(savedPending.from, false);
         });
         
         const rollDiceButton = document.getElementById('rollDice');
@@ -341,9 +353,9 @@ export function onTaskComplete() {
         
         window.showPage('board');
         
-        // Wait for board to render, THEN scroll to player
+        // Wait for board to render, THEN scroll to player (only if not visible)
         waitForBoard(() => {
-            scrollToPlayer(playerPosition, true);
+            scrollToPlayer(playerPosition, false);
         });
         
         const rollDiceButton = document.getElementById('rollDice');
