@@ -772,28 +772,20 @@ function startGame() {
     
     saveGameState();
     
-    // FIX: Set scroll position BEFORE showing the page
-    // The page is still on 'home', but boardPage exists in the DOM
-    const boardPage = document.getElementById('boardPage');
-    
-    // Make board page temporarily visible (but off-screen) to allow scroll calculation
-    boardPage.style.visibility = 'hidden';
-    boardPage.classList.add('active');
-    
-    // Wait for board to render, then scroll to bottom
-    setTimeout(() => {
-        scrollToBottom();
-        
-        // Now hide it again and prepare for animation
-        boardPage.classList.remove('active');
-        boardPage.style.visibility = '';
-        
-        // Small delay to ensure scroll is complete, then animate
-        setTimeout(() => {
-            _nextBoardAnim = 'slide';
-            showPage('board');
-        }, 50);
-    }, 100);
+   // Pre-scroll document to the bottom so when boardPage slides in
+   // the board is already at the correct position.
+   // The slide-in animation covers the full viewport so no snap is visible.
+   window.scrollTo(0, document.body.scrollHeight + 99999);
+
+   _nextBoardAnim = 'slide';
+   showPage('board');
+
+   // After the slide animation completes, confirm scroll is at bottom.
+   setTimeout(() => {
+       waitForBoard(() => {
+           scrollToBottom();
+       });
+   }, 1100);
     
     logGameStateOnStart();
 }
