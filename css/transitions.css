@@ -27,22 +27,9 @@
     animation: snl-fadeIn 0.65s ease both;
 }
 
-/* FIX Issue 2: Use percentage-based widths during fade to maintain centering.
-   The container itself uses flex with justify-content:center, so percentage widths
-   will keep columns centered throughout the animation. */
-.page-entering-fade #buttoncontainer {
-    /* Keep flex behavior for centering */
-    flex-wrap: nowrap;
-}
-
-.page-entering-fade .settings-column-left,
-.page-entering-fade .settings-column-right {
-    /* Use percentages that match the normal calc() values */
-    flex: 0 0 calc(50% - 10px);
-    width: calc(50% - 10px);
-    min-width: 300px;
-    max-width: calc(50% - 10px);
-}
+/* Columns maintain their normal flex sizing during fade animation.
+   The flex: 0 0 calc(50% - 10px) rule in menu.css is already stable and
+   prevents any resizing during DOM mutations or animations. */
 
 .page-entering-slide {
     position: fixed;

@@ -285,9 +285,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     const savedState = loadGameState();
     
-    // PRE-SET SLIDER DISPLAYS BEFORE SHOWING PAGE (prevents flash)
+// PRE-SET SLIDER DISPLAYS BEFORE SHOWING PAGE (prevents flash)
     if (savedState) {
-        if (savedState.prizeSettings) {
+        if (savedState.prizeSettings && 
+            savedState.prizeSettings.full !== null &&
+            savedState.prizeSettings.ruin !== null &&
+            savedState.prizeSettings.denied !== null) {
             document.getElementById('fullPercent').textContent = savedState.prizeSettings.full.toFixed(1) + '%';
             document.getElementById('ruinPercent').textContent = savedState.prizeSettings.ruin.toFixed(1) + '%';
             document.getElementById('deniedPercent').textContent = savedState.prizeSettings.denied.toFixed(1) + '%';
@@ -296,7 +299,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('deniedSlider').value = savedState.prizeSettings.denied;
         }
         
-        if (savedState.finalChallengeSettings) {
+        if (savedState.finalChallengeSettings &&
+            savedState.finalChallengeSettings.stroking !== null &&
+            savedState.finalChallengeSettings.vibe !== null &&
+            savedState.finalChallengeSettings.anal !== null) {
             document.getElementById('strokingPercent').textContent = savedState.finalChallengeSettings.stroking + '%';
             document.getElementById('vibePercent').textContent = savedState.finalChallengeSettings.vibe + '%';
             document.getElementById('analPercent').textContent = savedState.finalChallengeSettings.anal + '%';
@@ -778,13 +784,13 @@ function startGame() {
    // Switch to board page first
    showPage('board');
    
-   // AFTER switching pages, scroll the board page to bottom
-   // The board page starts at top, we scroll it down so player piece is visible
-   setTimeout(() => {
-       waitForBoard(() => {
-           scrollToBottom();
-       });
-   }, 50); // Small delay to let page switch complete
+//    // AFTER switching pages, scroll the board page to bottom
+//    // The board page starts at top, we scroll it down so player piece is visible
+//    setTimeout(() => {
+//        waitForBoard(() => {
+//            scrollToBottom();
+//        });
+//    }, 50); // Small delay to let page switch complete
     
     logGameStateOnStart();
 }
@@ -908,13 +914,8 @@ function resetSettings() {
     document.getElementById('playerNameInput').value = '';
     document.getElementById('boardSizeSelect').value = '100';
     
-    // FIX ISSUE 2: Force immediate layout recalculation
-    const buttonContainer = document.getElementById('buttoncontainer');
-    if (buttonContainer) {
-        // Force reflow by reading offsetHeight
-        void buttonContainer.offsetHeight;
-    }
-    
+    // Uncheck all instruction sets BEFORE calling initializeUI
+    // This prevents renderToyLibrary from being triggered during the transition
     document.querySelectorAll('#instructionSetCheckboxes input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
     });
@@ -998,16 +999,16 @@ function resetSettings() {
     document.getElementById('vibeSlider').value = 33;
     document.getElementById('analSlider').value = 34;
     
-    // Reinitialize UI to trigger fresh render with stable widths
-    initializeUI();
-    
-    // Force another layout recalculation after initializeUI
-    if (buttonContainer) {
-        void buttonContainer.offsetHeight;
-    }
+    // CRITICAL FIX: Defer initializeUI until AFTER the page is visible
+    // This prevents renderToyLibrary from running during the fade animation
+    // and causing the columns to flash to full width
+    setTimeout(() => {
+        initializeUI();
+    }, 700); // Run after fade animation completes (0.65s + small buffer)
     
     console.log('✅ Settings reset complete');
 }
+
 
 // Expose showPage globally for other modules
 window.showPage = showPage;

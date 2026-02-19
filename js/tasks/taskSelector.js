@@ -1,3 +1,6 @@
+// Detect base path for imports (GitHub Pages vs local)
+const BASE_PATH = window.location.hostname === 'github.io' || window.location.pathname.startsWith('/salvn/') ? '/salvn/' : '/';
+
 // Task selection logic - manifest is source of truth for requirements
 
 import { getTaskConditions, hasRegularToys, getPlayerBodyParts, playerHasBodyPart } from '../state/gameState.js';
@@ -192,7 +195,7 @@ export async function loadTaskRegistry() {
 // Load task definition from JS module file
 async function loadTaskDefinition(filePath) {
     try {
-        const module = await import(`/salvn/${filePath}`);
+        const module = await import(`${BASE_PATH}${filePath}`);
         return module.default;
     } catch (error) {
         console.error(`Failed to load ${filePath}:`, error);

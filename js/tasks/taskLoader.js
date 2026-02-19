@@ -1,3 +1,6 @@
+// Detect base path for imports (GitHub Pages vs local)
+const BASE_PATH = window.location.hostname.includes('github.io') || window.location.pathname.startsWith('/salvn/') ? '/salvn/' : '/';
+
 // js/tasks/taskLoader.js
 // Task loader - loads and renders task using Visual Novel display system
 // Integrates with existing task selection and game state
@@ -901,7 +904,7 @@ function buildDifficultyMap() {
 // Helper: Load task definition from file
 async function loadTaskDefinition(filePath) {
     try {
-        const module = await import(`/salvn/${filePath}`);
+        const module = await import(`${BASE_PATH}${filePath}`);
         return module.default;
     } catch (error) {
         console.error(`Failed to load ${filePath}:`, error);
