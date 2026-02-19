@@ -68,7 +68,7 @@ let taskRegistryLoaded = false;
 // This means ZERO delay on the incoming page — transitions feel instant and
 // smooth simultaneously.
 
-// 'slide' triggers the board slide-in-from-top (set just before startGame calls showPage)
+// 'slide' triggers the board slide-in-from-bottom (set just before startGame calls showPage)
 let _nextBoardAnim = null;
 
 function showPage(pageName) {
@@ -755,6 +755,8 @@ function startGame() {
         window.addToyToBodyPart('Pe', 'cage');
     }
     
+    // Create the board first (still hidden on home page)
+    boardRenderer.create();
     scaleManager.init();
     
     window.GAME_STATE.turnCount = 0;
@@ -770,21 +772,28 @@ function startGame() {
     
     saveGameState();
     
-    // ── FIX ISSUE 1: Pre-scroll to bottom BEFORE showing page ────────────
-    // This ensures the board starts at the bottom when it slides in,
-    // preventing the visible jump
+    // FIX: Set scroll position BEFORE showing the page
+    // The page is still on 'home', but boardPage exists in the DOM
+    const boardPage = document.getElementById('boardPage');
     
-    // First, render the board immediately (hidden)
-    boardRenderer.create();
+    // Make board page temporarily visible (but off-screen) to allow scroll calculation
+    boardPage.style.visibility = 'hidden';
+    boardPage.classList.add('active');
     
-    // Then scroll to bottom before the animation starts
-    requestAnimationFrame(() => {
+    // Wait for board to render, then scroll to bottom
+    setTimeout(() => {
         scrollToBottom();
         
-        // Now trigger the slide-in animation after scroll is done
-        _nextBoardAnim = 'slide';
-        showPage('board');
-    });
+        // Now hide it again and prepare for animation
+        boardPage.classList.remove('active');
+        boardPage.style.visibility = '';
+        
+        // Small delay to ensure scroll is complete, then animate
+        setTimeout(() => {
+            _nextBoardAnim = 'slide';
+            showPage('board');
+        }, 50);
+    }, 100);
     
     logGameStateOnStart();
 }
@@ -908,6 +917,13 @@ function resetSettings() {
     document.getElementById('playerNameInput').value = '';
     document.getElementById('boardSizeSelect').value = '100';
     
+    // FIX ISSUE 2: Force immediate layout recalculation
+    const buttonContainer = document.getElementById('buttoncontainer');
+    if (buttonContainer) {
+        // Force reflow by reading offsetHeight
+        void buttonContainer.offsetHeight;
+    }
+    
     document.querySelectorAll('#instructionSetCheckboxes input[type="checkbox"]').forEach(cb => {
         cb.checked = false;
     });
@@ -991,7 +1007,13 @@ function resetSettings() {
     document.getElementById('vibeSlider').value = 33;
     document.getElementById('analSlider').value = 34;
     
+    // Reinitialize UI to trigger fresh render with stable widths
     initializeUI();
+    
+    // Force another layout recalculation after initializeUI
+    if (buttonContainer) {
+        void buttonContainer.offsetHeight;
+    }
     
     console.log('✅ Settings reset complete');
 }
