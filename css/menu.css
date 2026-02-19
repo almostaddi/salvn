@@ -100,8 +100,9 @@ h1 {
 
 .settings-column-left,
 .settings-column-right {
-    flex: 1;
+    flex: 1 1 0;
     min-width: 300px;
+    max-width: 100%;
 }
 
 .settings-column-left {
@@ -116,6 +117,7 @@ h1 {
     .settings-column-left,
     .settings-column-right {
         width: 50%;
+        flex: 1 1 50%;
     }
 }
 
