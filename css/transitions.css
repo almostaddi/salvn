@@ -1,31 +1,20 @@
 /* ============================================================
    transitions.css — Page transition animations
-
-   Strategy: pages normally use display:none / display:block.
-   CSS opacity transitions don't work when toggling display.
-   
-   Instead we:
-     1. Clone the outgoing page, position it fixed on top, fade it out
-     2. Show the incoming page normally and play an entrance animation
-   This keeps both visually present during the crossfade.
    ============================================================ */
 
 /* ── Keyframes ───────────────────────────────────────────────────────────── */
 
-/* Board slides in from fully off-screen BELOW (changed from top) */
 @keyframes snl-slideInFromBottom {
     0%   { opacity: 1; transform: translateY(100vh); }
     100% { opacity: 1; transform: translateY(0); }
 }
 
-/* New page fades in on top of the old one */
 @keyframes snl-fadeIn {
     0%   { opacity: 0; }
     100% { opacity: 1; }
 }
 
-/* ── Incoming page sits on top and plays its entrance animation ──────────── */
-/* z-index: 1001 ensures it renders above the fixed controls bar (z-index: 1000) */
+/* ── Incoming page entrance animations ──────────────────────────────────── */
 .page-entering-fade {
     position: fixed;
     inset: 0;
@@ -36,6 +25,25 @@
     background: var(--primary-gradient);
     background-attachment: fixed;
     animation: snl-fadeIn 0.65s ease both;
+}
+
+/* FIX Bug 2: When homePage fades in, it gets position:fixed + 100vw which
+   breaks the percentage-based flex column widths inside #buttoncontainer.
+   We override those columns to use fixed pixel-equivalent widths during
+   the animation by targeting them when the animation class is present. */
+.page-entering-fade #buttoncontainer {
+    /* Freeze the flex container so columns don't reflow during the fade */
+    flex-wrap: nowrap;
+}
+
+.page-entering-fade .settings-column-left,
+.page-entering-fade .settings-column-right {
+    /* Use a large fixed min-width that won't trigger reflow.
+       Once position:fixed is removed the normal calc() widths take over. */
+    flex: 0 0 580px;
+    width: 580px;
+    min-width: 0;
+    max-width: none;
 }
 
 .page-entering-slide {
