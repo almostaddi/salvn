@@ -757,11 +757,6 @@ function startGame() {
     
     scaleManager.init();
     
-    // ── Flag the board page to slide in from the top ──────────────────────
-    _nextBoardAnim = 'slide';
-
-    showPage('board');
-    
     window.GAME_STATE.turnCount = 0;
     document.getElementById('turnCounter').textContent = 'Turn: 0';
     document.getElementById('diceResult').textContent = 'Dice: -';
@@ -775,8 +770,20 @@ function startGame() {
     
     saveGameState();
     
-    waitForBoard(() => {
+    // ── FIX ISSUE 1: Pre-scroll to bottom BEFORE showing page ────────────
+    // This ensures the board starts at the bottom when it slides in,
+    // preventing the visible jump
+    
+    // First, render the board immediately (hidden)
+    boardRenderer.create();
+    
+    // Then scroll to bottom before the animation starts
+    requestAnimationFrame(() => {
         scrollToBottom();
+        
+        // Now trigger the slide-in animation after scroll is done
+        _nextBoardAnim = 'slide';
+        showPage('board');
     });
     
     logGameStateOnStart();
