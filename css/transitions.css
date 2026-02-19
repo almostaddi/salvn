@@ -19,9 +19,6 @@
     position: fixed;
     inset: 0;
     z-index: 1001;
-    width: 100vw !important;
-    max-width: none !important;
-    min-width: 0 !important;
     background: var(--primary-gradient);
     background-attachment: fixed;
     animation: snl-fadeIn 0.65s ease both;
