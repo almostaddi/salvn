@@ -118,12 +118,9 @@ function showPage(pageName) {
         }, { once: true });
     }
 
-    // ── 4. Update title, body classes, button labels ──────────────────────
-    const mainTitle = document.querySelector('h1');
-    if (mainTitle) {
-        mainTitle.style.display = (pageName === 'task' || pageName === 'board') ? 'none' : 'block';
-    }
-
+    // ── 4. Update body classes and button labels ──────────────────────────
+    // Title is now inside pages, so we don't need to manipulate it
+    
     const resetBtn = document.getElementById('resetBtn');
     if (pageName === 'home') {
         document.body.classList.add('on-home-page');
@@ -137,6 +134,7 @@ function showPage(pageName) {
 
     console.log('✅ Now showing:', pageName);
 }
+
 
 // Update classic radio button state based on board size
 function updateClassicRadioState(boardSize) {
