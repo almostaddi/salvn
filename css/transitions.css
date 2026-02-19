@@ -27,23 +27,21 @@
     animation: snl-fadeIn 0.65s ease both;
 }
 
-/* FIX Bug 2: When homePage fades in, it gets position:fixed + 100vw which
-   breaks the percentage-based flex column widths inside #buttoncontainer.
-   We override those columns to use fixed pixel-equivalent widths during
-   the animation by targeting them when the animation class is present. */
+/* FIX Issue 2: Use percentage-based widths during fade to maintain centering.
+   The container itself uses flex with justify-content:center, so percentage widths
+   will keep columns centered throughout the animation. */
 .page-entering-fade #buttoncontainer {
-    /* Freeze the flex container so columns don't reflow during the fade */
+    /* Keep flex behavior for centering */
     flex-wrap: nowrap;
 }
 
 .page-entering-fade .settings-column-left,
 .page-entering-fade .settings-column-right {
-    /* Use a large fixed min-width that won't trigger reflow.
-       Once position:fixed is removed the normal calc() widths take over. */
-    flex: 0 0 580px;
-    width: 580px;
-    min-width: 0;
-    max-width: none;
+    /* Use percentages that match the normal calc() values */
+    flex: 0 0 calc(50% - 10px);
+    width: calc(50% - 10px);
+    min-width: 300px;
+    max-width: calc(50% - 10px);
 }
 
 .page-entering-slide {
