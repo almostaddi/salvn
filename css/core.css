@@ -49,16 +49,26 @@ body {
     color: var(--text-primary);
 }
 
-/* Main heading */
+/* Main heading - now inside pages */
 h1 {
     font-size: 3em;
     margin-top: 25px;
+    margin-bottom: 25px;
     text-align: center;
     color: var(--button-text);
     text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
     animation: float 3s ease-in-out infinite;
-    position: relative;
-    z-index: 100;
+}
+
+/* Page title variant - sits inside page content, inherits page visibility */
+.page-title {
+    font-size: 3em;
+    margin-top: 25px;
+    margin-bottom: 25px;
+    text-align: center;
+    color: var(--button-text);
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+    animation: float 3s ease-in-out infinite;
 }
 
 @keyframes float {
@@ -180,7 +190,7 @@ a:hover {
 .mt-3 { margin-top: 30px; }
 
 /* Fixed position buttons (Reset, Patch Notes) */
-/* Hidden by default to prevent flash on page load */
+/* Always visible when on board/task pages */
 #resetBtn,
 #patchNotesBtn {
     position: fixed;
@@ -191,13 +201,20 @@ a:hover {
     z-index: 1000;
     text-transform: none;
     letter-spacing: normal;
-    display: none;
+    /* Always hidden by default */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0s 0.3s;
 }
 
-/* Show buttons when explicitly enabled */
+/* Show buttons with fade when on board/task pages */
 body.show-fixed-buttons #resetBtn,
 body.show-fixed-buttons #patchNotesBtn {
-    display: block !important;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition: opacity 0.3s ease, visibility 0s 0s;
 }
 
 #patchNotesBtn {
