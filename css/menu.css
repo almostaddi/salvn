@@ -98,14 +98,16 @@ h1 {
     transform: translateY(0) !important;
 }
 
-/* FIX ISSUE 2: Stable column widths to prevent jump on reset */
+/* FIX: Use flex: 0 0 to prevent columns resizing during DOM mutations.
+   flex-grow:0 flex-shrink:0 means the browser will NOT recalculate column
+   width when child content is added/removed (e.g. during renderToyLibrary). */
 .settings-column-left,
 .settings-column-right {
-    flex: 1 1 0;
+    flex: 0 0 calc(50% - 10px);
+    width: calc(50% - 10px);
     min-width: 300px;
-    max-width: 100%;
-    /* Force explicit width calculation to prevent layout shift */
-    width: calc(50% - 10px); /* 50% minus half of the 20px gap */
+    max-width: calc(50% - 10px);
+    box-sizing: border-box;
 }
 
 .settings-column-left {
@@ -116,13 +118,13 @@ h1 {
     #buttoncontainer {
         flex-wrap: nowrap;
     }
-    
+
     .settings-column-left,
     .settings-column-right {
-        width: calc(50% - 10px); /* Enforce 50% width minus half gap */
-        flex: 1 1 calc(50% - 10px);
+        flex: 0 0 calc(50% - 10px);
+        width: calc(50% - 10px);
         min-width: 300px;
-        max-width: calc(50% - 10px); /* Prevent growth beyond 50% */
+        max-width: calc(50% - 10px);
     }
 }
 
@@ -683,7 +685,9 @@ input[type="range"]::-moz-range-thumb {
     
     .settings-column-left,
     .settings-column-right {
+        flex: 1 1 100%;
         min-width: 100%;
         width: 100%;
+        max-width: 100%;
     }
 }
