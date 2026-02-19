@@ -12,9 +12,9 @@
 
 /* ── Keyframes ───────────────────────────────────────────────────────────── */
 
-/* Board slides in from fully off-screen above */
-@keyframes snl-slideInFromTop {
-    0%   { opacity: 1; transform: translateY(-100vh); }
+/* Board slides in from fully off-screen BELOW (changed from top) */
+@keyframes snl-slideInFromBottom {
+    0%   { opacity: 1; transform: translateY(100vh); }
     100% { opacity: 1; transform: translateY(0); }
 }
 
@@ -47,11 +47,10 @@
     min-width: 0 !important;
     background: var(--primary-gradient);
     background-attachment: fixed;
-    animation: snl-slideInFromTop 1.0s cubic-bezier(0.4, 0, 0.6, 1) both;
+    animation: snl-slideInFromBottom 1.0s cubic-bezier(0.4, 0, 0.6, 1) both;
 }
 
 /* ── Outgoing overlay (kept for safety, no longer used) ─────────────────── */
 .page-transition-overlay {
     display: none;
 }
- 
