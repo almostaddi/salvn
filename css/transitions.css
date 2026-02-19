@@ -47,7 +47,7 @@
     min-width: 0 !important;
     background: var(--primary-gradient);
     background-attachment: fixed;
-    animation: snl-slideInFromTop 1.0s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation: snl-slideInFromTop 1.0s cubic-bezier(0.4, 0, 0.6, 1) both;
 }
 
 /* ── Outgoing overlay (kept for safety, no longer used) ─────────────────── */
