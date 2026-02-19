@@ -16,10 +16,10 @@
     <link rel="shortcut icon" type="image/x-icon" href="favicon.svg">
 </head>
 <body>
-    <h1>🎲 Snakes and Ladders 🎲</h1>
-    
     <!-- HOME PAGE - Settings and Start Game -->
     <div id="homePage" class="page">
+        <h1>🎲 Snakes and Ladders 🎲</h1>
+        
         <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 30px;">
             <button id="homeResetBtn">🔄 Reset Settings</button>
             <button id="startButton">🎮 Start Game</button>
@@ -303,6 +303,8 @@
     
     <!-- BOARD PAGE - Game Board and Controls -->
     <div id="boardPage" class="page">
+        <h1 class="page-title">🎲 Snakes and Ladders 🎲</h1>
+        
         <div id="gameContainer">
             <div id="board"></div>
             <div id="controls">
@@ -316,12 +318,14 @@
     
     <!-- TASK PAGE - VN Task Display -->
     <div id="taskPage" class="page">
+        <h1 class="page-title">🎲 Snakes and Ladders 🎲</h1>
+        
         <div id="instructions"></div>
     </div>
     
-    <!-- Fixed position buttons for board/task pages - HIDDEN BY DEFAULT WITH INLINE STYLE -->
-    <button id="resetBtn" style="display: none;">🔄 Reset</button>
-    <button id="patchNotesBtn" style="display: none;">📋 Notes</button>
+    <!-- Fixed position buttons for board/task pages -->
+    <button id="resetBtn">🔄 Reset</button>
+    <button id="patchNotesBtn">📋 Notes</button>
     
     <div id="patchNotesModal" class="modal">
         <div class="modal-content">
