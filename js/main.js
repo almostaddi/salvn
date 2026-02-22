@@ -104,6 +104,17 @@ function showPage(pageName) {
 
     // Controls bar
     const controls = document.getElementById('controls');
+    
+    // ── FIX: Update fixed buttons visibility based on page ──────────────────
+    const resetBtn = document.getElementById('resetBtn');
+    if (pageName === 'home') {
+        document.body.classList.remove('show-fixed-buttons');
+        if (resetBtn) resetBtn.textContent = '🔄 Reset Settings';
+    } else {
+        document.body.classList.add('show-fixed-buttons');
+        if (resetBtn) resetBtn.textContent = '🔄 Reset';
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     // ── Board slide transition ────────────────────────────────────────────
     if (pageName === 'board' && _nextBoardAnim === 'slide' && hasOutgoing) {
@@ -969,6 +980,10 @@ function restoreSavedGame(state) {
     }
 }
 
+// ============================================================================
+// FIXED resetGame FUNCTION - Replace in js/main.js (around line 750)
+// ============================================================================
+
 // Reset game (only resets game progress, keeps settings)
 function resetGame() {
     console.log('🔄 Resetting game...');
@@ -1027,6 +1042,8 @@ function resetGame() {
     
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
+    
+    // Use showPage which will now handle button visibility automatically
     showPage('home');
     
     console.log('✅ Game reset complete');
@@ -1136,6 +1153,7 @@ function resetSettings() {
     
     console.log('✅ Settings reset complete');
 }
+
 
 
 // Expose showPage globally for other modules
