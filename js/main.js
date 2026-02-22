@@ -143,7 +143,6 @@ function showPage(pageName) {
                     const scrollDuration = Math.min(4000, Math.round(1000 + (numRows - 10) * 80));
 
                     // Animate transform over same duration as scroll
-                    // so visual slide and scroll happen together
                     if (gameContainer) {
                         gameContainer.style.transition = `transform ${scrollDuration}ms cubic-bezier(0.0, 0.0, 0.2, 1)`;
                         gameContainer.style.transform = 'translateY(0)';
@@ -171,14 +170,16 @@ function showPage(pageName) {
         }, { once: true });
 
     // ── All other transitions ─────────────────────────────────────────────
-} else {
+    } else {
         _nextBoardAnim = null;
 
-        targetPageEl.classList.remove('page-entering-fade');
-        targetPageEl.classList.add('active');
-
-        // If going to task page, DON'T deactivate the board — task overlays on top
+        // If going to task page
         if (pageName === 'task') {
+            // Hide outgoing page immediately — board is rebuilt on return anyway
+            if (outgoing) {
+                outgoing.classList.remove('active');
+            }
+
             targetPageEl.classList.remove('page-entering-fade');
             targetPageEl.classList.add('active');
             void targetPageEl.offsetWidth;
@@ -186,19 +187,53 @@ function showPage(pageName) {
             targetPageEl.addEventListener('animationend', () => {
                 targetPageEl.classList.remove('page-entering-fade');
             }, { once: true });
-            // Board stays active underneath — controls stay visible too
 
-        // If returning from task page to board, board is already active — just hide task
+            // Hide controls bar
+            if (controls) {
+                controls.style.display = 'none';
+            }
+
+        // If returning from task page to board
         } else if (outgoing && outgoing.id === 'taskPage') {
-            // Fade out task page, board is already behind it
-            outgoing.classList.add('page-exiting-fade');
-            outgoing.addEventListener('animationend', () => {
-                outgoing.classList.remove('active', 'page-exiting-fade');
-            }, { once: true });
-            // Scroll to player at the first paint
+            // Remove task page immediately
+            outgoing.classList.remove('active');
+
+            // Restore controls bar
+            if (controls) {
+                controls.style.display = 'flex';
+                controls.style.opacity = '1';
+            }
+
+            // Make board active but hidden while we set up
+            const boardPageEl = document.getElementById('boardPage');
+            if (boardPageEl) {
+                boardPageEl.classList.add('active');
+                boardPageEl.style.visibility = 'hidden';
+            }
+
+            // Rebuild the board
+            scaleManager.init();
+
+            // Re-place player using setPlayerPosition which handles everything
+            const pos = window.GAME_STATE.playerPosition;
+            if (pos > 0) {
+                setPlayerPosition(pos);
+            }
+
+            // Scroll to player BEFORE revealing the board
+            if (pos > 0) {
+                const sq = document.getElementById(`square-${pos}`);
+                if (sq) {
+                    sq.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+                }
+            }
+
+            // Now reveal the board
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
-                    scrollToPlayer(window.GAME_STATE.playerPosition, true);
+                    if (boardPageEl) {
+                        boardPageEl.style.visibility = '';
+                    }
                 });
             });
 
