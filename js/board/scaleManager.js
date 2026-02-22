@@ -138,7 +138,7 @@ export class ScaleManager {
             display:        'flex',
             flexDirection:  'column',
             alignItems:     'center',
-            justifyContent: 'center',
+            justifyContent: 'flex-start',
             minHeight:      `calc(100vh - ${this.CTRL_H}px)`,
             paddingBottom:  `${this.CTRL_H + this.BOARD_MARGIN}px`,
             paddingTop:     `${this.BOARD_MARGIN}px`,

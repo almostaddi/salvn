@@ -23,7 +23,6 @@
 /* ── Board page ─────────────────────────────────────────────────────────── */
 #boardPage {
     overflow: visible;
-    /* Gradient background so the slide-in animation has a solid backdrop */
     background: var(--primary-gradient);
     background-attachment: fixed;
 }

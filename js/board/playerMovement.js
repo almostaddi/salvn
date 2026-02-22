@@ -27,38 +27,71 @@ function scrollToPlayer(playerPos, instant = true) {
         console.warn(`⚠️ Square ${playerPos} not found yet`);
         return false;
     }
-    
-    // Only scroll if player is not visible
+
     if (!instant && isPlayerVisible()) {
         console.log('📍 Player already visible, skipping scroll');
         return true;
     }
-    
-    // Scroll with player centered in viewport
-    square.scrollIntoView({
-        behavior: instant ? 'auto' : 'smooth',
-        block: 'center',
-        inline: 'center'
+
+    const squareRect = square.getBoundingClientRect();
+    const absoluteTop = window.scrollY + squareRect.top;
+    const centeredTop = absoluteTop - (window.innerHeight / 2) + (squareRect.height / 2);
+
+    window.scrollTo({
+        top: Math.max(0, centeredTop),
+        left: 0,
+        behavior: instant ? 'auto' : 'smooth'
     });
+
     console.log(`📍 ${instant ? 'Jumped' : 'Scrolled'} to player at square ${playerPos} (centered)`);
     return true;
 }
 
-// Scroll to bottom of page (for new games starting at square 1)
-function scrollToBottom() {
-    // Force scroll to the absolute bottom immediately
-    const maxScroll = Math.max(
-        document.body.scrollHeight,
-        document.documentElement.scrollHeight
-    );
-    
-    window.scrollTo({
-        top: maxScroll,
-        left: 0,
-        behavior: 'auto'
-    });
-    
-    console.log(`📍 Scrolled to bottom (${maxScroll}px)`);
+let _scrollAnimationId = null;
+
+function scrollToBottom(totalSquares = 100) {
+    // Cancel any in-progress scroll
+    if (_scrollAnimationId !== null) {
+        cancelAnimationFrame(_scrollAnimationId);
+        _scrollAnimationId = null;
+    }
+
+    const numRows = totalSquares / 10;
+    const duration = Math.min(4000, Math.round(800 + (numRows - 10) * 60));
+
+    const start = window.scrollY;
+    const target = document.documentElement.scrollHeight - window.innerHeight;
+    const distance = target - start;
+    const startTime = performance.now();
+
+function easeInOutSine(t) {
+        return -(Math.cos(Math.PI * t) - 1) / 2;
+    }
+
+    function step(currentTime) {
+        const elapsed = currentTime - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeInOutSine(progress);
+
+        window.scrollTo(0, start + distance * eased);
+
+        if (progress < 1) {
+            _scrollAnimationId = requestAnimationFrame(step);
+        } else {
+            _scrollAnimationId = null;
+        }
+    }
+
+    _scrollAnimationId = requestAnimationFrame(step);
+    console.log(`📍 Smooth scrolled to bottom (${numRows} rows, ${duration}ms)`);
+}
+
+function cancelScroll() {
+    if (_scrollAnimationId !== null) {
+        cancelAnimationFrame(_scrollAnimationId);
+        _scrollAnimationId = null;
+        console.log('🛑 Scroll cancelled');
+    }
 }
 
 // Wait for board to be ready, then execute callback
@@ -418,4 +451,4 @@ export function resetPlayerState() {
 }
 
 // Expose scrollToPlayer, scrollToBottom, and waitForBoard for use by main.js
-export { scrollToPlayer, scrollToBottom, waitForBoard };
+export { scrollToPlayer, scrollToBottom, waitForBoard, cancelScroll };

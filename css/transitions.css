@@ -2,11 +2,9 @@
    transitions.css — Page transition animations
    ============================================================ */
 
-/* ── Keyframes ───────────────────────────────────────────────────────────── */
-
-@keyframes snl-slideInFromBottom {
-    0%   { opacity: 1; transform: translateY(100vh); }
-    100% { opacity: 1; transform: translateY(0); }
+@keyframes snl-fadeOut {
+    0%   { opacity: 1; }
+    100% { opacity: 0; }
 }
 
 @keyframes snl-fadeIn {
@@ -14,33 +12,19 @@
     100% { opacity: 1; }
 }
 
-/* ── Incoming page entrance animations ──────────────────────────────────── */
+.page-exiting-fade {
+    animation: snl-fadeOut 0.4s ease forwards;
+    pointer-events: none;
+}
+
 .page-entering-fade {
-    position: fixed;
-    inset: 0;
-    z-index: 1001;
-    background: var(--primary-gradient);
-    background-attachment: fixed;
-    animation: snl-fadeIn 0.65s ease both;
+    animation: snl-fadeIn 0.4s ease forwards;
 }
 
-/* Columns maintain their normal flex sizing during fade animation.
-   The flex: 0 0 calc(50% - 10px) rule in menu.css is already stable and
-   prevents any resizing during DOM mutations or animations. */
-
-.page-entering-slide {
-    position: fixed;
-    inset: 0;
-    z-index: 1001;
-    width: 100vw !important;
-    max-width: none !important;
-    min-width: 0 !important;
-    background: var(--primary-gradient);
-    background-attachment: fixed;
-    animation: snl-slideInFromBottom 1.0s cubic-bezier(0.4, 0, 0.6, 1) both;
+.controls-fade-in {
+    animation: snl-fadeIn 0.5s ease forwards;
 }
 
-/* ── Outgoing overlay (kept for safety, no longer used) ─────────────────── */
 .page-transition-overlay {
     display: none;
 }

@@ -20,7 +20,8 @@ import {
     animatePlayer,
     scrollToPlayer,
     scrollToBottom,
-    waitForBoard
+    waitForBoard,
+    cancelScroll
 } from './board/playerMovement.js';
 
 // Task system
@@ -78,12 +79,9 @@ let _nextBoardAnim = null;
 // Add this variable at the top of main.js (around line 72, before showPage):
 let _pendingScrollCallback = null;
 
-// Replace the entire showPage() function:
 function showPage(pageName) {
     console.log('🔄 Switching to page:', pageName);
-    
-    // SCROLL FIX: Reset scroll position BEFORE transition when going to home ONLY
-    // DO NOT reset scroll for board page!
+
     if (pageName === 'home') {
         document.documentElement.scrollTop = 0;
         document.body.scrollTop = 0;
@@ -98,47 +96,120 @@ function showPage(pageName) {
     const outgoing = document.querySelector('.page.active');
     const hasOutgoing = outgoing && outgoing !== targetPageEl;
 
-    // ── 1. Hide instructions when leaving the task page ───────────────────
+    // Hide instructions when leaving task page
     const instructions = document.getElementById('instructions');
     if (instructions && pageName !== 'task') {
         instructions.classList.remove('active');
-        console.log('🧹 Instructions hidden');
     }
 
-    // ── 2. Show target page (outgoing stays visible in normal flow) ───────
-    // Remove any leftover animation classes from a previous transition
-    targetPageEl.classList.remove('page-entering-fade', 'page-entering-slide');
-    targetPageEl.classList.add('active');
+    // Controls bar
+    const controls = document.getElementById('controls');
 
-    // ── 3. Play entrance animation — new page overlays old one ───────────
-    if (hasOutgoing) {
-        const animClass = (pageName === 'board' && _nextBoardAnim === 'slide')
-            ? 'page-entering-slide'
-            : 'page-entering-fade';
-
+    // ── Board slide transition ────────────────────────────────────────────
+    if (pageName === 'board' && _nextBoardAnim === 'slide' && hasOutgoing) {
         _nextBoardAnim = null;
 
-        // Force reflow so browser registers the class addition as a new animation
-        void targetPageEl.offsetWidth;
+        // Hide controls initially — they'll fade in after scroll
+        if (controls) {
+            controls.style.opacity = '0';
+            controls.style.display = 'flex';
+        }
 
-        targetPageEl.classList.add(animClass);
+        // Step 1: Fade out the outgoing page
+        outgoing.classList.add('page-exiting-fade');
 
-        // After animation: remove class + fixed positioning, hide outgoing page
-        targetPageEl.addEventListener('animationend', () => {
-            targetPageEl.classList.remove('page-entering-fade', 'page-entering-slide');
-            // Now safe to hide the old page (it was hidden behind the animation)
-            if (outgoing && outgoing !== targetPageEl) {
-                outgoing.classList.remove('active');
-            }
+        outgoing.addEventListener('animationend', () => {
+            outgoing.classList.remove('active', 'page-exiting-fade');
+
+            // Step 2: Build the board NOW
+            scaleManager.init();
+
+            // Push gameContainer below viewport before making page active
+            const gameContainer = document.getElementById('gameContainer');
+            if (gameContainer) gameContainer.style.transform = 'translateY(100vh)';
+
+            targetPageEl.classList.add('active');
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+
+            // Step 3: Two frames to ensure paint, then begin scroll and slide together
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    document.documentElement.scrollTop = 0;
+                    document.body.scrollTop = 0;
+
+                    const totalSq = window.GAME_STATE.totalSquares || 100;
+                    const numRows = totalSq / 10;
+                    const scrollDuration = Math.min(4000, Math.round(1000 + (numRows - 10) * 80));
+
+                    // Animate transform over same duration as scroll
+                    // so visual slide and scroll happen together
+                    if (gameContainer) {
+                        gameContainer.style.transition = `transform ${scrollDuration}ms cubic-bezier(0.0, 0.0, 0.2, 1)`;
+                        gameContainer.style.transform = 'translateY(0)';
+                    }
+
+                    scrollToBottom(totalSq);
+
+                    // Clean up and fade controls in after scroll completes
+                    setTimeout(() => {
+                        if (gameContainer) {
+                            gameContainer.style.transition = '';
+                            gameContainer.style.transform = '';
+                        }
+                        if (controls) {
+                            controls.classList.add('controls-fade-in');
+                            controls.style.opacity = '1';
+                            controls.addEventListener('animationend', () => {
+                                controls.classList.remove('controls-fade-in');
+                            }, { once: true });
+                        }
+                    }, scrollDuration);
+                });
+            });
+
         }, { once: true });
+
+    // ── All other transitions ─────────────────────────────────────────────
+    } else {
+        _nextBoardAnim = null;
+
+        targetPageEl.classList.remove('page-entering-fade');
+        targetPageEl.classList.add('active');
+
+        if (hasOutgoing) {
+            void targetPageEl.offsetWidth;
+            targetPageEl.classList.add('page-entering-fade');
+            targetPageEl.addEventListener('animationend', () => {
+                targetPageEl.classList.remove('page-entering-fade');
+                if (outgoing && outgoing !== targetPageEl) {
+                    outgoing.classList.remove('active');
+                }
+            }, { once: true });
+        }
+
+        // Controls visibility
+        if (controls) {
+            if (pageName === 'board') {
+                controls.style.display = 'flex';
+                controls.style.opacity = '1';
+            } else {
+                controls.style.display = 'none';
+                controls.style.opacity = '1';
+            }
+        }
     }
 
-    // ── 4. Update body classes and button labels ──────────────────────────
+    // Body classes and button labels
     const resetBtn = document.getElementById('resetBtn');
     if (pageName === 'home') {
         document.body.classList.add('on-home-page');
         document.body.classList.remove('show-fixed-buttons');
         if (resetBtn) resetBtn.textContent = '🔄 Reset Settings';
+    } else if (pageName === 'board') {
+        document.body.classList.remove('on-home-page');
+        document.body.classList.add('show-fixed-buttons');
+        if (resetBtn) resetBtn.textContent = '🔄 Reset';
     } else {
         document.body.classList.remove('on-home-page');
         document.body.classList.add('show-fixed-buttons');
@@ -251,14 +322,13 @@ function handleTaskCompletion() {
         saveGameState();
         
         showPage('board');
-        
-         const SLIDE_MS = 1050; // slightly longer than animation (0.55s)
-         setTimeout(() => {
-             waitForBoard(() => {
-                 scrollToBottom();
-             });
-         }, SLIDE_MS);
-        
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                scrollToPlayer(savedPending.to, true);
+            });
+        });
+
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🚪 Enter';
         rollDiceButton.disabled = false;
@@ -273,13 +343,16 @@ function handleTaskCompletion() {
         window.GAME_STATE.pendingSnakeLadder = null;
         window.GAME_STATE.pendingAddRemoveTask = null;
         saveGameState();
-        
+
         showPage('board');
-        
-        waitForBoard(() => {
-            scrollToPlayer(window.GAME_STATE.playerPosition, true);
+
+        // Set scroll position at first paint after page becomes active
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                scrollToPlayer(window.GAME_STATE.playerPosition, true);
+            });
         });
-        
+
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🎲 Roll Dice';
         rollDiceButton.disabled = false;
@@ -444,7 +517,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (savedState.playerPosition > 0) {
                 scrollToPlayer(savedState.playerPosition, true);
             } else {
-                scrollToBottom();
+                scrollToBottom(window.GAME_STATE.totalSquares || 100);
             }
         });
     }
@@ -781,9 +854,7 @@ function startGame() {
         window.addToyToBodyPart('Pe', 'cage');
     }
     
-    // Create the board first (still hidden on home page)
-    boardRenderer.create();
-    scaleManager.init();
+    boardRenderer.updateSize(boardSize);
     
     window.GAME_STATE.turnCount = 0;
     document.getElementById('turnCounter').textContent = 'Turn: 0';
@@ -803,14 +874,6 @@ function startGame() {
     
     // Switch to board page (starts at top, will animate)
     showPage('board');
-    
-    // Wait for animation to complete (1.0s animation + 100ms buffer)
-    // THEN scroll to bottom
-    setTimeout(() => {
-        waitForBoard(() => {
-            scrollToBottom();
-        });
-    }, 1100);
     
     logGameStateOnStart();
 }
@@ -867,7 +930,8 @@ function restoreSavedGame(state) {
 // Reset game (only resets game progress, keeps settings)
 function resetGame() {
     console.log('🔄 Resetting game...');
-    
+    // Cancel any in-progress scroll immediately
+    cancelScroll();
     window.GAME_STATE.gameStarted = false;
     window.GAME_STATE.playerPosition = 0;
     window.GAME_STATE.turnCount = 0;
@@ -919,6 +983,8 @@ function resetGame() {
     
     document.getElementById('resetModal').classList.remove('active');
     
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
     showPage('home');
     
     console.log('✅ Game reset complete');
