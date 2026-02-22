@@ -3,14 +3,15 @@
 /* Task page container - full height layout */
 #taskPage {
     width: 100%;
-    max-width: 1400px;
-    min-width: 800px;
+    /* FIXED: Remove min-width that was causing mobile overflow */
+    min-width: 0;
     margin: 0 auto;
 }
 
 /* Only apply layout styles when taskPage is active */
 #taskPage.active {
     height: 100vh;
+    height: 100dvh; /* Use dvh for mobile to account for browser chrome */
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -36,7 +37,7 @@
     flex-direction: row;
     gap: 20px;
     height: 100%;
-    min-width: 40%;
+    min-width: 0;
     overflow: hidden;
     padding: 15px;
 }
@@ -68,15 +69,11 @@
     overflow: hidden;
 }
 
-/* Image container — takes up the bulk of space, never shrinks below a sensible size */
+/* Image container */
 .vn-image-container {
     width: 100%;
-    /* 
-     * flex: 1 lets the image fill remaining space after the text area 
-     * min-height ensures it never disappears on tiny viewports
-     */
     flex: 1 1 0;
-    min-height: 120px;
+    min-height: 80px; /* Reduced for mobile */
     border-radius: 10px;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.03);
@@ -99,13 +96,12 @@
     display: none;
 }
 
-/* Text bubble area — fixed height, doesn't grow/shrink */
+/* Text bubble area */
 .vn-text-area {
-    /* Fixed height: enough for a bubble + padding, never pushes image away */
     flex: 0 0 auto;
-    height: 240px;
-    min-height: 120px;
-    max-height: 300px;
+    height: 200px;
+    min-height: 100px;
+    max-height: 280px;
     position: relative;
     overflow: hidden;
     background: rgba(0, 0, 0, 0.05);
@@ -171,7 +167,7 @@
 /* Bubble content styling */
 .vn-bubble strong {
     display: block;
-    font-size: 17px;
+    font-size: 16px;
     color: var(--border-color);
     margin-bottom: 6px;
     font-weight: 700;
@@ -200,7 +196,7 @@
     opacity: 0.7;
 }
 
-/* Button area at bottom — compact, fixed height */
+/* Button area at bottom */
 .vn-button-area {
     display: flex;
     gap: 10px;
@@ -208,12 +204,14 @@
     align-items: center;
     flex-wrap: wrap;
     padding: 6px;
+    /* FIXED: Ensure button area always has enough height and is visible */
     flex: 0 0 auto;
-    min-height: 50px;
+    min-height: 56px;
+    overflow: visible;
 }
 
 .vn-button-area button {
-    padding: 10px 24px;
+    padding: 12px 28px;
     font-size: 15px;
     font-weight: bold;
     cursor: pointer;
@@ -224,6 +222,9 @@
     text-transform: uppercase;
     letter-spacing: 1px;
     box-shadow: var(--shadow-md);
+    /* Ensure buttons are always tappable */
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .vn-button-area button:hover:not(:disabled) {
@@ -306,7 +307,9 @@
     line-height: 1.6;
 }
 
-/* Responsive design */
+/* ── MOBILE RESPONSIVE ──────────────────────────────────────────────────── */
+
+/* Always hide side modules on smaller screens */
 @media (max-width: 1200px) {
     .vn-left-module,
     .vn-right-module {
@@ -314,46 +317,150 @@
     }
 }
 
+/* Tablet adjustments */
 @media (max-width: 768px) {
     #taskPage {
         min-width: 0;
+        width: 100%;
     }
-    
+
     #taskPage.active {
-        padding: 5px;
+        padding: 0;
+        /* Account for mobile browser chrome */
+        height: 100dvh;
+        height: -webkit-fill-available;
     }
-    
+
     #instructions.active {
-        padding: 8px;
+        padding: 10px;
         gap: 8px;
+        border-radius: 0;
+        margin: 0;
+    }
+
+    .vn-image-container {
+        min-height: 60px;
+        border-radius: 8px;
     }
 
     .vn-text-area {
-        height: 140px;
-        min-height: 100px;
-        padding: 10px;
+        height: 160px;
+        min-height: 90px;
+        max-height: 220px;
+        padding: 12px;
+        border-radius: 8px;
     }
 
     .vn-bubble {
         padding: 8px 14px;
     }
-    
+
     .vn-bubble strong {
         font-size: 15px;
+        margin-bottom: 4px;
     }
-    
+
     .vn-bubble p {
         font-size: 13px;
     }
-    
+
     .vn-button-area {
         padding: 4px;
+        gap: 8px;
+        min-height: 52px;
+    }
+
+    .vn-button-area button {
+        padding: 11px 22px;
+        font-size: 14px;
         min-height: 44px;
     }
-    
+}
+
+/* Phone adjustments */
+@media (max-width: 480px) {
+    #taskPage.active {
+        height: 100dvh;
+    }
+
+    #instructions.active {
+        padding: 8px;
+        gap: 6px;
+    }
+
+    .vn-center-content {
+        gap: 6px;
+    }
+
+    .vn-image-container {
+        min-height: 50px;
+        /* Let image take available space but not too much */
+        flex: 1 1 0;
+    }
+
+    .vn-text-area {
+        height: 150px;
+        min-height: 80px;
+        max-height: 200px;
+        padding: 10px;
+    }
+
+    .vn-bubbles-container {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+    }
+
+    .vn-bubble {
+        padding: 7px 12px;
+        border-radius: 10px;
+    }
+
+    .vn-bubble strong {
+        font-size: 14px;
+    }
+
+    .vn-bubble p {
+        font-size: 12px;
+        line-height: 1.45;
+    }
+
+    .vn-button-area {
+        gap: 6px;
+        padding: 4px 2px;
+        min-height: 50px;
+        /* CRITICAL: Allow buttons to wrap and be fully visible */
+        flex-wrap: wrap;
+        overflow: visible;
+    }
+
     .vn-button-area button {
-        padding: 8px 18px;
+        padding: 10px 18px;
         font-size: 13px;
+        letter-spacing: 0.5px;
+        min-height: 44px;
+        /* Allow buttons to grow on very small screens */
+        flex: 1 1 auto;
+        max-width: 200px;
+    }
+
+    .vn-continue-indicator {
+        font-size: 16px;
+        bottom: 6px;
+        right: 10px;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 360px) {
+    .vn-text-area {
+        height: 130px;
+        min-height: 70px;
+    }
+
+    .vn-button-area button {
+        font-size: 12px;
+        padding: 9px 14px;
     }
 }
 

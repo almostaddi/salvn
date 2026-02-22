@@ -5,14 +5,15 @@
 //   - Scale fits the board into available viewport space (minus controls)
 //   - Controls bar is ALWAYS rendered at scale=1 (fixed size, never scales)
 //   - No whitespace: board is centred in remaining space after controls
-//   - IMPROVED: Minimum scale of 0.5 allows large boards to scroll instead of becoming unreadable
+//   - On mobile: uses a lower minimum scale (0.4) and mobile-optimised controls height
 
 export class ScaleManager {
     constructor(boardRenderer) {
         this.renderer = boardRenderer;
 
         // ── Controls bar constants (always at scale=1, never scaled) ──────
-        this.CTRL_H         = 70;   // natural height of the controls bar
+        this.CTRL_H         = 70;   // natural height of the controls bar (desktop)
+        this.CTRL_H_MOBILE  = 90;   // taller controls on mobile (2-row grid)
         this.CTRL_PADDING_V = 10;   // top + bottom padding each
         this.CTRL_PADDING_H = 20;   // left + right padding each
         this.CTRL_GAP       = 20;   // gap between items
@@ -20,6 +21,16 @@ export class ScaleManager {
         this.BOARD_MARGIN   = 12;   // breathing room around the board
 
         this._onResizeBound = this._onResize.bind(this);
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────
+
+    _isMobile() {
+        return window.innerWidth <= 600;
+    }
+
+    _getControlsHeight() {
+        return this._isMobile() ? this.CTRL_H_MOBILE : this.CTRL_H;
     }
 
     // ── Public ─────────────────────────────────────────────────────────────
@@ -38,29 +49,28 @@ export class ScaleManager {
     _onResize() {
         const vw = window.innerWidth;
         const vh = window.innerHeight;
+        const isMobile = this._isMobile();
+        const ctrlH = this._getControlsHeight();
 
         const { NATURAL_BOARD_W, NATURAL_BOARD_H } = this.renderer;
 
         // Available space for the board
-        // Width: viewport minus outer padding
-        const availW = vw - this.OUTER_PADDING * 2;
-
-        // Height: viewport minus fixed controls bar height minus breathing room
-        const availH = vh - this.CTRL_H - this.BOARD_MARGIN * 2;
+        // On mobile, use the full width with minimal padding
+        const outerPad = isMobile ? 4 : this.OUTER_PADDING;
+        const availW = vw - outerPad * 2;
+        const availH = vh - ctrlH - this.BOARD_MARGIN * 2;
 
         // Scale = fit board inside available W and H, maintaining aspect ratio
         const scaleW = availW / NATURAL_BOARD_W;
         const scaleH = availH / NATURAL_BOARD_H;
         const scale  = Math.min(scaleW, scaleH);
 
-        // IMPROVED: Limit minimum scale to 0.7 (don't shrink below 70% of natural size)
-        // This ensures large boards (e.g. 1000 squares) remain readable and can scroll
-        // instead of becoming tiny and unreadable.
-        // 
         // Scale limits:
-        // - Min 0.7: Large boards stay at least 70% size and scroll (more readable)
-        // - Max 3.0: Small boards (10-30 squares) can scale up for visibility
-        const s = Math.max(0.7, Math.min(3.0, scale));
+        // - Mobile: min 0.4 (smaller min allows more scrolling on very large boards)
+        // - Desktop: min 0.7 (keeps boards readable)
+        // - Max 3.0: Small boards can scale up for visibility
+        const minScale = isMobile ? 0.4 : 0.7;
+        const s = Math.max(minScale, Math.min(3.0, scale));
 
         // Store on renderer so _createSquare uses it
         this.renderer.scale = s;
@@ -80,10 +90,14 @@ export class ScaleManager {
         const controls = document.getElementById('controls');
         if (!controls) return;
 
+        const isMobile = this._isMobile();
+
         // Always use fixed padding/gap regardless of board scale
         Object.assign(controls.style, {
-            padding: `${this.CTRL_PADDING_V}px ${this.CTRL_PADDING_H}px`,
-            gap:     `${this.CTRL_GAP}px`,
+            padding: isMobile
+                ? '8px 10px'
+                : `${this.CTRL_PADDING_V}px ${this.CTRL_PADDING_H}px`,
+            gap: isMobile ? '6px' : `${this.CTRL_GAP}px`,
         });
 
         // Fixed sizes for all control elements
@@ -92,29 +106,63 @@ export class ScaleManager {
         const turnCounter = document.getElementById('turnCounter');
         const jumpInput   = document.getElementById('testJumpInput');
 
-        if (diceResult) {
-            diceResult.style.fontSize     = '18px';
-            diceResult.style.padding      = '8px 16px';
-            diceResult.style.minWidth     = '100px';
-            diceResult.style.borderRadius = '12px';
-        }
-        if (rollDice) {
-            rollDice.style.padding      = '10px 30px';
-            rollDice.style.fontSize     = '16px';
-            rollDice.style.borderRadius = '50px';
-        }
-        if (turnCounter) {
-            turnCounter.style.fontSize     = '16px';
-            turnCounter.style.padding      = '8px 16px';
-            turnCounter.style.borderRadius = '12px';
-        }
-        if (jumpInput) {
-            jumpInput.style.width    = '80px';
-            jumpInput.style.padding  = '6px';
-            jumpInput.style.fontSize = '13px';
+        if (isMobile) {
+            // Mobile: compact sizes optimised for the 2-row grid in board.css
+            if (diceResult) {
+                diceResult.style.fontSize     = '13px';
+                diceResult.style.padding      = '6px 10px';
+                diceResult.style.minWidth     = '0';
+                diceResult.style.borderRadius = '10px';
+                diceResult.style.whiteSpace   = 'nowrap';
+            }
+            if (rollDice) {
+                rollDice.style.padding      = '10px 8px';
+                rollDice.style.fontSize     = '14px';
+                rollDice.style.borderRadius = '25px';
+                rollDice.style.width        = '100%';
+            }
+            if (turnCounter) {
+                turnCounter.style.fontSize     = '13px';
+                turnCounter.style.padding      = '6px 10px';
+                turnCounter.style.borderRadius = '10px';
+                turnCounter.style.whiteSpace   = 'nowrap';
+            }
+            if (jumpInput) {
+                jumpInput.style.width    = '100%';
+                jumpInput.style.padding  = '8px 6px';
+                jumpInput.style.fontSize = '14px';
+                jumpInput.style.boxSizing = 'border-box';
+            }
+        } else {
+            // Desktop: original sizes
+            if (diceResult) {
+                diceResult.style.fontSize     = '18px';
+                diceResult.style.padding      = '8px 16px';
+                diceResult.style.minWidth     = '100px';
+                diceResult.style.borderRadius = '12px';
+                diceResult.style.whiteSpace   = '';
+            }
+            if (rollDice) {
+                rollDice.style.padding      = '10px 30px';
+                rollDice.style.fontSize     = '16px';
+                rollDice.style.borderRadius = '50px';
+                rollDice.style.width        = '';
+            }
+            if (turnCounter) {
+                turnCounter.style.fontSize     = '16px';
+                turnCounter.style.padding      = '8px 16px';
+                turnCounter.style.borderRadius = '12px';
+                turnCounter.style.whiteSpace   = '';
+            }
+            if (jumpInput) {
+                jumpInput.style.width    = '80px';
+                jumpInput.style.padding  = '6px';
+                jumpInput.style.fontSize = '13px';
+                jumpInput.style.boxSizing = '';
+            }
         }
 
-        // Player piece scales with board and must sit above all square content
+        // Player piece scales with board
         const player = document.querySelector('.player');
         if (player) {
             const s = this.renderer.scale;
@@ -133,14 +181,16 @@ export class ScaleManager {
         const gameContainer = document.getElementById('gameContainer');
         if (!gameContainer) return;
 
+        const ctrlH = this._getControlsHeight();
+
         // Board sits centred in the space above the fixed controls bar
         Object.assign(gameContainer.style, {
             display:        'flex',
             flexDirection:  'column',
             alignItems:     'center',
             justifyContent: 'flex-start',
-            minHeight:      `calc(100vh - ${this.CTRL_H}px)`,
-            paddingBottom:  `${this.CTRL_H + this.BOARD_MARGIN}px`,
+            minHeight:      `calc(100vh - ${ctrlH}px)`,
+            paddingBottom:  `${ctrlH + this.BOARD_MARGIN}px`,
             paddingTop:     `${this.BOARD_MARGIN}px`,
         });
     }

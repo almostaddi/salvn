@@ -3,6 +3,8 @@
     width: 100%;
     max-width: 1200px;
     margin: 0 auto;
+    /* FIXED: No min-width on mobile */
+    min-width: 0;
 }
 
 #taskPage.active {
@@ -75,6 +77,8 @@
     display: block;
     margin-left: auto;
     margin-right: auto;
+    /* Mobile tap target */
+    min-height: 44px;
 }
 
 #continueButton:hover:not(:disabled) {
@@ -150,6 +154,7 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    min-height: 44px;
 }
 
 .action-btn:hover:not(:disabled) {
@@ -165,22 +170,32 @@
 /* Responsive */
 @media (max-width: 600px) {
     #instructions {
-        padding: 30px 20px;
-        font-size: 16px;
+        padding: 20px 16px;
+        font-size: 15px;
+        border-radius: 10px;
+        margin-top: 10px;
     }
     
     #instructions p {
-        font-size: 15px;
-        margin: 15px 0;
+        font-size: 14px;
+        line-height: 1.7;
+        margin: 10px 0;
     }
     
     #instructions strong {
-        font-size: 20px;
-        margin-bottom: 15px;
+        font-size: 18px;
+        margin-bottom: 12px;
     }
     
     .prize-result {
-        font-size: 1.5em;
-        padding: 20px;
+        font-size: 1.3em;
+        padding: 15px;
+    }
+
+    #continueButton {
+        padding: 12px 24px;
+        font-size: 15px;
+        width: 100%;
+        box-sizing: border-box;
     }
 }

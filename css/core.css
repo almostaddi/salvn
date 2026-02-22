@@ -115,6 +115,10 @@ button {
     letter-spacing: 1px;
     background: var(--success-gradient);
     box-shadow: var(--shadow-md);
+    /* Mobile tap target */
+    min-height: 44px;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
 button:hover:not(:disabled) {
@@ -135,6 +139,8 @@ input[type="number"],
 select {
     font-family: inherit;
     font-size: 16px;
+    /* Prevent zoom on iOS */
+    font-size: max(16px, 1em);
 }
 
 /* Keep spinners/arrows visible for number inputs */
@@ -190,7 +196,6 @@ a:hover {
 .mt-3 { margin-top: 30px; }
 
 /* Fixed position buttons (Reset, Patch Notes) */
-/* Always visible when on board/task pages */
 #resetBtn,
 #patchNotesBtn {
     position: fixed;
@@ -201,7 +206,6 @@ a:hover {
     z-index: 1000;
     text-transform: none;
     letter-spacing: normal;
-    /* Always hidden by default */
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
@@ -346,36 +350,61 @@ body.show-fixed-buttons #patchNotesBtn {
 /* Responsive */
 @media (max-width: 600px) {
     body {
-        padding: 10px;
+        padding: 0;
     }
-    
+
     h1 {
-        font-size: 2em;
-        margin-bottom: 20px;
+        font-size: 1.8em;
+        margin-bottom: 16px;
+        margin-top: 16px;
     }
-    
+
     button {
-        padding: 12px 30px;
+        padding: 12px 24px;
         font-size: 16px;
     }
-    
+
     #resetBtn,
     #patchNotesBtn {
-        top: 10px;
-        padding: 8px 16px;
-        font-size: 12px;
+        top: 8px;
+        padding: 7px 12px;
+        font-size: 11px;
+        border-radius: 20px;
     }
-    
-    #patchNotesBtn { right: 10px; }
-    #resetBtn { left: 10px; }
-    
+
+    #patchNotesBtn { right: 8px; }
+    #resetBtn { left: 8px; }
+
     .modal-content {
-        width: 90%;
-        padding: 20px;
-        margin: 10% auto;
+        width: 92%;
+        padding: 20px 16px;
+        margin: 8% auto;
+        border-radius: 16px;
     }
-    
+
+    .modal-content h2 {
+        font-size: 1.5em !important;
+    }
+
+    .modal-content p {
+        font-size: 15px !important;
+    }
+
+    #resetModal .modal-content > div,
+    #resetSettingsModal .modal-content > div {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    #confirmReset,
+    #confirmResetSettings,
+    #cancelReset,
+    #cancelResetSettings {
+        width: 100%;
+        padding: 12px 20px;
+    }
+
     .close-btn {
-        font-size: 24px;
+        font-size: 26px;
     }
 }

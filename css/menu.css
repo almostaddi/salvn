@@ -10,7 +10,6 @@
 /* Settings page layout */
 h1 {
     font-size: 3em;
-    # margin-bottom: 30px;
     text-align: center;
 }
 
@@ -18,7 +17,7 @@ h1 {
     padding: 20px;
     max-width: 1400px;
     margin: 0 auto;
-    flex: 0 0 auto; /* Don't stretch inside flex body */
+    flex: 0 0 auto;
     width: 100%;
 }
 
@@ -30,6 +29,7 @@ h1 {
     justify-content: center;
     align-items: center;
     gap: 15px;
+    flex-wrap: wrap;
 }
 
 /* Home page specific button styles */
@@ -83,6 +83,7 @@ h1 {
     text-transform: none !important;
     letter-spacing: normal !important;
     transition: all 0.2s ease !important;
+    min-height: 36px !important;
 }
 
 #toggleAdvancedRandom:hover:not(:disabled) {
@@ -98,9 +99,7 @@ h1 {
     transform: translateY(0) !important;
 }
 
-/* FIX: Use flex: 0 0 to prevent columns resizing during DOM mutations.
-   flex-grow:0 flex-shrink:0 means the browser will NOT recalculate column
-   width when child content is added/removed (e.g. during renderToyLibrary). */
+/* FIX: Use flex: 0 0 to prevent columns resizing during DOM mutations. */
 .settings-column-left,
 .settings-column-right {
     flex: 0 0 calc(50% - 10px);
@@ -135,7 +134,6 @@ h1 {
     padding: 15px;
     border: 2px solid #667eea;
     margin-bottom: 20px;
-    /* Prevent content from pushing column width */
     box-sizing: border-box;
     width: 100%;
 }
@@ -254,10 +252,9 @@ input[name="snakesLaddersMode"][value="random"] ~ * {
     padding: 15px;
     margin-bottom: 15px;
     border: 2px solid #e9ecef;
-    /* Prevent content from pushing column width */
     box-sizing: border-box;
     width: 100%;
-    overflow: hidden; /* Prevent horizontal overflow */
+    overflow: hidden;
 }
 
 /* Continuous task probability display */
@@ -298,7 +295,6 @@ input[name="snakesLaddersMode"][value="random"] ~ * {
     margin-bottom: 8px;
     transition: all 0.3s ease;
     background: white;
-    /* Prevent content from pushing column width */
     box-sizing: border-box;
     width: 100%;
 }
@@ -381,9 +377,6 @@ input[name="snakesLaddersMode"][value="random"] ~ * {
     padding: 4px 0;
 }
 
-.set-difficulty-item:last-child {
-}
-
 .difficulty-row {
     display: flex;
     justify-content: space-between;
@@ -434,6 +427,7 @@ input[name="snakesLaddersMode"][value="random"] ~ * {
     align-items: center;
     justify-content: center;
     transition: background 0.2s ease;
+    min-height: unset;
 }
 
 .gear-btn:hover {
@@ -611,7 +605,7 @@ input[type="range"]::-moz-range-thumb {
     margin: 0;
 }
 
-/* Challenge type checkboxes - FIXED: More specific selector to prevent matching toy library */
+/* Challenge type checkboxes */
 .settings-section > div > div > div:last-child {
     margin-left: 20px;
     display: flex;
@@ -629,7 +623,6 @@ input[type="range"]::-moz-range-thumb {
     background: transparent;
 }
 
-/* FIXED: Added 'label' to selector to make it more specific and not match toy checkboxes */
 .settings-section > div > div > div:last-child label input[type="checkbox"] {
     width: 16px;
     height: 16px;
@@ -653,7 +646,7 @@ input[type="range"]::-moz-range-thumb {
     margin: 0;
 }
 
-/* Set checkbox styling - applies to set difficulty checkboxes */
+/* Set checkbox styling */
 .set-difficulty input[type="checkbox"] {
     width: 16px;
     height: 16px;
@@ -669,24 +662,74 @@ input[type="range"]::-moz-range-thumb {
 /* Mobile responsive */
 @media (max-width: 600px) {
     h1 {
-        font-size: 2em;
+        font-size: 1.8em;
     }
-    
+
+    #homePage {
+        padding: 12px;
+    }
+
     #homePage > div:first-child {
-        flex-direction: column;
-        gap: 10px;
+        gap: 8px;
+        margin-top: 12px;
+        margin-bottom: 16px;
     }
-    
+
+    /* Start button - slightly smaller on mobile */
     #startButton {
         padding: 15px 30px;
         font-size: 18px;
+        width: 100%;
+        order: -1; /* Start button first on mobile */
     }
-    
+
+    /* Reset and Notes buttons side by side */
+    #homeResetBtn,
+    #homePatchNotesBtn {
+        flex: 1;
+        padding: 10px 12px;
+        font-size: 13px;
+        min-width: 0;
+    }
+
     .settings-column-left,
     .settings-column-right {
         flex: 1 1 100%;
         min-width: 100%;
         width: 100%;
         max-width: 100%;
+    }
+
+    .settings-section {
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    /* Make sliders easier to interact with on mobile */
+    input[type="range"] {
+        height: 10px;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+        width: 24px;
+        height: 24px;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+        width: 24px;
+        height: 24px;
+    }
+}
+
+@media (max-width: 380px) {
+    #homePage > div:first-child {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    #homeResetBtn,
+    #homePatchNotesBtn {
+        flex: none;
+        width: 100%;
     }
 }
