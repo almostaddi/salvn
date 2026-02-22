@@ -171,49 +171,63 @@ function showPage(pageName) {
         }, { once: true });
 
     // ── All other transitions ─────────────────────────────────────────────
-    } else {
+} else {
         _nextBoardAnim = null;
 
         targetPageEl.classList.remove('page-entering-fade');
         targetPageEl.classList.add('active');
 
-        if (hasOutgoing) {
+        // If going to task page, DON'T deactivate the board — task overlays on top
+        if (pageName === 'task') {
+            targetPageEl.classList.remove('page-entering-fade');
+            targetPageEl.classList.add('active');
             void targetPageEl.offsetWidth;
             targetPageEl.classList.add('page-entering-fade');
             targetPageEl.addEventListener('animationend', () => {
                 targetPageEl.classList.remove('page-entering-fade');
-                if (outgoing && outgoing !== targetPageEl) {
-                    outgoing.classList.remove('active');
-                }
             }, { once: true });
-        }
+            // Board stays active underneath — controls stay visible too
 
-        // Controls visibility
-        if (controls) {
-            if (pageName === 'board') {
-                controls.style.display = 'flex';
-                controls.style.opacity = '1';
-            } else {
-                controls.style.display = 'none';
-                controls.style.opacity = '1';
+        // If returning from task page to board, board is already active — just hide task
+        } else if (outgoing && outgoing.id === 'taskPage') {
+            // Fade out task page, board is already behind it
+            outgoing.classList.add('page-exiting-fade');
+            outgoing.addEventListener('animationend', () => {
+                outgoing.classList.remove('active', 'page-exiting-fade');
+            }, { once: true });
+            // Scroll to player at the first paint
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    scrollToPlayer(window.GAME_STATE.playerPosition, true);
+                });
+            });
+
+        } else {
+            targetPageEl.classList.remove('page-entering-fade');
+            targetPageEl.classList.add('active');
+
+            if (hasOutgoing) {
+                void targetPageEl.offsetWidth;
+                targetPageEl.classList.add('page-entering-fade');
+                targetPageEl.addEventListener('animationend', () => {
+                    targetPageEl.classList.remove('page-entering-fade');
+                    if (outgoing && outgoing !== targetPageEl) {
+                        outgoing.classList.remove('active');
+                    }
+                }, { once: true });
+            }
+
+            // Controls visibility
+            if (controls) {
+                if (pageName === 'board') {
+                    controls.style.display = 'flex';
+                    controls.style.opacity = '1';
+                } else {
+                    controls.style.display = 'none';
+                    controls.style.opacity = '1';
+                }
             }
         }
-    }
-
-    // Body classes and button labels
-    const resetBtn = document.getElementById('resetBtn');
-    if (pageName === 'home') {
-        document.body.classList.add('on-home-page');
-        document.body.classList.remove('show-fixed-buttons');
-        if (resetBtn) resetBtn.textContent = '🔄 Reset Settings';
-    } else if (pageName === 'board') {
-        document.body.classList.remove('on-home-page');
-        document.body.classList.add('show-fixed-buttons');
-        if (resetBtn) resetBtn.textContent = '🔄 Reset';
-    } else {
-        document.body.classList.remove('on-home-page');
-        document.body.classList.add('show-fixed-buttons');
-        if (resetBtn) resetBtn.textContent = '🔄 Reset';
     }
 
     console.log('✅ Now showing:', pageName);
@@ -345,13 +359,6 @@ function handleTaskCompletion() {
         saveGameState();
 
         showPage('board');
-
-        // Set scroll position at first paint after page becomes active
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                scrollToPlayer(window.GAME_STATE.playerPosition, true);
-            });
-        });
 
         const rollDiceButton = document.getElementById('rollDice');
         rollDiceButton.textContent = '🎲 Roll Dice';

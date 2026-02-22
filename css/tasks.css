@@ -5,6 +5,16 @@
     margin: 0 auto;
 }
 
+#taskPage.active {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    overflow-y: auto;
+    background: var(--primary-gradient);
+    background-attachment: fixed;
+    max-width: none;
+}
+
 /* Instructions container - HIDDEN BY DEFAULT */
 #instructions {
     margin-top: 20px;

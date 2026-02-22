@@ -33,17 +33,34 @@ function scrollToPlayer(playerPos, instant = true) {
         return true;
     }
 
-    const squareRect = square.getBoundingClientRect();
-    const absoluteTop = window.scrollY + squareRect.top;
-    const centeredTop = absoluteTop - (window.innerHeight / 2) + (squareRect.height / 2);
-
-    window.scrollTo({
-        top: Math.max(0, centeredTop),
-        left: 0,
-        behavior: instant ? 'auto' : 'smooth'
+    // Scroll square into center of view
+    square.scrollIntoView({
+        behavior: 'auto',
+        block: 'center',
+        inline: 'center'
     });
 
-    console.log(`📍 ${instant ? 'Jumped' : 'Scrolled'} to player at square ${playerPos} (centered)`);
+    // After scrollIntoView, check if we've scrolled into empty space below the board
+    // If so, pull back to the true bottom of the board content
+    requestAnimationFrame(() => {
+        const board = document.getElementById('board');
+        if (!board) return;
+
+        const boardRect = board.getBoundingClientRect();
+        const controls = document.getElementById('controls');
+        const controlsHeight = controls ? controls.offsetHeight : 70;
+
+        // If the bottom of the board is above the bottom of the visible area
+        // (accounting for controls bar), we've scrolled too far
+        const visibleBottom = window.innerHeight - controlsHeight;
+        if (boardRect.bottom < visibleBottom) {
+            // Scroll back up so board bottom sits just above controls
+            const overshoot = visibleBottom - boardRect.bottom;
+            window.scrollBy({ top: -overshoot, left: 0, behavior: 'auto' });
+        }
+    });
+
+    console.log(`📍 Scrolled to player at square ${playerPos}`);
     return true;
 }
 
