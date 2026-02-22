@@ -5,6 +5,7 @@
 //   - Scale fits the board into available viewport space (minus controls)
 //   - Controls bar is ALWAYS rendered at scale=1 (fixed size, never scales)
 //   - No whitespace: board is centred in remaining space after controls
+//   - IMPROVED: Minimum scale of 0.5 allows large boards to scroll instead of becoming unreadable
 
 export class ScaleManager {
     constructor(boardRenderer) {
@@ -52,8 +53,14 @@ export class ScaleManager {
         const scaleH = availH / NATURAL_BOARD_H;
         const scale  = Math.min(scaleW, scaleH);
 
-        // Clamp: don't shrink below 0.2 (unusable) or above 3 (tiny boards go huge)
-        const s = Math.max(0.2, Math.min(3.0, scale));
+        // IMPROVED: Limit minimum scale to 0.7 (don't shrink below 70% of natural size)
+        // This ensures large boards (e.g. 1000 squares) remain readable and can scroll
+        // instead of becoming tiny and unreadable.
+        // 
+        // Scale limits:
+        // - Min 0.7: Large boards stay at least 70% size and scroll (more readable)
+        // - Max 3.0: Small boards (10-30 squares) can scale up for visibility
+        const s = Math.max(0.7, Math.min(3.0, scale));
 
         // Store on renderer so _createSquare uses it
         this.renderer.scale = s;

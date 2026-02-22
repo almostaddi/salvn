@@ -71,8 +71,23 @@ let taskRegistryLoaded = false;
 // 'slide' triggers the board slide-in-from-bottom (set just before startGame calls showPage)
 let _nextBoardAnim = null;
 
+// Complete showPage function with scroll position fix
+// Replace the entire showPage function in js/main.js with this:
+
+
+// Add this variable at the top of main.js (around line 72, before showPage):
+let _pendingScrollCallback = null;
+
+// Replace the entire showPage() function:
 function showPage(pageName) {
     console.log('🔄 Switching to page:', pageName);
+    
+    // SCROLL FIX: Reset scroll position BEFORE transition when going to home ONLY
+    // DO NOT reset scroll for board page!
+    if (pageName === 'home') {
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+    }
 
     const targetPageEl = document.getElementById(pageName + 'Page');
     if (!targetPageEl) {
@@ -119,8 +134,6 @@ function showPage(pageName) {
     }
 
     // ── 4. Update body classes and button labels ──────────────────────────
-    // Title is now inside pages, so we don't need to manipulate it
-    
     const resetBtn = document.getElementById('resetBtn');
     if (pageName === 'home') {
         document.body.classList.add('on-home-page');
@@ -134,7 +147,6 @@ function showPage(pageName) {
 
     console.log('✅ Now showing:', pageName);
 }
-
 
 // Update classic radio button state based on board size
 function updateClassicRadioState(boardSize) {
@@ -386,6 +398,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (mainTitle) {
         mainTitle.style.display = (initialPage === 'task' || initialPage === 'board') ? 'none' : 'block';
     }
+
+    // Set controls visibility for initial page
+    const controls = document.getElementById('controls');
+    if (controls) {
+        controls.style.display = initialPage === 'board' ? 'flex' : 'none';
+    }
+
     const resetBtnInit = document.getElementById('resetBtn');
     if (initialPage === 'home') {
         document.body.classList.add('on-home-page');
@@ -420,9 +439,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         restoreSavedGame(savedState);
     }
     
-    if (initialPage === 'board') {
+    if (initialPage === 'board' && savedState && savedState.gameStarted) {
         waitForBoard(() => {
-            if (savedState && savedState.playerPosition > 0) {
+            if (savedState.playerPosition > 0) {
                 scrollToPlayer(savedState.playerPosition, true);
             } else {
                 scrollToBottom();
@@ -686,7 +705,8 @@ function logGameStateOnStart() {
     console.groupEnd(); // end top-level group
 }
 
-// Start game
+
+// Replace the entire startGame() function:
 function startGame() {
     const selectedSets = window.GAME_STATE.selectedSets;
     if (selectedSets.length === 0) {
@@ -776,21 +796,21 @@ function startGame() {
     rollDiceButton.onclick = null;
     rollDiceButton.onclick = rollDice;
     
- saveGameState();
+    saveGameState();
     
-   // Set the board animation type
-   _nextBoardAnim = 'slide';
-   
-   // Switch to board page first
-   showPage('board');
-   
-//    // AFTER switching pages, scroll the board page to bottom
-//    // The board page starts at top, we scroll it down so player piece is visible
-//    setTimeout(() => {
-//        waitForBoard(() => {
-//            scrollToBottom();
-//        });
-//    }, 50); // Small delay to let page switch complete
+    // Set the board animation type
+    _nextBoardAnim = 'slide';
+    
+    // Switch to board page (starts at top, will animate)
+    showPage('board');
+    
+    // Wait for animation to complete (1.0s animation + 100ms buffer)
+    // THEN scroll to bottom
+    setTimeout(() => {
+        waitForBoard(() => {
+            scrollToBottom();
+        });
+    }, 1100);
     
     logGameStateOnStart();
 }
