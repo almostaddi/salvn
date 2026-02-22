@@ -23,7 +23,7 @@ export class BoardRenderer {
         // Base dimensions (unscaled)
         this.SQ      = 64;
         this.EXTRA   = 7;
-        this.ROW_GAP = this.EXTRA * 2;   // 14
+        this.ROW_GAP = this.EXTRA * 2.3;   // 14
         this.COL_GAP = 2;
 
         // Current scale (updated by ScaleManager)
