@@ -293,7 +293,6 @@ body.show-fixed-buttons #patchNotesBtn {
 
 .close-btn:hover {
     color: var(--border-color);
-    transform: rotate(90deg);
 }
 
 #resetModal .modal-content,
@@ -348,7 +347,7 @@ body.show-fixed-buttons #patchNotesBtn {
 }
 
 /* Responsive */
-@media (max-width: 600px) {
+@media (max-width: 660px) {
     body {
         padding: 0;
     }

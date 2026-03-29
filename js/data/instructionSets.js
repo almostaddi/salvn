@@ -14,7 +14,7 @@ export const INSTRUCTION_SETS = {
             { id: "vibe", name: "Vibe 💎" }
         ]
     },
-    apple: {
+    anal: {
         name: "Anal Set",
         emoji: "🍎",
         toys: [

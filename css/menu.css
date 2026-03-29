@@ -61,6 +61,7 @@ h1 {
     font-size: 24px;
     font-weight: bold;
     cursor: pointer;
+    white-space: nowrap;
 }
 
 /* Button container - two column layout */
@@ -659,8 +660,42 @@ input[type="range"]::-moz-range-thumb {
     opacity: 0.5;
 }
 
+
+#exportCodeBtn,
+#importCodeBtn {
+    padding: 10px 18px;
+    font-size: 14px;
+    white-space: nowrap;
+    background: var(--primary-gradient);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+#exportCodeBtn:hover:not(:disabled),
+#importCodeBtn:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+#settingsCodeRow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+#settingsCodeRow input {
+    flex: 1;
+    min-width: 0;
+}
+
+#settingsCodeMsg {
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+
 /* Mobile responsive */
-@media (max-width: 600px) {
+@media (max-width: 660px) {
     h1 {
         font-size: 1.8em;
     }
@@ -669,27 +704,36 @@ input[type="range"]::-moz-range-thumb {
         padding: 12px;
     }
 
+    /* Three-column grid: [Reset] [Start] [Notes] */
     #homePage > div:first-child {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
         gap: 8px;
         margin-top: 12px;
         margin-bottom: 16px;
     }
 
-    /* Start button - slightly smaller on mobile */
-    #startButton {
-        padding: 15px 30px;
-        font-size: 18px;
-        width: 100%;
-        order: -1; /* Start button first on mobile */
+    #homeResetBtn {
+        grid-column: 1;
+        padding: 10px 14px;
+        font-size: 13px;
+        white-space: nowrap;
     }
 
-    /* Reset and Notes buttons side by side */
-    #homeResetBtn,
+    #startButton {
+        grid-column: 2;
+        padding: 12px;
+        font-size: 16px;
+        width: 100%;
+        white-space: nowrap;
+    }
+
     #homePatchNotesBtn {
-        flex: 1;
-        padding: 10px 12px;
+        grid-column: 3;
+        padding: 10px 14px;
         font-size: 13px;
-        min-width: 0;
+        white-space: nowrap;
     }
 
     .settings-column-left,
@@ -705,7 +749,6 @@ input[type="range"]::-moz-range-thumb {
         padding: 12px;
     }
 
-    /* Make sliders easier to interact with on mobile */
     input[type="range"] {
         height: 10px;
     }
@@ -719,17 +762,21 @@ input[type="range"]::-moz-range-thumb {
         width: 24px;
         height: 24px;
     }
-}
-
-@media (max-width: 380px) {
-    #homePage > div:first-child {
+        #settingsCodeRow {
         flex-direction: column;
         align-items: stretch;
     }
 
-    #homeResetBtn,
-    #homePatchNotesBtn {
-        flex: none;
+    #settingsCodeRow input {
         width: 100%;
+    }
+
+    #exportCodeBtn,
+    #importCodeBtn {
+        width: 100%;
+    }
+
+    #settingsCodeMsg {
+        text-align: center;
     }
 }

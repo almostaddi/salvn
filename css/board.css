@@ -171,7 +171,7 @@
 }
 
 /* ── Mobile controls ─────────────────────────────────────────────────────── */
-@media (max-width: 600px) {
+@media (max-width: 660px) {
     #controls {
         padding: 8px 10px;
         gap: 6px;
@@ -223,7 +223,7 @@
     }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 660px) {
     #controls {
         gap: 4px;
         padding: 6px 8px;

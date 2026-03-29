@@ -66,11 +66,11 @@
             }
         ]
     },
-    "apple": {
+    "anal": {
         "tasks": [
             {
-                "file": "js/tasks/apple/fallback.js",
-                "id": "apple_fallback",
+                "file": "js/tasks/anal/fallback.js",
+                "id": "anal_fallback",
                 "toyId": "hand",
                 "type": "standard",
                 "isFallback": true,

@@ -31,6 +31,8 @@ export function initializeState() {
         },
         playerName: '',
         playerPronouns: 'he/him',
+        playerNicknames: '',
+        domName: '',
         // Body type configuration (checkboxes - player checks which parts they have)
         bodyType: {
             pe: true,        // Penis
@@ -217,6 +219,8 @@ export function resetGameState() {
     window.GAME_STATE.completedOnlyOnceTasks = {};
     window.GAME_STATE.playerName = '';
     window.GAME_STATE.playerPronouns = 'he/him';
+    window.GAME_STATE.playerNicknames = '';
+    window.GAME_STATE.domName = '';
     window.GAME_STATE.bodyType = { pe: true, pu: false, breasts: false, ba: true };
     window.GAME_STATE.selectedSets = [];
     window.GAME_STATE.toyDifficulties = {};
@@ -323,17 +327,40 @@ export function playerHasBodyPart(bodyPart) {
     return gate(bodyType);
 }
 
-// Get condition helpers for tasks
+// Get task conditions
 export function getTaskConditions() {
     return {
         // Player info
         name: window.GAME_STATE.playerName || 'Player',
         pronouns: window.GAME_STATE.playerPronouns || 'he/him',
+        domName: window.GAME_STATE.domName || '',
+        nicknames: window.GAME_STATE.nicknames || '',
         playerPosition: window.GAME_STATE.playerPosition,
         turnCount: window.GAME_STATE.turnCount,
 
+        // Helper functions for random selection
+        getRandomDomName: () => {
+            const domNamesArray = window.GAME_STATE.domName 
+                ? window.GAME_STATE.domName.split(',').map(n => n.trim()).filter(n => n)
+                : [];
+            return domNamesArray.length > 0 
+                ? domNamesArray[Math.floor(Math.random() * domNamesArray.length)]
+                : null;
+        },
+        
+        getRandomNickname: () => {
+            const nicknamesArray = window.GAME_STATE.nicknames 
+                ? window.GAME_STATE.nicknames.split(',').map(n => n.trim()).filter(n => n)
+                : [];
+            return nicknamesArray.length > 0 
+                ? nicknamesArray[Math.floor(Math.random() * nicknamesArray.length)]
+                : null;
+        },
+
         // Body type
         bodyType: window.GAME_STATE.bodyType || { pe: true, pu: false, breasts: false, ba: true },
+        
+        // ... rest of the conditions
         
         // Turn count tracking
         getTurnCountForSet: (setId) => window.GAME_STATE.turnCountBySet[setId] || 0,

@@ -252,21 +252,23 @@ export function rollDice() {
         
         // Stay on board page and show Continue button
         rollDiceButton.textContent = '🚪 Enter';
-        rollDiceButton.disabled = false;
+        rollDiceButton.disabled = true;  // Keep disabled until preload finishes
         isRolling = false;
-        
-        // Clear onclick first to prevent double-firing
+
         rollDiceButton.onclick = null;
-        
-        // PRELOAD IMAGES IMMEDIATELY AFTER LANDING
-        // Get the task that will be shown
+
+        // PRELOAD IMAGES BEFORE ENABLING ENTER BUTTON
         const taskToShow = window.selectNextTask();
-        if (taskToShow && window.preloadTaskImages) {
-            console.log('🎬 Preloading task images after landing...');
-            window.preloadTaskImages(taskToShow, addRemoveTask).catch(err => {
+        const preloadPromise = (taskToShow && window.preloadTaskImages)
+            ? window.preloadTaskImages(taskToShow, addRemoveTask).catch(err => {
                 console.warn('⚠️ Image preload failed:', err);
-            });
-        }
+            })
+            : Promise.resolve();
+
+        preloadPromise.then(() => {
+            rollDiceButton.disabled = false;
+            console.log('✅ Preload done — Enter button enabled');
+        });
         
         // Set up what happens when user clicks Continue
         if (isSnake || isLadder) {
@@ -358,15 +360,29 @@ export function onTaskComplete() {
                 
                 const totalSquares = window.GAME_STATE.totalSquares || 100;
                 
-                // Check if final square after snake/ladder
+                // Check if final square
                 if (playerPosition === totalSquares) {
-                    // STATE: Ready for final challenge
                     window.GAME_STATE.gamePhase = 'awaiting_final_challenge';
                     window.GAME_STATE.pendingSnakeLadder = null;
                     window.GAME_FUNCTIONS.saveState();
-                    
-                    window.showPage('task');
-                    window.displayFinalChallenge();
+
+                    // Preload final challenge images before showing the page
+                    rollDiceButton.disabled = true;
+                    rollDiceButton.textContent = '⏳ Loading...';
+                    isRolling = false;
+
+                    (async () => {
+                        try {
+                            const finalTask = window.selectFinalChallenge();
+                            if (finalTask && window.preloadTaskImages) {
+                                await window.preloadTaskImages(finalTask, null);
+                            }
+                        } catch (err) {
+                            console.warn('⚠️ Final challenge preload failed:', err);
+                        }
+                        window.showPage('task');
+                        window.displayFinalChallenge();
+                    })();
                     return;
                 }
                 

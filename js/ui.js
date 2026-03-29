@@ -315,7 +315,7 @@ export function renderToyLibrary() {
     
     const setEmojis = {
         dressup: '🎨',
-        apple: '🍎',
+        anal: '🍎',
         digging: '⛏️',
         teaseanddenial: '🎯'
     };
@@ -996,6 +996,17 @@ export function restoreUIState(state) {
             const el = document.getElementById(elId);
             if (el && state.bodyType[key] !== undefined) el.checked = state.bodyType[key];
         }
+    }
+
+    // Restore other names
+        const nicknamesInput = document.getElementById('nicknamesInput');
+    if (nicknamesInput && state.playerNicknames !== undefined) {
+        nicknamesInput.value = state.playerNicknames;
+    }
+
+    const domNameInput = document.getElementById('domNameInput');
+    if (domNameInput && state.domName !== undefined) {
+        domNameInput.value = state.domName;
     }
     
     // Restore board size

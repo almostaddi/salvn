@@ -9,7 +9,7 @@ export default {
         
         // Return VN format
         return {
-            image: 'https://picsum.photos/seed/apple_fallback/800/600',
+            image: 'https://picsum.photos/seed/anal_fallback/800/600',
             bubbles: [
                 '<strong>Anal Set Task</strong>',
                 `<p>Touch your toes ${count} times.</p>`,

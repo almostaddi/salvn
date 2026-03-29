@@ -17,7 +17,7 @@ export async function loadTaskRegistry() {
         taskRegistry = {
             sets: {
                 dressup: { tasks: {}, add: {}, remove: {}, snakes: [], ladders: [], finals: [] },
-                apple: { tasks: {}, add: {}, remove: {}, snakes: [], ladders: [], finals: [] },
+                anal: { tasks: {}, add: {}, remove: {}, snakes: [], ladders: [], finals: [] },
                 digging: { tasks: {}, add: {}, remove: {}, snakes: [], ladders: [], finals: [] },
                 teaseanddenial: { tasks: {}, add: {}, remove: {}, snakes: [], ladders: [], finals: [] }
             },

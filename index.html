@@ -14,6 +14,7 @@
     <!-- NEW: Visual Novel CSS -->
     <link rel="stylesheet" href="css/tasks-visual-novel.css">
     <link rel="shortcut icon" type="image/x-icon" href="favicon.svg">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 </head>
 <body>
     <!-- HOME PAGE - Settings and Start Game -->
@@ -21,9 +22,15 @@
         <h1>🎲 Snakes and Ladders 🎲</h1>
         
         <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 30px;">
-            <button id="homeResetBtn">🔄 Reset Settings</button>
+            <button id="homeResetBtn">🔄 Reset</button>
             <button id="startButton">🎮 Start Game</button>
             <button id="homePatchNotesBtn">📋 Notes</button>
+        </div>
+        <div id="settingsCodeRow" style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;">
+            <button id="exportCodeBtn" type="button">📋 Export Code</button>
+            <input type="text" id="settingsCodeInput" placeholder="Paste code to import...">
+            <button id="importCodeBtn" type="button">📥 Import Code</button>
+            <span id="settingsCodeMsg"></span>
         </div>
         <div id="buttoncontainer">
             <div class="settings-column-left">
@@ -117,7 +124,7 @@
                     <h3>🎮 Instruction Sets & Toys</h3>
                     <label>Select Instruction Sets:</label>
                     <div id="instructionSetCheckboxes" class="instruction-set-selector">
-                        <label><input type="checkbox" value="apple"> Anal Set 🍑</label>
+                        <label><input type="checkbox" value="anal"> Anal Set 🍑</label>
                         <label><input type="checkbox" value="digging"> Deepthroat 🍌</label>
                         <label><input type="checkbox" value="dressup"> Painplay😖</label>
                         <label><input type="checkbox" value="teaseanddenial"> Tease And Denial 😉</label>

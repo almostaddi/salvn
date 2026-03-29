@@ -387,9 +387,12 @@ class VNTaskDisplay {
             stage.buttons.forEach(btn => {
                 const btnType = btn.type || 'next';
                 this.addButton(btn.text, () => {
+                    // ── FIX: if execute() returns false, block navigation ──
                     if (btn.execute) {
-                        btn.execute(this.stageData);
+                        const result = btn.execute(this.stageData);
+                        if (result === false) return;
                     }
+                    // ─────────────────────────────────────────────────────
                     if (btn.onComplete && this.onCompleteCallback) {
                         this.onCompleteCallback();
                     } else if (btn.nextStage) {
@@ -587,9 +590,6 @@ class VNTaskDisplay {
 // Current VN display instance
 let currentVN = null;
 
-// Parse HTML string into VN format (for backward compatibility)
-// parseHTMLToVNFormat has been removed - all tasks now use native VN format
-
 // Extract image URLs from current stage only
 function extractCurrentStageImageUrls(vnData, currentStageId = null) {
     const urls = [];
@@ -644,67 +644,36 @@ function extractRemainingStageImageUrls(vnData, currentStageId = null) {
     return urls;
 }
 
-// Extract all image URLs from VN data (for restoration only)
-function extractAllImageUrls(vnData) {
-    const urls = [];
-    
-    // Main image
-    if (vnData.image) {
-        urls.push(vnData.image);
-    }
-    
-    // Stage images
-    if (vnData.stages) {
-        vnData.stages.forEach(stage => {
-            if (stage.image) {
-                urls.push(stage.image);
-            }
-        });
-    }
-    
-    return urls;
-}
-
 // PRELOAD task images when player lands (before clicking Enter)
 export async function preloadTaskImages(taskDefinition, addRemoveTask = null) {
     console.log('🎬 Preloading images for:', taskDefinition.id);
     
     const conditions = getTaskConditions();
-    
-    // Build difficulty map
     const difficultyMap = buildDifficultyMap();
     
-    // Get primary difficulty
     const toyKey = taskDefinition.setId && taskDefinition.toyId ? 
         `${taskDefinition.setId}_${taskDefinition.toyId}` : null;
     const primaryDifficulty = toyKey ? 
         (window.GAME_STATE.toyDifficulties[toyKey] || 'medium') : 
         'medium';
     
-    // Get task content
     const taskContent = taskDefinition.getDifficulty(primaryDifficulty, conditions, difficultyMap);
-    
-    // All tasks should now return VN format
     const vnData = taskContent;
     
-    // Handle add/remove task
     if (addRemoveTask && addRemoveTask.getHTML) {
         const addRemoveHTML = addRemoveTask.getHTML();
-        // addRemoveHTML should also be in VN format now
         const parsed = addRemoveHTML;
         if (parsed.image) {
             await imagePreloader.preload(parsed.image);
         }
     }
     
-    // Only preload CURRENT stage images (blocking)
     const currentImageUrls = extractCurrentStageImageUrls(vnData);
     if (currentImageUrls.length > 0) {
         await imagePreloader.preloadMultiple(currentImageUrls);
         console.log('✅ Preloaded', currentImageUrls.length, 'current stage images');
     }
     
-    // Preload remaining stage images in background (non-blocking)
     const remainingImageUrls = extractRemainingStageImageUrls(vnData);
     if (remainingImageUrls.length > 0) {
         imagePreloader.preloadInBackground(remainingImageUrls);
@@ -727,7 +696,6 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
     instructions.classList.add('active');
     console.log('✅ Instructions container activated');
     
-    // Create VN instance if needed
     if (!currentVN) {
         console.log('🆕 Creating new VN instance');
         currentVN = new VNTaskDisplay();
@@ -736,13 +704,9 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
         currentVN.initialize();
     }
     
-    // Get conditions
     const conditions = getTaskConditions();
-    
-    // Build difficulty map
     const difficultyMap = buildDifficultyMap();
     
-    // Get primary difficulty
     const toyKey = taskDefinition.setId && taskDefinition.toyId ? 
         `${taskDefinition.setId}_${taskDefinition.toyId}` : null;
     const primaryDifficulty = toyKey ? 
@@ -751,7 +715,6 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
     
     console.log('🎚️ Difficulty:', primaryDifficulty);
     
-    // Increment turn counts
     if (taskDefinition.setId && taskDefinition.toyId) {
         const selectedToyKey = `${taskDefinition.setId}_${taskDefinition.toyId}`;
         window.GAME_STATE.turnCountBySet[taskDefinition.setId] = 
@@ -761,29 +724,23 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
         window.GAME_STATE.lastSelectedSet[taskDefinition.toyId] = taskDefinition.setId;
     }
     
-    // Get task content
     console.log('📝 Getting task content...');
     const taskContent = taskDefinition.getDifficulty(primaryDifficulty, conditions, difficultyMap);
     console.log('✅ Task content received:', typeof taskContent);
     
-    // All tasks should now return VN format
     const vnData = taskContent;
     
-    // Add add/remove task bubbles at the beginning
     if (addRemoveTask && addRemoveTask.getHTML) {
         console.log('🔧 Adding add/remove task bubbles');
         const addRemoveHTML = addRemoveTask.getHTML();
-        // addRemoveHTML should also be in VN format now
         const parsed = addRemoveHTML;
         
-        // Prepend add/remove bubbles
         if (vnData.bubbles && parsed.bubbles) {
             vnData.bubbles = [...parsed.bubbles, ...vnData.bubbles];
             console.log('✅ Add/remove bubbles prepended, total:', vnData.bubbles.length);
         }
     }
     
-    // Start background preloading of remaining images (if multi-stage)
     if (vnData.stages && vnData.stages.length > 1) {
         const remainingImageUrls = extractRemainingStageImageUrls(vnData);
         if (remainingImageUrls.length > 0) {
@@ -791,7 +748,6 @@ export async function loadAndDisplayTask(taskDefinition, addRemoveTask = null) {
         }
     }
     
-    // Load task into VN display
     console.log('🚀 Loading task into VN display...');
     currentVN.loadTask(taskDefinition, vnData, () => {
         if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
@@ -821,11 +777,8 @@ export async function loadAndDisplaySnakeLadderTask(type, fromPos, toPos) {
     const difficultyMap = buildDifficultyMap();
     
     const taskContent = task.getDifficulty('medium', conditions, difficultyMap, snakeLadderInfo);
-    
-    // All tasks should now return VN format
     const vnData = taskContent;
     
-    // Add snake/ladder info to task definition for restoration
     const taskWithContext = {
         ...task,
         snakeLadderInfo: snakeLadderInfo,
@@ -834,7 +787,6 @@ export async function loadAndDisplaySnakeLadderTask(type, fromPos, toPos) {
         snakeLadderToPos: toPos
     };
     
-    // FIX BUG 3: Use same loading logic as loadAndDisplayTask
     currentVN.loadTask(taskWithContext, vnData, () => {
         if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
             window.GAME_FUNCTIONS.completeTask();
@@ -862,21 +814,16 @@ export async function loadAndDisplayFinalChallenge() {
     const difficultyMap = buildDifficultyMap();
     
     const taskContent = task.getDifficulty(null, conditions, difficultyMap, prizeType);
-    
-    // All tasks should now return VN format
     const vnData = taskContent;
     
-    // Add prize type to task definition for restoration
     const taskWithContext = {
         ...task,
         prizeType: prizeType,
         isFinalChallenge: true
     };
     
-    // FIX BUG 3: Use same loading logic as loadAndDisplayTask
     currentVN.loadTask(taskWithContext, vnData, () => {
         // Final challenge complete - no callback needed
-        // The task itself handles what happens next
     });
 }
 
@@ -930,11 +877,9 @@ export async function restoreVNState() {
             return;
         }
         
-        // Check if we have bubble snapshots (new format)
         if (vnState.bubbleSnapshots && vnState.bubbleSnapshots.length > 0) {
             console.log('✅ Using bubble snapshots for restoration (new method)');
             
-            // Handle special task types
             let taskDef;
             let vnData;
             
@@ -946,7 +891,6 @@ export async function restoreVNState() {
                 const difficultyMap = buildDifficultyMap();
                 const taskContent = taskDef.getDifficulty(null, conditions, difficultyMap, vnState.prizeType);
                 
-                // All tasks should now return VN format
                 vnData = taskContent;
                     
                 taskDef = {
@@ -968,7 +912,6 @@ export async function restoreVNState() {
                 const difficultyMap = buildDifficultyMap();
                 const taskContent = taskDef.getDifficulty('medium', conditions, difficultyMap, snakeLadderInfo);
                 
-                // All tasks should now return VN format
                 vnData = taskContent;
                     
                 taskDef = {
@@ -981,7 +924,6 @@ export async function restoreVNState() {
                 
             } else if (vnState.taskFilePath) {
                 console.log('📋 Restoring regular task');
-                // Load the task definition from file
                 taskDef = await loadTaskDefinition(vnState.taskFilePath);
                 
                 if (!taskDef) {
@@ -990,7 +932,6 @@ export async function restoreVNState() {
                     return;
                 }
                 
-                // Get conditions and difficulty map
                 const conditions = getTaskConditions();
                 const difficultyMap = buildDifficultyMap();
                 
@@ -1000,10 +941,8 @@ export async function restoreVNState() {
                     (window.GAME_STATE.toyDifficulties[toyKey] || 'medium') : 
                     'medium';
                 
-                // Regenerate task content
                 const taskContent = taskDef.getDifficulty(primaryDifficulty, conditions, difficultyMap);
                 
-                // All tasks should now return VN format
                 vnData = taskContent;
                     
                 taskDef = {
@@ -1017,23 +956,19 @@ export async function restoreVNState() {
                 return;
             }
             
-            // Preload the SAVED image (not the regenerated one)
             if (vnState.currentImageUrl) {
                 console.log('🖼️ Preloading saved image:', vnState.currentImageUrl);
                 await imagePreloader.preload(vnState.currentImageUrl);
             }
             
-            // Show instructions
             instructions.classList.add('active');
             
-            // Recreate VN instance
             if (!currentVN) {
                 currentVN = new VNTaskDisplay();
             } else {
                 currentVN.initialize();
             }
             
-            // Set up VN
             currentVN.taskDefinition = taskDef;
             currentVN.onCompleteCallback = () => {
                 if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
@@ -1041,18 +976,15 @@ export async function restoreVNState() {
                 }
             };
             
-            // Restore stage data
             if (vnState.stageData) {
                 currentVN.stageData = vnState.stageData;
             }
             
-            // Set the SAVED image (not regenerated one)
             if (vnState.currentImageUrl) {
                 currentVN.setImage(vnState.currentImageUrl);
                 console.log('✅ Restored saved image:', vnState.currentImageUrl);
             }
             
-            // Load stages structure (for buttons and navigation)
             if (vnData.stages && vnData.stages.length > 0) {
                 currentVN.stages = vnData.stages;
                 currentVN.currentStageId = vnState.currentStageId || vnData.stages[0].id;
@@ -1060,7 +992,6 @@ export async function restoreVNState() {
                 const stage = currentVN.stages.find(s => s.id === currentVN.currentStageId);
                 
                 if (stage) {
-                    // Add buttons from stage definition
                     if (stage.choices) {
                         stage.choices.forEach(choice => {
                             currentVN.addButton(choice.text, () => {
@@ -1074,9 +1005,12 @@ export async function restoreVNState() {
                         stage.buttons.forEach(btn => {
                             const btnType = btn.type || 'next';
                             currentVN.addButton(btn.text, () => {
+                                // ── FIX: if execute() returns false, block navigation ──
                                 if (btn.execute) {
-                                    btn.execute(currentVN.stageData);
+                                    const result = btn.execute(currentVN.stageData);
+                                    if (result === false) return;
                                 }
+                                // ─────────────────────────────────────────────────────
                                 if (btn.onComplete && currentVN.onCompleteCallback) {
                                     currentVN.onCompleteCallback();
                                 } else if (btn.nextStage) {
@@ -1093,7 +1027,6 @@ export async function restoreVNState() {
                     }
                 }
             } else {
-                // Simple task - add completion button
                 currentVN.addButton('✓ Complete', () => {
                     if (currentVN.onCompleteCallback) {
                         currentVN.onCompleteCallback();
@@ -1101,17 +1034,14 @@ export async function restoreVNState() {
                 }, 'complete');
             }
             
-            // Use saved bubble snapshots instead of regenerating
             currentVN.bubbles = vnState.bubbleSnapshots;
             
-            // Restore to saved bubble index
             const targetBubbleIndex = vnState.currentBubbleIndex || 1;
             currentVN.restoreToBubbleIndex(targetBubbleIndex);
             
             console.log('✅ Task restored using bubble snapshots and saved image');
             
         } else {
-            // OLD FORMAT: No bubble snapshots, use fallback
             console.warn('⚠️ No bubble snapshots found, using fallback restore');
             fallbackToHTMLRestore(instructions, vnState);
         }
@@ -1128,12 +1058,10 @@ function fallbackToHTMLRestore(instructions, vnState) {
     instructions.innerHTML = window.GAME_STATE.currentInstruction;
     instructions.classList.add('active');
     
-    // Create fresh VN instance
     if (!currentVN) {
         currentVN = new VNTaskDisplay();
     }
     
-    // Re-cache element references after HTML restore
     currentVN.container = instructions;
     currentVN.elements = {
         leftModule: instructions.querySelector('.vn-left-module'),
@@ -1147,13 +1075,11 @@ function fallbackToHTMLRestore(instructions, vnState) {
         continueIndicator: instructions.querySelector('.vn-continue-indicator')
     };
     
-    // Verify critical elements exist
     if (!currentVN.elements.textArea || !currentVN.elements.buttonArea) {
         console.error('❌ Critical VN elements not found after restore');
         return;
     }
     
-    // Restore basic state values
     if (vnState) {
         currentVN.currentBubbleIndex = vnState.currentBubbleIndex || 0;
         currentVN.currentStageId = vnState.currentStageId;
@@ -1162,20 +1088,17 @@ function fallbackToHTMLRestore(instructions, vnState) {
         currentVN.currentImageUrl = vnState.currentImageUrl || null;
     }
     
-    // CRITICAL: Set the completion callback
     currentVN.onCompleteCallback = () => {
         if (window.GAME_FUNCTIONS && window.GAME_FUNCTIONS.completeTask) {
             window.GAME_FUNCTIONS.completeTask();
         }
     };
     
-    // Re-attach text area click handler
     if (currentVN.elements.textArea) {
         currentVN.elements.textArea.onclick = () => currentVN.advanceBubble();
         console.log('✅ Text area click handler attached');
     }
     
-    // Re-attach button click handlers
     const buttons = currentVN.elements.buttonArea.querySelectorAll('button');
     buttons.forEach(button => {
         const text = button.textContent;

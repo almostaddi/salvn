@@ -1,5 +1,5 @@
 // Main entry point - orchestrates the game
-
+import { exportSettingsCode, importSettingsCode } from './settingsCode.js';
 // State management
 import { 
     initializeState, 
@@ -104,8 +104,8 @@ function showPage(pageName) {
 
     // Controls bar
     const controls = document.getElementById('controls');
-    
-    // ── FIX: Update fixed buttons visibility based on page ──────────────────
+
+    // ── Update fixed buttons visibility based on page ──────────────────────
     const resetBtn = document.getElementById('resetBtn');
     if (pageName === 'home') {
         document.body.classList.remove('show-fixed-buttons');
@@ -114,9 +114,8 @@ function showPage(pageName) {
         document.body.classList.add('show-fixed-buttons');
         if (resetBtn) resetBtn.textContent = '🔄 Reset';
     }
-    // ─────────────────────────────────────────────────────────────────────────
 
-    // ── Board slide transition ────────────────────────────────────────────
+    // ── Board slide transition ─────────────────────────────────────────────
     if (pageName === 'board' && _nextBoardAnim === 'slide' && hasOutgoing) {
         _nextBoardAnim = null;
 
@@ -180,13 +179,13 @@ function showPage(pageName) {
 
         }, { once: true });
 
-    // ── All other transitions ─────────────────────────────────────────────
+    // ── All other transitions ──────────────────────────────────────────────
     } else {
         _nextBoardAnim = null;
 
-        // If going to task page
+        // ── Task page incoming ─────────────────────────────────────────────
         if (pageName === 'task') {
-            // Hide outgoing page immediately — board is rebuilt on return anyway
+            // Hide outgoing page immediately
             if (outgoing) {
                 outgoing.classList.remove('active');
             }
@@ -204,50 +203,64 @@ function showPage(pageName) {
                 controls.style.display = 'none';
             }
 
-        // If returning from task page to board
+        // ── Returning from task page ───────────────────────────────────────
         } else if (outgoing && outgoing.id === 'taskPage') {
             // Remove task page immediately
             outgoing.classList.remove('active');
 
-            // Restore controls bar
-            if (controls) {
-                controls.style.display = 'flex';
-                controls.style.opacity = '1';
-            }
+            // Hide instructions
+            if (instructions) instructions.classList.remove('active');
 
-            // Make board active but hidden while we set up
-            const boardPageEl = document.getElementById('boardPage');
-            if (boardPageEl) {
-                boardPageEl.classList.add('active');
-                boardPageEl.style.visibility = 'hidden';
-            }
-
-            // Rebuild the board
-            scaleManager.init();
-
-            // Re-place player using setPlayerPosition which handles everything
-            const pos = window.GAME_STATE.playerPosition;
-            if (pos > 0) {
-                setPlayerPosition(pos);
-            }
-
-            // Scroll to player BEFORE revealing the board
-            if (pos > 0) {
-                const sq = document.getElementById(`square-${pos}`);
-                if (sq) {
-                    sq.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+            // ── Going to home (e.g. reset from task page) ─────────────────
+            if (pageName === 'home') {
+                targetPageEl.classList.add('active');
+                if (controls) {
+                    controls.style.display = 'none';
                 }
+
+            // ── Going to board (normal task completion) ────────────────────
+            } else {
+                // Restore controls bar
+                if (controls) {
+                    controls.style.display = 'flex';
+                    controls.style.opacity = '1';
+                }
+
+                // Make board active but hidden while we set up
+                const boardPageEl = document.getElementById('boardPage');
+                if (boardPageEl) {
+                    boardPageEl.classList.add('active');
+                    boardPageEl.style.visibility = 'hidden';
+                }
+
+                // Rebuild the board
+                scaleManager.init();
+
+                // Re-place player
+                const pos = window.GAME_STATE.playerPosition;
+                if (pos > 0) {
+                    setPlayerPosition(pos);
+                }
+
+                // Scroll to player BEFORE revealing the board
+                if (pos > 0) {
+                    const sq = document.getElementById(`square-${pos}`);
+                    if (sq) {
+                        sq.scrollIntoView({ behavior: 'auto', block: 'center', inline: 'center' });
+                    }
+                }
+
+                // Now reveal the board
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (boardPageEl) {
+                            boardPageEl.style.visibility = '';
+                        }
+                    });
+                });
             }
 
-            // Now reveal the board
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    if (boardPageEl) {
-                        boardPageEl.style.visibility = '';
-                    }
-                });
-            });
-
+        // ── All other transitions (e.g. home → board without slide) ───────
         } else {
             targetPageEl.classList.remove('page-entering-fade');
             targetPageEl.classList.add('active');
@@ -610,6 +623,15 @@ function setupEventListeners() {
         window.GAME_STATE.playerName = this.value;
         saveGameState();
     });
+    document.getElementById('nicknamesInput').addEventListener('input', function() {
+    window.GAME_STATE.playerNicknames = this.value;
+    saveGameState();
+    });
+
+    document.getElementById('domNameInput').addEventListener('input', function() {
+        window.GAME_STATE.domName = this.value;
+        saveGameState();
+    });
     
     document.querySelectorAll('input[name="snakesLaddersMode"]').forEach(radio => {
         radio.addEventListener('change', function() {
@@ -644,8 +666,8 @@ function setupEventListeners() {
     });
     
     document.getElementById('resetBtn').addEventListener('click', () => {
-        const isOnHomePage = document.body.classList.contains('on-home-page');
-        if (isOnHomePage) {
+        const homePageActive = document.getElementById('homePage').classList.contains('active');
+        if (homePageActive) {
             document.getElementById('resetSettingsModal').classList.add('active');
         } else {
             document.getElementById('resetModal').classList.add('active');
@@ -679,6 +701,45 @@ function setupEventListeners() {
         if (e.target.classList.contains('modal')) {
             e.target.classList.remove('active');
         }
+    });
+    document.getElementById('exportCodeBtn').addEventListener('click', () => {
+    const code = exportSettingsCode();
+    const input = document.getElementById('settingsCodeInput');
+    const msg = document.getElementById('settingsCodeMsg');
+    input.value = code;
+    navigator.clipboard.writeText(code).then(() => {
+        msg.textContent = '✅ Copied to clipboard!';
+        msg.style.color = '#51cf66';
+    }).catch(() => {
+        msg.textContent = '✅ Code ready — copy it manually.';
+        msg.style.color = '#51cf66';
+    });
+    setTimeout(() => { msg.textContent = ''; }, 3000);
+});
+
+    document.getElementById('importCodeBtn').addEventListener('click', () => {
+        const code = document.getElementById('settingsCodeInput').value.trim();
+        const msg = document.getElementById('settingsCodeMsg');
+
+        if (!code) {
+            msg.textContent = '⚠️ Paste a code first.';
+            msg.style.color = '#f59f0b';
+            setTimeout(() => { msg.textContent = ''; }, 3000);
+            return;
+        }
+
+        const result = importSettingsCode(code);
+        if (result.success) {
+            msg.textContent = '✅ Settings imported!';
+            msg.style.color = '#51cf66';
+            document.getElementById('settingsCodeInput').value = '';
+            saveGameState();
+            restoreUIState(window.GAME_STATE);
+        } else {
+            msg.textContent = `❌ ${result.error}`;
+            msg.style.color = '#ff6b6b';
+        }
+        setTimeout(() => { msg.textContent = ''; }, 4000);
     });
 }
 
